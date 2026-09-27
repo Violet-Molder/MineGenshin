@@ -372,8 +372,16 @@ public final class CharacterConfigPage {
       Selector<Integer> selector = new Selector();
       selector.addClass("cc-sock-selector");
       selector.layout(l -> l.height(12.0F));
-      UIElementProvider<Integer> provider = UIElementProvider.text(valuex -> Component.translatable(appearance.optionValueNameKey(index, valuex)));
+
+      // ⚠️ 顺序要紧：LDLib2 的 setCandidateUIProvider 会立刻拿「当前值」渲染一次候选，
+      // 所以必须先把当前值定下来，否则那个 lambda 会被喂 null（打开配置页直接 NPE 崩）。
+      selector.setSelected(appearance.optionValue(character.getAppearance(), index), false);
+
+      // 候选渲染再兜一层 null：万一以后有「值还没定」的路径，显示第 0 项的名字而不是崩。
+      UIElementProvider<Integer> provider = UIElementProvider.text(
+              valuex -> Component.translatable(appearance.optionValueNameKey(index, valuex == null ? 0 : valuex)));
       selector.setCandidateUIProvider(valuex -> provider.apply(valuex).setOverflowVisible(true).addClass("cc-sock-item"));
+
       List<Integer> values = new ArrayList<>();
 
       for (int value = 0; value < appearance.optionValueCount(index); value++) {
@@ -381,7 +389,6 @@ public final class CharacterConfigPage {
       }
 
       selector.setCandidates(values);
-      selector.setSelected(appearance.optionValue(character.getAppearance(), index), false);
       selector.setOnValueChanged(valuex -> {
          if (valuex != null) {
             character.setAppearance(appearance.withOptionValue(character.getAppearance(), index, valuex));

@@ -37,7 +37,7 @@ public class ModCharacters {
    public static final DeferredHolder<PGCharacter, RaidenShogun> RAIDEN_SHOGUN = register("raiden_shogun", 135003, RaidenShogun::new);
    public static final DeferredHolder<PGCharacter, Vesna> VESNA = register("vesna", 115001, Vesna::new);
    public static final DeferredHolder<PGCharacter, Vodyanitsa> VODYANITSA = register("vodyanitsa", 145002, Vodyanitsa::new);
-    public static final DeferredHolder<PGCharacter, Linweiyun> LINWEIYUN = register("linweiyun", 135004, Linweiyun::new);
+    public static final DeferredHolder<PGCharacter, Linweiyun> LINWEIYUN = register("linweiyun", 105001, Linweiyun::new);
 
     private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(String name, int uuid, Supplier<T> factory) {
       DeferredHolder<PGCharacter, T> holder = CHARACTERS.register(name, factory);

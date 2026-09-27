@@ -89,10 +89,11 @@ public class ShenheConfigUI extends CharacterConfigScreen {
       Selector<SockType> sock = new Selector();
       sock.addClass("cc-sock-selector");
       sock.layout(l -> l.height(12.0F));
+      // 同 CharacterConfigPage#optionChoice：先定当前值，再装候选渲染器（否则 LDLib2 会拿 null 渲染一次）
+      sock.setSelected(ShenheAppearanceData.INSTANCE.sock(character.getAppearance(), left), false);
       UIElementProvider<SockType> sockProvider = UIElementProvider.text(s -> Component.translatable(sockKey(s)));
       sock.setCandidateUIProvider(s -> sockProvider.apply(s).setOverflowVisible(true).addClass("cc-sock-item"));
       sock.setCandidates(List.of(SockType.values()));
-      sock.setSelected(ShenheAppearanceData.INSTANCE.sock(character.getAppearance(), left), false);
       sock.setOnValueChanged(value -> {
          if (value != null) {
             character.setAppearance(ShenheAppearanceData.INSTANCE.withSock(character.getAppearance(), left, value));
