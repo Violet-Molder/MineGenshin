@@ -61,3 +61,9 @@ logs/
 ### 整包资源：本地产出的单个文件，不进仓库 ###
 # 由本机母本收进去的那一个文件；克隆下来没有它，构建出的 jar 自然就没有内置模型。
 /src/main/resources/assets/minegenshin/geo/
+
+### 本机排查用的散件：本地留着查代码，不进仓库 ###
+# 反编译出来的几个原版类，只拿来对着看（Screen / Player / GoalSelector …）
+/net/
+# javac 参数文件（@文件包住一整行超长 classpath，机器相关）
+/javac.*.args

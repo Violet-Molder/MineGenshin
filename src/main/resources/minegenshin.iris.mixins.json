@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.linweiyun.genshin.mixin.compat.iris",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "com.linweiyun.genshin.mixin.compat.IrisMixinPlugin",
+  "client": [
+    "IrisShaderReloadMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 0
+  }
+}

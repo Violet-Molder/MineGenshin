@@ -1,0 +1,1084 @@
+/* ============================================================================
+ * 角色装备页（按键 U）—— 科技风：蓝色外框 + 蓝色半透明屏幕 + 花纹 / 齿轮。
+ *
+ * 这张表是 character_config.lss（按键 N 的角色配置页）的**放大版兄弟**：
+ * 外框贴图、内屏底色、四边留白、字号与配色全部沿用同一套，只做三处硬改动 ——
+ *
+ * 1. **窗口从 72% 提到 88%**。用户口径：「之前那个可能可用窗口不够大，需要提升」。
+ *    这一页要塞下「左侧纵向六个页签 + 中间 3D 预览 + 右侧详情/列表」三栏，
+ *    72% 那档右栏只剩 ~150 单位，圣遗物列表和属性表都会被挤成一条缝。
+ *    只改这一个百分比：外框、齿轮、内部三栏一起等比放大，比例锁死在 422/248。
+ *
+ * 2. **内容层从 88%x86% 放到 93%x91%**。同一句「提高可用区」的第二步 ——
+ *    窗口变大后如果内容层还是 88%，多出来的空间会全变成内框与内容之间的空边。
+ *    93/91 仍然留着不压到内框线的那点安全边（外框内侧那圈细线在元素矩形的四边上）。
+ *
+ * 3. 新增了这一页自己的控件类（.ce-*）：角色头像条、左侧页签、圣遗物槽位、
+ *    属性行、列表格子。命名前缀 ce-（character equip）与配置页的 cc- 互不干扰 ——
+ *    两张表在同一个 lss 系统里，重名会互相覆盖。
+ *
+ * ⚠️ 其余「为什么 sprite 裁剪区是 422x248、为什么要 scale(1.32913,1.30871)、
+ *   为什么还要 translate(2.36%,-1.85%)、为什么根元素尺寸要用 INLINE 再写一遍」
+ *   与 character_config.lss 完全同因，逐条推导见那个文件头，这里不重复。
+ * ⚠️ 文本颜色要用 `text-color`，不是 `color`。
+ * ⚠️ 高度仍由 Java 侧用 INLINE 再设一次（首帧算样式时 lss 还没结算）。
+ * ========================================================================== */
+
+#ce-root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #88000000;
+}
+
+/* 窗口 = 半透明内屏（深蓝底 alpha 0x4A）+ 屏幕外框（贴图，画在上面）。
+   元素矩形就是那圈「内框」：底色正好铺在内框里，外框美术（含齿轮）比元素大，
+   靠 sprite 自己的 scale 溢出画在元素之外（#ce-window 没写 overflow）。 */
+#ce-window {
+  width: 88%;
+  min-width: 320;
+  max-height: 94%;
+  aspect-rate: 1.7016;
+  transform: translate(2.36%, -1.85%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: group(
+      #4A101E36,
+      sprite(minegenshin:gui/shenhe_config/frame.png, 0, 0, 422, 248) scale(1.32913, 1.30871)
+  );
+}
+
+/* 内容层：元素矩形就是内框，93% x 91% 只留一点不压线的安全边。 */
+#ce-body {
+  width: 93%;
+  height: 91%;
+  display: flex;
+  flex-direction: column;
+  gap-all: 5;
+}
+
+/* ---------------- 顶栏：标题 + 角色头像条 ---------------- */
+
+#ce-topbar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 8;
+  flex-shrink: 0;
+  /* 往里收一点：顶栏原来贴在内容层左上角，头像条会压在左上角那圈花纹上
+     （用户口径：角色列表太靠左上、超出范围）。 */
+  padding-top: 6;
+  padding-left: 6;
+  padding-right: 6;
+}
+
+#ce-title {
+  flex-shrink: 0;
+  /* ⚠️ Label 在 flex 行里没有固有宽度：不写 adaptive-width 时它的盒子是 0 宽，
+     文字照样从盒子左边画出去 → 标题就压到右边那排头像上（用户截图里那排「角…列…」）。
+     adaptive-width 会按文字实际宽度把盒子撑开。 */
+  adaptive-width: true;
+  font-size: 15;
+  text-color: #9BE8FF;
+}
+
+/* 角色头像条：横排、可点。头像贴图是 avatar_hud.png（320x320 方图）。
+   整条排在一个「自带横向滚动条」的 ScrollerView 里（用户口径：加带自带横向滚动条的
+   view 容器）—— 全角色有十几个，一排头像必然超出顶栏宽度，靠滚动条横拉。 */
+#ce-strip-scroll {
+  flex: 1;
+  min-width: 0;
+  /* 视口内容高 = 38 - 上下各 3 的内边距 = 32：头像 22 + #ce-strip 上下各 2 的留白 = 26，
+     横向滚动条（AUTO）出现时再占几像素，也裁不到头像的描边。 */
+  height: 38;
+}
+
+/* ⚠️ 这里**不能**写 `#ce-strip-scroll .__scroller_view_view-port__` 去给视口画框 ——
+   LDLib2 把 viewport 的默认背景写在元素自己的 INLINE 样式层（ScrollerView 构造函数里的
+   Sprites.BORDER），lss 是 STYLESHEET(2)，级联里必输（StyleOrigin：DEFAULT 0 <
+   STYLESHEET 2 < INLINE 3），写了也不显示。所以外框改由下面这层自己的元素来画。
+   背景和细蓝边与详情栏那些滚动区（.ce-scroller）同一套，这样角色列表看起来是一个有边界的框，
+   而不是一排头像直接糊在窗口内屏上；内边距 1 让框线不贴头像。 */
+#ce-strip-frame {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding-all: 1;
+  background: group(#59101E30, border(1, #404F8FBF));
+}
+
+#ce-strip {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 4;
+  flex-shrink: 0;
+  /* ⚠️ 上/左/下/右各留 2：**这是「第一行第一列的边界被吞掉」的正解**。
+     LDLib2 的 `border(n, color)`（n >= 0）是**向外画**的描边（ColorBorderTexture：
+     上边画在 y-border、左边画在 x-border），而 ScrollerView 会给视口的**内容盒**
+     （padding 以内那块，见 UIElementRenderer：enableScissor(getContentX/Y/W/H)）
+     下剪刀 —— 贴在最上/最左的头像，它那 1 像素的外描边正好落在剪刀外，于是
+     只看得见右、下两条边（用户截图里那排「⌐」形边框）。
+     给 strip 留 2 像素，描边就落在内容盒里面了。 */
+  padding-all: 2;
+}
+
+/* 一枚头像 = 22x22 的方框；「正在查看」的那一枚用亮青描边，不看的那几枚只有一圈暗边
+   （用户参考图里也是「选中的那枚更亮」）。
+   ⚠️ 底色/贴图是 Java 侧用 INLINE 写的（每枚头像的 avatar_hud.png 都不一样），
+   INLINE 压得住本表的 `background`，所以描边只能走 `overlay` —— 写成 background 会被
+   Java 那份直接盖掉，高亮就没了。 */
+.ce-avatar {
+  width: 22;
+  height: 22;
+  flex-shrink: 0;
+  overlay: border(1, #664F8FBF);
+}
+
+.ce-avatar:hover {
+  overlay: border(1, #CC9BE8FF);
+}
+
+.ce-avatar-viewed {
+  overlay: border(1, #E6D9F4FF);
+}
+
+/* 标题下面一条分隔线 */
+#ce-title-line {
+  height: 1;
+  flex-shrink: 0;
+  background: #664FA8D8;
+}
+
+/* ---------------- 主体：左页签 / 中预览 / 右详情 ---------------- */
+
+#ce-main {
+  display: flex;
+  flex-direction: row;
+  gap-all: 8;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 左侧页签栏：六个竖排按钮（属性/武器/圣遗物/命之座/天赋/资料）。
+   宽度固定 62 —— 不跟窗口等比缩放，否则窄窗口下「命之座」会被压成两行。 */
+#ce-menu {
+  width: 62;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap-all: 4;
+}
+
+/* 页签 = 按钮式 Toggle（CustomToggle，文字居中画在按钮内部）。
+   和配置页的 .cc-tab 同一套写法：未选中暗底细蓝边、选中亮青底。 */
+.ce-tab {
+  width: 100%;
+  height: 16;
+  flex-shrink: 0;
+  mark-background: group(#8C1B3A5C, border(1, #CC7FD4F0));
+}
+
+.ce-tab > button.__toggle_button__ {
+  base-background: group(#40101E30, border(1, #667FD4F0));
+  hover-background: group(#5C17304F, border(1, #99A8D8FF));
+  pressed-background: group(#7017304F, border(1, #CCA8D8FF));
+}
+
+.ce-tab:on .__custom_toggle_text__ {
+  text-color: #EAF7FF;
+}
+
+/* 中间 3D 预览：Scene 占满，底部一行操作提示 */
+#ce-stage {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap-all: 2;
+  background: group(#4512263C, border(1, #7A6FD8F5));
+}
+
+#ce-scene {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+#ce-stage-hint {
+  height: 9;
+  flex-shrink: 0;
+  font-size: 8;
+  text-color: #86B6D4;
+  horizontal-align: center;
+}
+
+/* 预览区底下的模型作者署名（**在操作提示上面一行**，配置页 #cc-credit 那份的等价物）。
+   样式只跟字号/对齐；颜色走 .ce-credit / .ce-link 两个类 ——
+   ⚠️ 不能写在这个 id 上：ID 的权重(100)压得住 `.ce-link:hover`(20)，
+   写上去鼠标放上去就不变白（配置页 #cc-credit 踩过同一个坑）。
+   行高由 Java 的 INLINE 兜首帧，所以这里不写 height。 */
+#ce-stage-credit {
+  flex-shrink: 0;
+  font-size: 8;
+  horizontal-align: center;
+}
+
+/* 有署名但没登记主页：安静的蓝灰（和操作提示同一档） */
+.ce-credit {
+  text-color: #86B6D4;
+}
+
+/* 右侧详情栏：宽度固定 196。窗口 88% 时内容层约 777 单位，三栏是
+   62 + 8 + (剩) + 8 + 196，中间预览还有 ~490 —— 模型有足够的地方站。 */
+#ce-panel {
+  width: 196;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap-all: 4;
+  padding-all: 5;
+  min-height: 0;
+  background: group(#4512263C, border(1, #7A6FD8F5));
+}
+
+/* ---------------- 通用行 / 文字 ---------------- */
+
+.ce-section {
+  font-size: 10;
+  text-color: #7FD4F0;
+  flex-shrink: 0;
+}
+
+.ce-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 4;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.ce-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 9;
+  text-color: #C9DCE8;
+  /* 天赋 / 命座的介绍是整段文字：让它按宽度换行，别横向溢出详情卡 */
+  text-wrap: wrap;
+}
+
+.ce-value {
+  /* ⚠️ 一行里并排的 Label 一定要给宽度：Label 在 flex 行里没有固有宽度，
+     不写就是 0 宽，两枚 Label 会叠在同一个 x 上画（材料行右边那团糊字就是
+     「x99」和「经验+1000」互相压着）。adaptive-width = 按文字实际宽度撑开。 */
+  adaptive-width: true;
+  font-size: 9;
+  text-color: #EAF4FF;
+  flex-shrink: 0;
+}
+
+.ce-value-base {
+  adaptive-width: true;
+  font-size: 9;
+  text-color: #F0CE6E;
+  flex-shrink: 0;
+}
+
+.ce-value-extra {
+  adaptive-width: true;
+  font-size: 9;
+  text-color: #A8E86B;
+  flex-shrink: 0;
+}
+
+/* 属性表那一行（生命值上限 / 攻击力 …）：名字定宽 + 白（总值）黄（基础值）定宽右对齐，
+   余下的宽度全给绿字（额外值），于是绿字贴右框、白黄按列对齐。
+   不给名字定宽时它会 flex:1 吃掉所有空隙，三个数字被推到三个孤岛上（用户截图那处）。 */
+.ce-stat-name {
+  width: 56;
+  flex-shrink: 0;
+  font-size: 8;
+  text-color: #C9DCE8;
+}
+
+.ce-stat-white {
+  width: 36;
+  flex-shrink: 0;
+  font-size: 9;
+  text-color: #EAF4FF;
+  horizontal-align: right;
+}
+
+.ce-stat-yellow {
+  width: 32;
+  flex-shrink: 0;
+  font-size: 9;
+  text-color: #F0CE6E;
+  horizontal-align: right;
+}
+
+.ce-stat-green {
+  flex: 1;
+  min-width: 0;
+  font-size: 9;
+  text-color: #A8E86B;
+  horizontal-align: right;
+}
+
+/* 白 / 黄 / 绿三个数字之间的固定空隙：黄字后面留一格，
+   滚动条出来时绿字也不会贴到（甚至压到）黄字上。 */
+.ce-stat-gap {
+  width: 4;
+  flex-shrink: 0;
+}
+
+/* 升级页最后那块「本次升级会给到的数值」：几行 .ce-stat-*（名字 / 当前值 / 升级后的绿字）。
+   只是给行之间留一点缝，尺寸全交给里面的行。 */
+.ce-stat-preview {
+  display: flex;
+  flex-direction: column;
+  gap-all: 1;
+  width: 100%;
+}
+
+/* ---------------- 溢出确认那一层（自绘，不用 LDLib2 的 Dialog） ----------------
+   【border 例外，显式说明】面板沿用本页各信息框同一套 `group(#F00B1826, border(1, #996FD8F5))`
+   （和下拉候选那一层一个写法）：父层是这个整页遮罩，四周都留了位，那圈 1 像素不会落到
+   可渲染区之外。（全局规范默认禁 border，这里按本页既有做法显式例外。） */
+.ce-modal {
+  /* ⚠️ position / left / top / width / height 由 Java 的 INLINE 写死（见 openLevelUpConfirm），
+     这里只管配色与排布 —— 定位那几个属性走 lss 要拼枚举名，INLINE 更稳。
+     （定位不受"尺寸用百分比"那条限制，见全局规范；这里的 100% 是整页遮罩。） */
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #99000000;
+}
+
+.ce-modal-panel {
+  width: 64%;
+  display: flex;
+  flex-direction: column;
+  gap-all: 4;
+  padding-all: 6;
+  background: group(#F00B1826, border(1, #996FD8F5));
+}
+
+.ce-modal-title {
+  width: 100%;
+  height: 12;
+  flex-shrink: 0;
+  font-size: 10;
+  text-color: #9BE8FF;
+}
+
+/* 正文：整段会换行、自己撑高（和 .ce-story 同一套写法），颜色比标题暗一档 */
+.ce-modal-text {
+  width: 100%;
+  flex-shrink: 0;
+  font-size: 9;
+  text-color: #C9DCE8;
+  text-wrap: wrap;
+  adaptive-height: true;
+}
+
+.ce-modal-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap-all: 4;
+  width: 100%;
+}
+
+/* 整段会换行的正文（天赋介绍 / 命座介绍 / 角色简介）。
+   必须让文字自己撑高：只写 text-wrap 不给 adaptive-height 时，
+   Label 的盒子高度仍按「一行」算，第二行就画到框外面去
+   （用户看到的「命座文字有一条横线」就是那行字压在视口下边线上）。
+   也不能套 .ce-name —— 那条带 flex:1，会把正文拉成「剩下的高度」。 */
+.ce-text {
+  width: 100%;
+  flex-shrink: 0;
+  font-size: 9;
+  text-color: #C9DCE8;
+  text-wrap: wrap;
+  adaptive-height: true;
+}
+
+/* 天赋详情卡底部那行「消耗」：写在滚动区**外面**，
+   介绍再长也挤不掉它、盖不住它。 */
+.ce-cost-line {
+  width: 100%;
+  flex-shrink: 0;
+  padding-top: 2;
+  font-size: 8;
+  text-color: #F0CE6E;
+}
+
+.ce-value-dim {
+  adaptive-width: true;
+  font-size: 8;
+  text-color: #86B6D4;
+  flex-shrink: 0;
+}
+
+.ce-note {
+  adaptive-width: true;
+  font-size: 8;
+  text-color: #86B6D4;
+  flex-shrink: 0;
+}
+
+/* 大名字（角色名 / 武器名）：字号大一点、亮青 */
+.ce-title-name {
+  width: 100%;
+  text-wrap: wrap;
+  adaptive-height: true;
+  font-size: 12;
+  text-color: #EAF7FF;
+  flex-shrink: 0;
+}
+
+.ce-star {
+  adaptive-width: true;
+  font-size: 9;
+  text-color: #F0CE6E;
+  flex-shrink: 0;
+}
+
+/* 进度条（角色经验 / 武器经验 / 圣遗物经验）：一条底 + 一条按比例宽度的填充。
+   填充的宽度由 Java 侧按百分比写 INLINE，这里只给颜色与高度。 */
+.ce-bar-track {
+  width: 100%;
+  height: 5;
+  flex-shrink: 0;
+  /* ⚠️ 这两句是「预升级绿条」画对位置的关键：LDLib2 的 UIElement 默认 flex 方向是
+     **COLUMN**（见 TaffyLayoutStyle 的 DEFAULT_TAFFY_STYLE），而这条 `fill` 与 `ghost`
+     都是写死「高度 100% + 宽度百分比」的子元素 —— 不写 row 就直接上下摞起来，
+     绿条于是画在蓝条**下面**（用户口径：「现在是在当前经验值下面，应该接在后面」）。
+     写成 row 之后绿条的起点自然跟着蓝条的宽度走，也就是「当前经验到哪里它就从哪里开始」。 */
+  display: flex;
+  flex-direction: row;
+  background: group(#C0091421, border(1, #664F8FBF));
+}
+
+.ce-bar-fill {
+  height: 100%;
+  background: #CC7FD4F0;
+}
+
+/* 「预升级拖尾」：紧跟在当前填充后面的一条淡绿量，表示「这批经验投进去会涨到哪」
+   （用户口径：经验条要画出预升级的条，就像拖尾一样）。宽度由 Java 侧按百分比写 INLINE，
+   当前已经满级 / 没有预增量时 Java 会把这一条 display:none。 */
+.ce-bar-ghost {
+  height: 100%;
+  background: #CCA8E86B;
+}
+
+/* 夹在一行里的进度条（好感度那一行）：不能再用 width:100% ——
+   那样会把同一行的文字全挤出去。改成「占满剩下的宽度」。 */
+.ce-bar-inrow {
+  width: auto;
+  flex: 1;
+  min-width: 12;
+}
+
+/* ---------------- 圣遗物 / 武器槽位与列表格子 ---------------- */
+
+.ce-slot-row {
+  display: flex;
+  flex-direction: row;
+  /* 留够 6：这一排的格子悬浮也会放大 1.1，间距太近会压到邻格 */
+  gap-all: 6;
+  flex-shrink: 0;
+}
+
+/* 一件装备的方格子：28x28，暗底 + 细蓝边；选中的那一格亮青描边。
+   图标由 Java 侧写 background（sprite 路径来自 ItemIcons），
+   所以「描边」写在 overlay 上而不是 background，避免把图标盖掉。 */
+.ce-slot {
+  width: 28;
+  height: 28;
+  flex-shrink: 0;
+  /* 图标是 Java 侧写的 INLINE background —— 它会整份压掉这里的 group（底色 + 边框），
+     所以「框」一律画在 overlay 上（用户截图里格子只剩右/下两条边、左边顶边不见了就是这个原因）。 */
+  background: #800C1726;
+  overlay: border(1, #664F8FBF);
+  /* 照抄背包那套格子的悬浮 / 点击动画：缩放值由 Java 的 transform 写，
+     这里只声明过渡时长，放大缩小才不是硬跳。 */
+  clip: none;
+  transform-2d: scale(1.0);
+  transition: transform 0.25;
+}
+
+.ce-slot:hover {
+  overlay: border(2, #EAF7FF);
+}
+
+.ce-slot-selected {
+  overlay: border(2, #E6D9F4FF);
+}
+
+/* 拖拽悬停：整格套一圈亮青粗边，比 hover 更明显 */
+.ce-slot-drop {
+  overlay: border(2, #FF9BE8FF);
+}
+
+/* 背包列表里的格子：同尺寸、同底色，只是按网格排。
+   ⚠️ 内边距必须写在**滚动内容**上（这里），不能只写给滚动区的视口 ——
+   视口那点 padding 只把背景/描边往里缩，内容照样从左上角起排，
+   于是第一行第一列的边框被视口边线吃掉（用户反复提到的那处）。
+   格子悬浮会放大到 1.1（28 → 30.8、36 → 39.6），行/列间距也要留够，
+   不然放大后的那格会盖住邻居。 */
+.ce-grid {
+  display: flex;
+  flex-direction: column;
+  gap-all: 8;
+  width: 100%;
+  padding-all: 4;
+}
+
+.ce-grid-row {
+  display: flex;
+  flex-direction: row;
+  gap-all: 8;
+  flex-shrink: 0;
+}
+
+/* ---------------- 滚动区 / 滚动条 ---------------- */
+
+/* 滚动区里那一层**内容**（列表 / 详情盒）：四周垫 4。
+   不能只给视口写 padding —— 视口那份只把背景和描边往里缩，内容照样从左上角起排，
+   第一行第一列的边框就被视口边线吃掉（用户反复提到的那处）。 */
+.ce-scroll-body {
+  padding-all: 4;
+}
+
+/* 详情栏里的滚动区：内凹的信息框底 + 很淡的蓝边。
+   只写在 .ce-scroller 下 —— Selector 内部也有一个同名的视口，别顺手改到它。 */
+.ce-scroller {
+  width: 100%;
+  flex: 1;
+  min-width: 24;
+  min-height: 24;
+}
+
+.ce-scroller .__scroller_view_view-port__ {
+  background: group(#59101E30, border(1, #404F8FBF));
+  /* 不留内边距时，网格第一行的顶边、第一列的左边会被视口边线压掉
+     （用户截图里「第一行图标显示不出来顶边 / 第一列显示不出来左边」）。 */
+  padding-all: 3;
+}
+
+.__scroller_view_view-port__ {
+  min-width: 16;
+  min-height: 16;
+}
+
+.__scroller_scroll_container__ {
+  background: #66101E30;
+}
+
+scroller-vertical .__scroller_scroll_bar__ {
+  base-background: #996FD8F5;
+  hover-background: #CC9BE8FF;
+  pressed-background: #E6D9F4FF;
+}
+
+/* 横向滚动条（头像条那条）：和竖的那条同一套配色，只是方向不同。
+   滚动槽也一起压暗，免得默认那身灰底色在顶栏里跳出来。 */
+scroller-horizontal .__scroller_scroll_bar__ {
+  base-background: group(#66101E30, border(1, #664F8FBF));
+  hover-background: #CC9BE8FF;
+  pressed-background: #E6D9F4FF;
+}
+
+scroller-horizontal .__scroller_scroll_container__ {
+  background: group(#66101E30, border(1, #664F8FBF));
+}
+
+.__scroller_head_button__,
+.__scroller_tail_button__ {
+  display: none;
+}
+
+/* ---------------- 按钮 ---------------- */
+
+/* 动作按钮（升级 / 突破 / 装备 / 卸下 …）：Button 自带 base/hover/pressed 三态背景，
+   默认那身灰紫是构造器里的 DEFAULT，本表 STYLESHEET 优先级压得住。 */
+.ce-action {
+  height: 16;
+  flex-shrink: 0;
+  base-background: group(#AE0B1A2C, border(1, #8C6FD8F5));
+  hover-background: group(#CC142C48, border(1, #CC9BE8FF));
+  pressed-background: group(#E61B3A5C, border(1, #CC9BE8FF));
+}
+
+/* 禁用态（条件不满足时 Java 侧加这个类）：整体压暗，文字也灰掉 */
+.ce-action-off {
+  base-background: group(#60101E30, border(1, #404F8FBF));
+  hover-background: group(#60101E30, border(1, #404F8FBF));
+  pressed-background: group(#60101E30, border(1, #404F8FBF));
+}
+
+.ce-action-off .__button_text__ {
+  text-color: #5A7A93;
+}
+
+.__button_text__ {
+  font-size: 9;
+  text-color: #DCEBF5;
+}
+
+/* 页签 / 头像条那层自定义按钮文字（CustomToggle 固定类名） */
+.__custom_toggle_text__ {
+  font-size: 9;
+  text-color: #7FB6D8;
+}
+
+/* 名字与数值的长串兜底：英文长名（Elemental Mastery 这类）在 9 号字下比一栏还宽，
+   右栏固定 196 单位放不下，所以属性行里的名字统一 8 号。 */
+.ce-name-sm {
+  flex: 1;
+  min-width: 0;
+  font-size: 8;
+  text-color: #C9DCE8;
+}
+
+/* 命座节点：一枚一行的小方块 + 名字，解锁的亮、锁着的暗 */
+.ce-con-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 4;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.ce-con-dot {
+  width: 10;
+  height: 10;
+  flex-shrink: 0;
+  background: group(#80303A4A, border(1, #664C5A6E));
+}
+
+.ce-con-dot-on {
+  background: group(#CC7FD4F0, border(1, #E6D9F4FF));
+}
+
+.ce-con-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 8;
+  text-color: #7A8A9A;
+}
+
+.ce-con-name-on {
+  flex: 1;
+  min-width: 0;
+  font-size: 8;
+  text-color: #EAF7FF;
+}
+
+/* 天赋行右边那个「Lv」数字：不许被名字挤掉（原来没给样式，解锁行的名字不带 flex，
+   数字被顶到行外，看起来就像天赋页没有等级）。 */
+.ce-level-num {
+  flex-shrink: 0;
+  font-size: 8;
+  text-color: #EAF7FF;
+  horizontal-align: right;
+}
+
+/* ---------------- 圣遗物环绕（模型周围那 5 枚） ---------------- */
+
+/* 一枚圣遗物 = 一个 30x30 的牌：底色 + 图标（Java 侧写 background）。
+   ⚠️ 和 .ce-slot 同一个坑：图标是 Java 的 INLINE background，压得住本表的 background，
+   所以「高亮 / 描边」一律走 overlay，写成 background 会被图标盖掉。
+   位置（left/top 百分比）与 transform（把元素中心对到那个点）由 Java 侧写，
+   因为要支持按住拖动。 */
+.ce-orb {
+  width: 30;
+  height: 30;
+  flex-shrink: 0;
+  position: absolute;
+  background: group(#B3101E30, border(1, #996FD8F5));
+  overlay: border(2, #00000000);
+}
+
+.ce-orb:hover {
+  overlay: border(2, #CC9BE8FF);
+}
+
+/* 当前查看的那一件 */
+.ce-orb-on {
+  overlay: border(2, #E6D9F4FF);
+}
+
+/* 空槽位：没有图标，只有一圈暗边，里面写部位名 */
+.ce-orb-empty {
+  background: group(#59101E30, border(1, #664F8FBF));
+}
+
+/* 空槽里那行部位名（裸腿/黑丝那类选择器上也用它当小标签） */
+.ce-orb-tag {
+  position: absolute;
+  left: 0;
+  top: 11;
+  width: 100%;
+  font-size: 8;
+  text-color: #86B6D4;
+  horizontal-align: center;
+}
+
+/* ---------------- 子页面（更换圣遗物 / 升级） ---------------- */
+
+/* 子页面：默认 display:none，由 Java 在「打开了子页面」时切成 flex。
+   它和 #ce-main 互斥 —— 子页面要占满整个内容层（参考图里更换页是整页大网格）。 */
+#ce-sub {
+  display: none;
+  flex-direction: column;
+  gap-all: 6;
+  flex: 1;
+  min-height: 0;
+}
+
+#ce-sub-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 6;
+  flex-shrink: 0;
+}
+
+#ce-sub-title {
+  font-size: 13;
+  text-color: #EAF7FF;
+  flex-shrink: 0;
+}
+
+/* 子页面主体：左（大网格 / 材料列表）+ 右（详情 + 按钮） */
+#ce-sub-body {
+  display: flex;
+  flex-direction: row;
+  gap-all: 8;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 详情卡：带内边框 + 内边距（文字不贴边） */
+.ce-detail {
+  display: flex;
+  flex-direction: column;
+  gap-all: 3;
+  padding-all: 5;
+  background: group(#59101E30, border(1, #7A6FD8F5));
+}
+
+/* 可点选的列表行（命之座 / 天赋 / 材料）：选中那行亮青描边 + 亮底 */
+.ce-list-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 4;
+  width: 100%;
+  flex-shrink: 0;
+  padding-all: 2;
+  background: group(#40101E30, border(1, #404F8FBF));
+}
+
+.ce-list-row:hover {
+  background: group(#5C17304F, border(1, #99A8D8FF));
+}
+
+.ce-list-row-on {
+  background: group(#7017304F, border(1, #CCA8D8FF));
+}
+
+/* 更换页的大格子：比右栏那种 28 的格子大一圈，一屏能摆下十几件 */
+.ce-big-slot {
+  width: 36;
+  height: 36;
+  flex-shrink: 0;
+  /* 同 .ce-slot：图标压掉 group，所以框走 overlay */
+  background: #800C1726;
+  overlay: border(1, #664F8FBF);
+  clip: none;
+  transform-2d: scale(1.0);
+  transition: transform 0.25;
+}
+
+.ce-big-slot:hover {
+  overlay: border(2, #EAF7FF);
+}
+
+.ce-big-slot-selected {
+  overlay: border(2, #E6D9F4FF);
+}
+
+/* 数量步进器上的 − / ＋ 小按钮 */
+.ce-step {
+  width: 16;
+  height: 16;
+  flex-shrink: 0;
+  base-background: group(#AE0B1A2C, border(1, #8C6FD8F5));
+  hover-background: group(#CC142C48, border(1, #CC9BE8FF));
+  pressed-background: group(#E61B3A5C, border(1, #CC9BE8FF));
+}
+
+/* 词条 / 属性预览里的箭头（升级后会变成什么样） */
+.ce-arrow {
+  font-size: 9;
+  text-color: #A8E86B;
+  flex-shrink: 0;
+}
+
+/* 「MAX」标签：到顶了就用橙红，和参考图一致 */
+.ce-max {
+  font-size: 9;
+  text-color: #FF9C6B;
+  flex-shrink: 0;
+}
+
+/* 只看不能改（正在看的角色不在队伍里）：提示条 */
+.ce-viewonly {
+  padding-all: 3;
+  font-size: 8;
+  text-color: #FFC46B;
+  background: group(#591E1708, border(1, #66FFC46B));
+}
+
+/* ---------------- 详情栏右下那几样（属性页 / 武器页 / 订阅页共用） ---------------- */
+
+/* 右上角「头像 + 元素 + 名字 + 星」那一行里的两个小方块。
+   贴图是 Java 侧写的 INLINE background（每张都不一样），所以这里只管尺寸。 */
+.ce-head-avatar {
+  width: 18;
+  height: 18;
+  flex-shrink: 0;
+  overlay: border(1, #99A8D8FF);
+}
+
+.ce-elem {
+  width: 12;
+  height: 12;
+  flex-shrink: 0;
+}
+
+/* 未激活的圣遗物格子：整格压成**半透明**（用户口径：不是红框）。
+   图标是 Java 的 INLINE background，所以半透明那层只能盖在 overlay 上。 */
+.ce-slot-dim {
+  background: #4D0A1220;
+  overlay: group(#66000000, border(1, #4D9BE8FF));
+}
+
+/* 模型作者署名：可点的那一份（和配置页的 cc-credit-link 同一个意思） */
+.ce-link {
+  font-size: 8;
+  text-color: #7FD4F0;
+  flex-shrink: 0;
+}
+
+.ce-link:hover {
+  text-color: #EAF7FF;
+}
+
+/* 更换页右栏：详情卡 + 按钮，竖排 */
+#ce-change-right {
+  display: flex;
+  flex-direction: column;
+  gap-all: 4;
+  min-height: 0;
+}
+
+/* 升级材料那一行左边的小图标（16x16，贴图同样是 Java 写的） */
+.ce-mat-icon {
+  width: 16;
+  height: 16;
+  flex-shrink: 0;
+  overlay: border(1, #664F8FBF);
+}
+
+/* 「使用数量」那口数字框：和步进按钮同高，底色沿用信息框那一套 */
+.ce-count-field {
+  width: 40;
+  height: 16;
+  flex-shrink: 0;
+  background: group(#C0091421, border(1, #664F8FBF));
+  focus-overlay: border(1, #CC9BE8FF);
+  font-size: 9;
+  text-color: #EAF4FF;
+}
+
+
+/* ============================================================================
+* 三栏版（按 N 的角色配置页那套）之后仍然需要的几条补丁样式。
+*
+* 文件末尾原本还有「布局重排（第二版）/（第三版）」两大段，把 #ce-main / #ce-menu /
+* #ce-panel / #ce-stage 全部改成原神那套绝对定位 —— 用户判定那一版在实机里是乱的
+* （右栏叠字、中间模型拖不动、圣遗物拖不动），已整段删除，改回上面那套三栏 flex 写法。
+* 只保留三样与版面无关、三栏版也在用的东西：命座/天赋详情卡、天赋小页签、装备中角标。
+* ========================================================================== */
+
+/* 命之座 / 天赋页：右栏里那张「选中项详情」卡 */
+#ce-detail-card {
+  width: 100%;
+  flex-direction: column;
+  min-height: 0;
+  /* 详情卡吃掉列表之外剩下的高度 —— 天赋介绍要尽可能大 */
+  flex: 1;
+}
+
+/* 天赋列表：只留三条的高度，多的靠滚动条（用户口径：天赋表缩减成三条、把介绍页让大）。
+   外面这层盒子定高、内部那个 .ce-scroller 用 flex:1 去填，比直接给 scroller 定高稳
+   （.ce-scroller 类本身带 flex:1，靠 id 改不动它）。 */
+#ce-talent-list-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 52;
+  flex-shrink: 0;
+}
+
+/* 命座列表：和天赋表同一套（.ce-list-row 的边框 / 悬浮 / 选中底），
+   但六行要**正好**放得下 —— 原来这层没有定高，滚动区会一路吃到详情卡，
+   六行占完剩下的全是空白（用户口径「命之座太简单了…也没有多余的空白」）。
+   一行 ≈ 15（名字 11 + 上下内边距 4），六行 90，加 .ce-scroll-body 的 8 内边距 = 98。 */
+#ce-con-list-box {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 98;
+  flex-shrink: 0;
+}
+
+#ce-detail-card > .ce-detail {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 天赋详情卡上那对小页签（天赋介绍 / 详细属性） */
+.ce-subtab {
+  width: 100%;
+  height: 14;
+  flex-shrink: 0;
+  mark-background: group(#00000000, border(0, #00000000));
+}
+
+.ce-subtab > button.__toggle_button__ {
+  base-background: group(#40101E30, border(1, #664F8FBF));
+  hover-background: group(#5C17304F, border(1, #99A8D8FF));
+  pressed-background: group(#7017304F, border(1, #CCA8D8FF));
+}
+
+.ce-subtab .__custom_toggle_text__ {
+  font-size: 9;
+  text-color: #96BCD8;
+}
+
+.ce-subtab:on .__custom_toggle_text__ {
+  text-color: #EAF7FF;
+}
+
+/* 装备中的圣遗物：右上角叠一枚穿戴者的小头像（照抄背包那套 equipped-avatar-overlay）。
+   「装备中」那行字按用户口径去掉了 —— 这里只留头像。 */
+.ce-avatar-overlay {
+  position: absolute;
+  right: -2;
+  top: -2;
+  width: 15;
+  height: 15;
+  z-index: 5;
+  clip: none;
+  overlay: border(1, #EAF7FF);
+}
+
+/* 右栏那张详情卡（武器卡 / 圣遗物卡）：占满右栏剩下的高度 */
+#ce-panel .ce-detail {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ============================================================================
+ * 右栏那几行的样式（等级 / 经验 / 名字牌 / 简介 / 元素小图标）。
+ *
+ * ⚠️ 这几条原先只写在被删掉的那两段「原神版面」覆盖块里，删掉之后它们是**没有样式**的：
+ *    「Lv.%s / %s」和「经验 %s / %s」两枚 Label 就退化成默认布局叠在一起，
+ *    界面上看起来就是「Lv.经验 20 / 1000」这种糊成一团（用户截图里圈出来的那处）。
+ *    所以这里必须补回来，它们与「三栏 / 原神版面」之争无关。
+ * ========================================================================== */
+
+/* 名字牌：名字 + 元素小图标一行，下面一行星 */
+.ce-nameplate {
+  display: flex;
+  flex-direction: column;
+  gap-all: 2;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.ce-nameplate-name {
+  /* ⚠️ Label 在 flex 行里没有固有宽度：不写 adaptive-width 时盒子是 0 宽，
+     文字照样从盒子左边界往外画 —— 后面那枚元素图标正好落在名字中间
+     （用户截图里申鹤头上的雪花就是被「申鹤」两个字压住的）。
+     adaptive-width 让盒子按文字实际宽度撑开，图标就排到名字右边去。 */
+  adaptive-width: true;
+  flex-shrink: 0;
+  font-size: 12;
+  text-color: #EAF7FF;
+}
+
+/* 元素小图标（12x12 的方图，贴图由 Java 写 INLINE background） */
+.ce-elem-sm {
+  width: 12;
+  height: 12;
+  flex-shrink: 0;
+}
+
+/* 「Lv.20 / 20」：左边那枚，不许被压缩 */
+.ce-level {
+  adaptive-width: true;
+  flex-shrink: 0;
+  font-size: 10;
+  text-color: #EAF7FF;
+}
+
+/* 「经验 20 / 1000」：右边那枚，靠右对齐 */
+.ce-exp-num {
+  flex: 1;
+  min-width: 0;
+  font-size: 8;
+  text-color: #96BCD8;
+  horizontal-align: right;
+}
+
+/* 底下那行「雷电将军 · 雷元素角色」：按栏宽换行，别横着溢出 */
+.ce-story {
+  font-size: 8;
+  text-color: #86B6D4;
+  text-wrap: wrap;
+  adaptive-height: true;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* 右栏最下面那排操作键（升级 / 突破 / 更换 / 卸下 …），元素 id 是 ce-actions。
+   右栏只有 196 宽，一排 2~3 枚按钮就放不下，这里允许折行 —— 不然按钮会被压成
+   一条细缝、文字全糊在一起（用户截图里「右栏布局全是乱的」就是少了这一条）。 */
+#ce-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap-all: 4;
+  width: 100%;
+  flex-shrink: 0;
+}
