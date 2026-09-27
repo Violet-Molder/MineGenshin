@@ -10,13 +10,14 @@ import com.linweiyun.genshin.content.items.material.MaterialItem;
 import com.linweiyun.genshin.content.items.precious.PreciousItem;
 import com.linweiyun.genshin.content.items.quest.QuestItem;
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
-import com.linweiyun.genshin.render.gui.menu.BackpackMenu;
+import com.linweiyun.genshin.client.render.gui.menu.BackpackUI;
 import com.lowdragmc.lowdraglib2.gui.factory.IContainerUIHolder;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -35,7 +36,7 @@ import java.util.Collections;
 public class Backpack implements IPersistedSerializable, Container, IContainerUIHolder {
     public static final Codec<Backpack> CODEC = PersistedParser.createCodec(Backpack::new);
     public static final StreamCodec<ByteBuf, Backpack> STREAM_CODEC = PersistedParser.createStreamCodec(Backpack::new);
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     public enum Category {
         WEAPONS("weapons", 100, WeaponItem.class),
@@ -235,7 +236,7 @@ public class Backpack implements IPersistedSerializable, Container, IContainerUI
 
     @Override
     public ModularUI createUI(Player player) {
-        return BackpackMenu.createUI(player, this);
+        return BackpackUI.createUI(player, this);
     }
 
     @Override

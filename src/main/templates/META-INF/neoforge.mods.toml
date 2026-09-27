@@ -47,6 +47,13 @@ Art Director：
 [[mixins]]
 config="${mod_id}.mixins.json"
 
+# 第二份混入配置：与光影（Iris）相关的兼容层，软依赖 —— 只有装了 Iris 才生效。
+# 这份配置自己写了 "required": false，目标类全部用字符串（@Mixin(targets=...) + @Pseudo）
+# 并在 IrisMixinPlugin 里再加一道门禁，所以整合包没装 Iris 时它整份被跳过：
+# 不会有「找不到目标类」的报错，也不会因为引用 Iris 的类而启动失败。
+[[mixins]]
+config="${mod_id}.iris.mixins.json"
+
 # The [[accessTransformers]] block allows you to declare where your AT file is.
 # If this block is omitted, a fallback attempt will be made to load an AT from META-INF/accesstransformer.cfg
 #[[accessTransformers]]
@@ -81,6 +88,17 @@ config="${mod_id}.mixins.json"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
+
+# 软依赖：光影模组 Iris。声明出来只做两件事 —— 装了时让本模组排在它之后加载（我们的兼容混入
+# 要按它的类来注入），以及让「本模组认识光影」这件事在模组列表里可见。
+# type = "optional" 意味着【没装 Iris 完全正常】：不报缺依赖、不影响启动。
+[[dependencies.${mod_id}]]
+    modId="iris"
+    type="optional"
+    versionRange="[0,)"
+    ordering="AFTER"
+    side="CLIENT"
+    reason="装了就通过一份独立的软依赖混入接住光影包的重载点，让 GPU 蒙皮的环境自检即时生效；不装则一切照旧。"
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't

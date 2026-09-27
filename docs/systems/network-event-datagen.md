@@ -30,7 +30,7 @@
 | 情况 | 放哪 |
 |---|---|
 | 跨模块的通用分发入口 | `event/` 下，方法体只做校验与委派（当前只有 `PlayerLoginEventListeners`） |
-| 只服务单一模块 | 该模块包内，命名 `XxxHandler`（如 `CharacterEffectHandler`、`ActionInterruptHandler`） |
+| 只服务单一模块 | 该模块包内，命名 `XxxHandler`（如 `CharacterEffectHandler`、`ShieldTickHandler`） |
 | 客户端专有表现 | `client/` 或 `render/` 内，`@EventBusSubscriber(value = Dist.CLIENT)` |
 
 ### 多监听点是允许的
@@ -45,7 +45,7 @@
 | `EntityTickEvent.Post` | `StatusTickHandler`、`CharacterChillHandler`、`ShieldTickHandler`、`CombatTimerHandler` |
 | `ClientTickEvent.Post` | `DamageIndicatorRenderer`、`KeyInputHandler`、`KeyMappingRegistry`、`ActionStateMachine`、`KeyInterceptionHandler` |
 | `RegisterGuiLayersEvent` | `DamageIndicatorHudRegistration` 与各 HUD 各自注册 |
-| `LivingIncomingDamageEvent` | `CombatTimerHandler`（重置战斗计时）、`ActionInterruptHandler`（打断动作） |
+| `LivingIncomingDamageEvent` | `CombatTimerHandler`（重置战斗计时）、`CompatEventHandler`（兼容处理）；「挨打是否打断动作」不在这条链上，它走命中入口 `ControlService.onHit` |
 
 ### 加一个监听
 

@@ -15,10 +15,13 @@ import com.linweiyun.genshin.core.system.about.host.BlockHost;
 import com.linweiyun.genshin.core.system.about.host.CharacterHost;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionManager;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.status.StatusAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.player.Player;
@@ -47,12 +50,13 @@ import org.slf4j.Logger;
  *   水 + 冰        → 附着 → 冻结反应 → 浮冰（FROZEN 存在容器里，随时间衰减）
  *   浮冰 + 火      → 附着 → 融化反应 → 水
  *   生物在水中/雨中 → 周期给「出战角色」挂弱水（宿主是 CharacterHost，跟着角色走）
+ *   玩家进水 / 进火 → 当刻就给「出战角色」挂弱水 / 弱火（不等 1 秒一轮的批量扫描）
  *   大型冰史莱姆踏水/踏冰 → 给脚下方块附着冰/冻
  * </pre>
  */
 public final class BlockElementHelper {
 
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     private static final int WATER_CHECK_INTERVAL = 20;
     private static int waterEntityCheckCounter = 0;
@@ -130,28 +134,40 @@ public final class BlockElementHelper {
      * 切回来只要没掉就还在（与 {@code CharacterChillHandler} 是同一套语义）。
      */
     public static void checkAndApplyWaterToEntity(LivingEntity entity) {
+        boolean raining = entity.level() instanceof ServerLevel level && level.isRaining();
+        checkAndApplyWaterToEntity(entity, raining);
+    }
+
+    /**
+     * 带上「当前维度是否在下雨」的重载（{@link #onServerTick} 的批量扫描用）。
+     *
+     * <p>雨没下的时候「淋雨挂水」这条根本不可能成立，而 {@code isRainingAt} 要走
+     * 生物群系降水查询、{@code canSeeSky} 要走高度图 —— 都是每实体上百纳秒的活。
+     * 所以把布尔判断提出来，非雨天每个实体只剩一次 {@code isInWater()}。</p>
+     */
+    private static void checkAndApplyWaterToEntity(LivingEntity entity, boolean raining) {
         if (!(entity.level() instanceof ServerLevel level)) return;
         if (entity.isSpectator()) return;
 
-        boolean inWater = entity.isInWater();
-        boolean exposedToRain = level.isRainingAt(entity.blockPosition())
-                && level.canSeeSky(entity.blockPosition());
+        // 玩家：水（含淋雨）与火都是环境元素源，两种都挂在「出战角色」身上
+        if (entity instanceof Player player) {
+            if (entity.isInWater() || (raining && isRainedOn(level, entity))) {
+                attachToCurrentCharacter(player, ModElements.HYDRO.get(), AttachmentProfile.WEAK);
+            }
+            if (isInFire(player)) {
+                attachToCurrentCharacter(player, ModElements.PYRO.get(), AttachmentProfile.WEAK);
+            }
+            return;
+        }
 
-        if (!inWater && !exposedToRain) return;
+        boolean inWater = entity.isInWater();
+        if (!inWater) {
+            if (!raining) return;
+            if (!isRainedOn(level, entity)) return;
+        }
 
         MobCategory cat = entity.getType().getCategory();
         if (cat == MobCategory.WATER_CREATURE || cat == MobCategory.WATER_AMBIENT) return;
-
-        if (entity instanceof Player player) {
-            PlayerCharactersAttachment chars =
-                    player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
-            if (chars == null) return;
-            PGCharacter character = chars.getCurrentCharacter();
-            if (character == null) return;
-            ElementalAttachmentHelper.attach(CharacterHost.of(character),
-                    ModElements.HYDRO.get(), AttachmentSource.ENVIRONMENTAL, AttachmentProfile.WEAK);
-            return;
-        }
 
         StatusContainer container = entity.getData(AttachmentRegistration.CONTAINER);
         if (container == null) return;
@@ -159,13 +175,83 @@ public final class BlockElementHelper {
                 AttachmentSource.ENVIRONMENTAL, AttachmentProfile.WEAK);
     }
 
+    /** 这个位置是不是正被雨淋着（生物群系在下雨 + 头顶见天）。 */
+    private static boolean isRainedOn(ServerLevel level, LivingEntity entity) {
+        BlockPos pos = entity.blockPosition();
+        return level.isRainingAt(pos) && level.canSeeSky(pos);
+    }
+
+    /**
+     * 玩家专用的环境附着检查 —— <b>每 tick</b> 跑一次，负责「刚进水 / 刚踩进火」那一刻就挂上元素。
+     *
+     * <p>1 秒一轮的批量扫描对「一直站在水里」是够用的（水会被它持续补满），但「刚进水」最多要等
+     * 1 秒才挂上，玩起来就是附着慢半拍。这里只补「身上还没有这个元素」的情况：
+     * 站着不动不会每 tick 往容器里灌，也不会把附着刷成无限量，节奏仍由上面那条 1 秒扫描维持。
+     */
+    public static void checkPlayerEnvironment(Player player) {
+        if (player.isSpectator()) return;
+
+        boolean inWater = player.isInWater();
+        boolean inFire = isInFire(player);
+        if (!inWater && !inFire) return;
+
+        StatusContainer container = currentCharacterContainer(player);
+        if (container == null) return;
+
+        if (inWater && !hasElement(container, ModElements.HYDRO.get())) {
+            attachToCurrentCharacter(player, ModElements.HYDRO.get(), AttachmentProfile.WEAK);
+        }
+        if (inFire && !hasElement(container, ModElements.PYRO.get())) {
+            attachToCurrentCharacter(player, ModElements.PYRO.get(), AttachmentProfile.WEAK);
+        }
+    }
+
+    /** 站在火里：岩浆里、身上烧着，或者脚下方块就是火 / 灵魂火。 */
+    private static boolean isInFire(Player player) {
+        if (player.isInLava() || player.isOnFire()) {
+            return true;
+        }
+        BlockState feet = player.level().getBlockState(player.blockPosition());
+        return feet.is(Blocks.FIRE) || feet.is(Blocks.SOUL_FIRE);
+    }
+
+    /** 出战角色的元素容器（没选角色 / 没有角色数据时返回 {@code null}）。 */
+    private static StatusContainer currentCharacterContainer(Player player) {
+        PlayerCharactersAttachment chars =
+                player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+        PGCharacter character = chars == null ? null : chars.getCurrentCharacter();
+        return character == null ? null : StatusAccessor.of(character.getData());
+    }
+
+    /**
+     * 把元素挂到出战角色身上 —— 玩家身上的环境附着（水 / 火）都走这一条。
+     *
+     * <p>宿主是 {@link CharacterHost}：附着跟着角色走，切人就是换一个附着，切回来只要没掉就还在。
+     */
+    private static void attachToCurrentCharacter(Player player, GenshinElement element,
+                                                 AttachmentProfile profile) {
+        PlayerCharactersAttachment chars =
+                player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+        PGCharacter character = chars == null ? null : chars.getCurrentCharacter();
+        if (character == null) return;
+        ElementalAttachmentHelper.attach(CharacterHost.of(character), element,
+                AttachmentSource.ENVIRONMENTAL, profile);
+    }
+
     public static void onServerTick(ServerLevel level) {
+        // 玩家每 tick 单独过一遍：进水 / 进火要「立刻」附着，不能等下一轮 1 秒的批量扫描
+        for (ServerPlayer player : level.players()) {
+            checkPlayerEnvironment(player);
+        }
+
         if (++waterEntityCheckCounter < WATER_CHECK_INTERVAL) return;
         waterEntityCheckCounter = 0;
 
+        // 这一轮是不是雨天：降水量这类查询提到循环外，别每个实体都重问一遍
+        boolean raining = level.isRaining();
         for (Entity e : level.getEntities().getAll()) {
             if (e instanceof LivingEntity living) {
-                checkAndApplyWaterToEntity(living);
+                checkAndApplyWaterToEntity(living, raining);
             }
         }
     }

@@ -9,12 +9,14 @@ import com.linweiyun.genshin.content.effect.character.CharacterEffectInstance;
 import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
 import com.linweiyun.genshin.content.effect.character.artifact.ArtifactSetEffect;
 import com.linweiyun.genshin.content.items.artifact.ArtifactItem;
+import com.linweiyun.genshin.content.items.artifact.ArtifactLevelData;
 import com.linweiyun.genshin.content.items.artifact.ArtifactSet;
 import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
 import com.linweiyun.genshin.content.items.artifact.type.ArtifactType;
 import com.linweiyun.genshin.content.items.component.ArtifactStatsComponent;
 import com.linweiyun.genshin.content.items.component.WeaponStatsComponent;
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
+import com.linweiyun.genshin.content.items.weapon.WeaponLevelData;
 import com.linweiyun.genshin.content.stat.TeyvatItemStat;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
@@ -32,11 +34,13 @@ import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
 import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
 import com.linweiyun.genshin.core.sync.ISyncCharacter;
+import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.syncdata.storage.FieldManagedStorage;
 import com.lowdragmc.lowdraglib2.syncdata.storage.IManagedStorage;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -110,16 +114,64 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
     protected transient TalentBase talent;
     protected transient ConstellationBase constellation;
 
+    /**
+     * 角色自己的<b>配置页</b>（LDLib2 构建）。
+     *
+     * <p>和 {@link #skill} / {@link #talent} / {@link #constellation} 同一套路数：
+     * 基类只留一个 {@code transient} 槽位 + 一个 getter，具体页面在<b>子类无参构造器</b>里 new 出来
+     * 赋给它（客户端反序列化也会跑到子类无参构造器，所以双端都有实例）。
+     * 没赋值的角色 {@link #hasConfigUI()} 为 false，按 N 会提示「该角色还没有配置页」，
+     * 而不是弹一个空页面。
+     *
+     * <p>约定成 {@code transient} 而不是 {@code @Persisted}：页面是纯表现层对象，
+     * 里面有 Scene / 控件树这些不该入档的东西，它读写的状态全在角色数据里。
+     */
+    protected transient ICharacterConfigUI configUI;
+
+    /** 配置页对象；没有专属页的角色返回 null。 */
+    @Nullable
+    public ICharacterConfigUI getConfigUI() {
+        return configUI;
+    }
+
+    public boolean hasConfigUI() {
+        return configUI != null;
+    }
+
+    /**
+     * 角色自己的<b>外观数据</b>——决定外观掩码（{@code PGCharacterData#getAppearance()}）
+     * 里每一位是什么意思，以及配置页的外观区该列哪几项。
+     *
+     * <p>和 {@link #configUI} 同一套路数：基类给一个默认实例（只有「常态是否显示武器」一项），
+     * 有自己外观的角色在子类无参构造器里换成自己的那一款
+     * （申鹤 → {@code ShenheAppearanceData}，全武器类角色 → {@code AllWeaponAppearanceData}）。
+     *
+     * <p>它本身<b>不存状态</b>：掩码仍然是 {@code PGCharacterData} 上那一个 int，
+     * 这里只提供"怎么读、怎么改"的方法，所以是 {@code transient} 且可以共用单例。
+     */
+    protected transient com.linweiyun.genshin.core.character.appearance.CharacterAppearanceData appearanceData =
+            com.linweiyun.genshin.core.character.appearance.DefaultAppearanceData.INSTANCE;
+
+    /** 这个角色的外观数据（掩码读法 + 配置页外观项）。 */
+    public com.linweiyun.genshin.core.character.appearance.CharacterAppearanceData appearanceData() {
+        return appearanceData;
+    }
+
     /** 技能对象（普攻/重击/战技/爆发）。 */
     @Nullable
     public SkillBase getSkill() {
         return skill;
     }
 
-    /** 天赋对象（突破天赋 / 被动）。 */
-    @Nullable
+    /**
+     * 天赋对象（突破天赋 / 被动）。
+     *
+     * <p>没给自己天赋的角色拿到的是 {@link TalentBase#DEFAULT}（空实现）——
+     * 「缺天赋」因此不会变成 {@code NullPointerException}，技能里那些
+     * {@code character.getTalent().xxx()} 也不用处处判空。
+     */
     public TalentBase getTalent() {
-        return talent;
+        return talent == null ? TalentBase.DEFAULT : talent;
     }
 
     /**
@@ -132,7 +184,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
         return constellation;
     }
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     private final Map<String, ActionSet> actionSetCache = new HashMap<>();
 
@@ -187,6 +239,99 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
 
     public Class<? extends WeaponItem> getAllowedWeaponClass() {
         return WeaponItem.class;
+    }
+
+    // ============ 武器角色（这个角色属于哪一类、现在按哪一类算）============
+
+    /**
+     * 这个角色属于<b>哪一类武器角色</b>（标准六种 ＋ 只有角色才有的「全武器类」）。
+     *
+     * <p>默认按「角色限定的武器类」认；{@code getAllowedWeaponClass()} 放行到
+     * {@link WeaponItem} 这一层（= 没限定）就是 {@link CharacterWeaponClass#ALL_WEAPON}，
+     * {@link com.linweiyun.genshin.core.character.allweapon.AllWeaponCharacter} 也显式给这一档。
+     */
+    public CharacterWeaponClass characterWeaponClass() {
+        return CharacterWeaponClass.of(WeaponPoiseTable.weaponOfClass(getAllowedWeaponClass()));
+    }
+
+    /** 是不是全武器类角色（第七种）。 */
+    public boolean isAllWeaponCharacter() {
+        return characterWeaponClass() == CharacterWeaponClass.ALL_WEAPON;
+    }
+
+    /**
+     * 这个角色<b>现在按哪一类武器算</b> —— 标准的六种之一（认不出来时给
+     * {@link WeaponPoiseTable.WeaponClass#UNKNOWN}）。
+     *
+     * <p>单武器角色恒等于自己那一类；<b>全武器类角色跟着当前选中的武器种类走</b>
+     * （见 {@code AllWeaponCharacter#currentWeaponType()}）。削韧、冲击、伤害查表都读它。
+     */
+    public WeaponPoiseTable.WeaponClass currentWeaponType() {
+        WeaponPoiseTable.WeaponClass type = characterWeaponClass().weaponType();
+        return type == null ? WeaponPoiseTable.WeaponClass.UNKNOWN : type;
+    }
+
+    /**
+     * 这个角色现在算不算某一类<b>武器角色</b> —— 取代原来散在各处的
+     * {@code character instanceof SwordCharacter} 这类硬判。
+     *
+     * <p>对全武器类角色来说，问的是"现在这一档是不是它选中的那一类"。
+     */
+    public boolean isWeaponCharacter(WeaponPoiseTable.WeaponClass weaponType) {
+        return weaponType != null && weaponType != WeaponPoiseTable.WeaponClass.UNKNOWN
+                && currentWeaponType() == weaponType;
+    }
+
+    /** 是不是单手剑角色（= 原来的 {@code this instanceof SwordCharacter}）。 */
+    public boolean isSwordCharacter() {
+        return isWeaponCharacter(WeaponPoiseTable.WeaponClass.SWORD);
+    }
+
+    /** 是不是大剑角色。 */
+    public boolean isClaymoreCharacter() {
+        return isWeaponCharacter(WeaponPoiseTable.WeaponClass.CLAYMORE);
+    }
+
+    /** 是不是长柄角色。 */
+    public boolean isPolearmCharacter() {
+        return isWeaponCharacter(WeaponPoiseTable.WeaponClass.POLEARM);
+    }
+
+    /** 是不是法器角色。 */
+    public boolean isCatalystCharacter() {
+        return isWeaponCharacter(WeaponPoiseTable.WeaponClass.CATALYST);
+    }
+
+    /** 是不是弓角色。 */
+    public boolean isBowCharacter() {
+        return isWeaponCharacter(WeaponPoiseTable.WeaponClass.BOW);
+    }
+
+    /** 是不是拳头角色。 */
+    public boolean isFistCharacter() {
+        return isWeaponCharacter(WeaponPoiseTable.WeaponClass.FIST);
+    }
+
+    /**
+     * 这把武器能不能装到<b>现在这一格</b>上 —— 换武器校验、武器选择列表的筛选项都问它。
+     *
+     * <p>单武器角色：只有自己那一类能装（= 原来的
+     * {@code getAllowedWeaponClass().isInstance(stack.getItem())}）。
+     * <b>全武器类角色</b>：只有<b>当前选中的那一类</b>能装 —— 他/她一个武器种类一格，
+     * 选了大剑就不该把弓塞进大剑那一格。
+     */
+    public boolean canEquipWeapon(ItemStack stack) {
+        if (stack == null || !(stack.getItem() instanceof WeaponItem weapon)) {
+            return false;
+        }
+        if (!getAllowedWeaponClass().isInstance(weapon)) {
+            return false;
+        }
+        // 全武器类角色一个武器种类一格，只吃当前选中的那一类；
+        // 没有确定类型的角色（连武器类都没限定的壳）不再额外收窄。
+        WeaponPoiseTable.WeaponClass current = currentWeaponType();
+        return current == WeaponPoiseTable.WeaponClass.UNKNOWN
+                || WeaponPoiseTable.weaponOfClass(weapon.getClass()) == current;
     }
 
     // ============ 动作系统扩展点 ============
@@ -311,7 +456,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
     public final ActionSet getActionSet(Player player) {
         String key = getActionStateKey(player);
         return actionSetCache.computeIfAbsent(key, k -> {
-            ActionSet built = (skill != null) ? skill.buildActionSet(this, k) : null;
+            SkillBase current = getSkill();
+            ActionSet built = (current != null) ? current.buildActionSet(this, k) : null;
             return built != null ? built : buildFallbackActionSet();
         });
     }
@@ -443,7 +589,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
     // ============ 普攻 / 重击 ============
 
     public void performNormalAttack(Player player, int comboStage) {
-        if (skill != null) skill.attack(player, this, comboStage);
+        SkillBase current = getSkill();
+        if (current != null) current.attack(player, this, comboStage);
         if (!player.level().isClientSide() && spawnsNormalAttackParticle()) {
             trySpawnNormalAttackParticle(player);
         }
@@ -465,12 +612,32 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
     }
 
     public void performChargedAttack(Player player) {
-        if (skill != null) skill.chargeAttack(player, this);
+        SkillBase current = getSkill();
+        if (current != null) current.chargeAttack(player, this);
     }
 
     public int getChargedAttackChargeTicks() {
-        if (skill != null) return skill.getChargeTicks();
+        // 走 getSkill() 而不是字段：全武器类角色的招式对象跟着"选中哪把武器"换
+        SkillBase current = getSkill();
+        if (current != null) return current.getChargeTicks();
         return 20;
+    }
+
+    /**
+     * 这个角色的重击是不是<b>持续型</b>（大剑：按住进入状态、松手/到时结束）。
+     *
+     * <p>只读技能基类的声明，不含运行时状态，所以客户端也能问
+     * （客户端就是靠它在 {@code ResourceDrivenActionHandler.tickCharge} 里分岔）。
+     */
+    public boolean isSustainedChargedAttack() {
+        SkillBase current = getSkill();
+        return current != null && current.isSustainedChargedAttack();
+    }
+
+    /** 持续型重击的最高持续时间（刻）；不是持续型时是 0。见 {@link #isSustainedChargedAttack()}。 */
+    public int getChargedAttackMaxTicks() {
+        SkillBase current = getSkill();
+        return current != null ? current.getChargedAttackMaxTicks() : 0;
     }
 
     public void frontTick(Player player) {}
@@ -515,7 +682,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
     public void recalculateDirtyArtifactSlots() {
         ArtifactInventory inv = data.getArtifactInventory();
         if (!inv.hasDirtySlots()) return;
-        for (int i = 0; i < ArtifactInventory.SLOT_COUNT; i++) {
+        for (int i = 0; i < inv.slotCount(); i++) {
             if (inv.isDirty(i)) {
                 recalculateArtifactSlot(i);
                 inv.clearDirty(i);
@@ -525,7 +692,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
     }
 
     private void recalculateArtifactSlot(int slotIndex) {
-        if (slotIndex == ArtifactInventory.SLOT_WEAPON) {
+        // 5~10 都是武器槽（全武器类角色一个武器种类一格）
+        if (slotIndex >= ArtifactInventory.SLOT_WEAPON) {
             recalculateWeaponSlot();
             return;
         }
@@ -562,7 +730,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
         data.removeAttributeBaseValue(ModAttributes.ATK.get(), SOURCE_WEAPON);
         data.setWeaponBaseATK(0);
 
-        ItemStack stack = data.getArtifactInventory().getItem(ArtifactInventory.SLOT_WEAPON);
+        // 读「身上那一把」而不是固定的第 5 格：全武器类角色身上那把跟着选中的武器种类走
+        ItemStack stack = data.getWeapon();
         if (stack.isEmpty() || !(stack.getItem() instanceof WeaponItem weapon)) return;
 
         WeaponStatsComponent stats = stack.getOrDefault(
@@ -675,6 +844,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
         if (player instanceof ServerPlayer sp) {
             NetworkManager.setGenshinModeToPlayer(sp, false);
         }
+        // 全灭被动退出：角色属性折算到玩家身上这件事现在才算发生
+        com.linweiyun.genshin.core.system.compat.PlayerStatBridge.onGenshinModeChanged(player, false);
     }
 
     public void revive(int hp) {
@@ -757,6 +928,73 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
             data.setCurrentExp(data.getCurrentExp() + amount);
         }
         tryLevelUp();
+    }
+
+    /**
+     * 角色「不丢经验」还能吃进多少 —— 从当前等级攒到<b>本次突破的等级上限</b>为止。
+     *
+     * <p>用户口径：**超出这一档上限的经验一律不保留**（升级页的材料上限与那条溢出确认框
+     * 说的就是这件事，服务端 {@code NetworkManager#addEquipLevelExp} 也按这份 room 截断）。
+     * 想继续升必须先突破，突破会换一档上限。
+     */
+    public long characterExpRoom() {
+        var expList = CharacterXpConfig.getAllXp();
+        int cap = data.getAscensionPhase() == 0
+                ? 20
+                : Math.min((data.getAscensionPhase() + 3) * 10, 90);
+        long room = 0;
+        int level = data.getLevel();
+        int current = Math.max(0, data.getCurrentExp());
+        while (level < cap) {
+            int need = Math.max(1, expList.get(Math.max(0, Math.min(level - 1, expList.size() - 1))));
+            room += Math.max(0, need - current);
+            current = 0;
+            level++;
+        }
+        return room;
+    }
+
+    /** 武器「不丢经验」还能吃进多少 —— 到它当前这一档等级上限为止（不含存经验）。 */
+    public long weaponExpRoom() {
+        ItemStack weapon = data.getWeapon();
+        if (!(weapon.getItem() instanceof WeaponItem item)) {
+            return 0;
+        }
+        WeaponStatsComponent stats = weapon.getOrDefault(
+                ModDataComponents.WEAPON_STATS.get(), WeaponStatsComponent.DEFAULT);
+        long room = 0;
+        for (int lv = stats.level; lv < stats.getMaxLevel(); lv++) {
+            long need = WeaponLevelData.getExpToNextLevel(item.getStar(), lv);
+            if (need <= 0) {
+                break;
+            }
+            room += Math.max(0, need - (lv == stats.level ? stats.exp : 0));
+        }
+        return room;
+    }
+
+    /** 某格圣遗物「不丢经验」还能吃进多少 —— 到它当前星级的等级上限为止。 */
+    public long artifactExpRoom(int slot) {
+        ItemStack artifact = data.getArtifactInventory().getItem(slot);
+        if (!(artifact.getItem() instanceof ArtifactItem item)) {
+            return 0;
+        }
+        ArtifactStatsComponent stats = artifact.getOrDefault(
+                ModDataComponents.ARTIFACT_STATS.get(), ArtifactStatsComponent.DEFAULT);
+        // 未激活的圣遗物一点经验都吃不下（ArtifactStatsComponent#addExp 直接返回 0）
+        if (!stats.activated) {
+            return 0;
+        }
+        long room = 0;
+        int maxLevel = stats.getMaxLevel(item.getStar());
+        for (int lv = stats.level; lv < maxLevel; lv++) {
+            long need = ArtifactLevelData.getExpToNextLevel(item.getStar(), lv);
+            if (need <= 0) {
+                break;
+            }
+            room += Math.max(0, need - (lv == stats.level ? stats.exp : 0));
+        }
+        return room;
     }
 
     public void tryLevelUp() {
@@ -982,4 +1220,33 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
         data.setConstellation(level);
         syncRealtimeState();
     }
+
+    // ==================== 外观（腿部变体 + 猫耳挂件） ====================
+
+    /**
+     * 外观位掩码 —— 每条腿「穿不穿鞋」+「裸腿/白丝/黑丝」，外加猫耳挂件的显隐。
+     *
+     * <p>渲染期读它来决定藏哪两套网格 / 藏不藏耳朵，规则见
+     * {@code core.character.appearance.LegBoneRules} 与 {@code EarBoneRules}。
+     */
+    public int getAppearance() {
+        return data.getAppearance();
+    }
+
+    /**
+     * 改外形。
+     *
+     * <p><b>服务端</b>调用：落数据 + 同步给客户端。
+     * <b>客户端</b>调用：本地立刻生效（页面里的预览要即时反映），
+     * 另外还要把角色数据整包发回服务端 —— 这一步在页面里用
+     * {@code PlayerCharactersAttachment.syncSingleCharacterToServer} 做，
+     * 因为服务端收到后才是权威值，别的玩家看到的也是服务端那一份。
+     */
+    public void setAppearance(int mask) {
+        data.setAppearance(mask);
+        syncRealtimeState();
+    }
+
+    // 腿部变体 / 猫耳的读写不在这里：那是"申鹤自己的外观数据"该知道的事，
+    // 页面通过 {@code ShenheAppearanceData} 读掩码、再调 {@link #setAppearance(int)} 写回。
 }

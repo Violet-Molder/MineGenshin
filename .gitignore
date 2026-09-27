@@ -47,10 +47,16 @@ logs/
 ### 逐文件的 geo / 动画母本：本地保留、不进仓库（构建期收进整包） ###
 # 母本就放在正常的资源路径下（开发时看得见、直接改、Blockbench 直接放），
 # 构建期被收进整包文件，母本本身不提交。
-/src/main/resources/assets/minegenshin/**/*.geo.json
-/src/main/resources/assets/minegenshin/**/*.animation.json
+# 按后缀全仓库排除：以后不管被放到哪个资源根（例如 src/generated/resources）都不会漏网。
+*.geo.json
+*.animation.json
+# 对象目录里的贴图母本（textures/ 下的 png）同样本地保留、不进仓库。
+# gui/ 、icon/ 那类跨对象的共用界面贴图不进包，照常提交。
+**/assets/minegenshin/**/textures/*.png
 # 例外：对象目录里的 local/ 免打包，照常提交。
-!/src/main/resources/assets/minegenshin/**/local/**
+!/**/local/**
+# 整包文件本体同样不进仓库（不限 geo/ 那一个位置）。
+*.minegenshin
 
 ### 整包资源：本地产出的单个文件，不进仓库 ###
 # 由本机母本收进去的那一个文件；克隆下来没有它，构建出的 jar 自然就没有内置模型。

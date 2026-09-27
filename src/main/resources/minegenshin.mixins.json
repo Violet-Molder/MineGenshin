@@ -8,6 +8,7 @@
     "AccessorRangedAttribute",
     "BlazeResistanceMixin",
     "BlockEntityElementalMixin",
+    "CreeperFuseMixin",
     "DamageContainerMixin",
     "FileToIdConverterRedirectMixin",
     "FrostedIceMixin",
@@ -17,12 +18,22 @@
     "LivingEntityHurtMixin",
     "LivingEntityTeyvatMixin",
     "MagmaCubeResistanceMixin",
+    "MobServerAiStepMixin",
+    "MultiPackResourceManagerBundleMixin",
     "PlayerAttackInterceptor",
-    "PlayerHurtInterceptor"
+    "PlayerHurtInterceptor",
+    "RavagerActionMixin"
   ],
   "client": [
     "AvatarRendererMixin",
-    "SoundManagerMixin"
+    "CameraTypeMixin",
+    "EntityTurnMixin",
+    "GeoRendererSubmitTasksMixin",
+    "LivingEntityTickHeadTurnMixin",
+    "LocalPlayerSprintMixin",
+    "RenderPassScissorGuardMixin",
+    "SoundManagerMixin",
+    "WalkBobSuppressMixin"
   ],
   "injectors": {
     "defaultRequire": 1

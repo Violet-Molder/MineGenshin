@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.action;
 
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public final class ServerTickScheduler {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
     private static final ConcurrentLinkedQueue<Task> QUEUE = new ConcurrentLinkedQueue<>();
 
     private ServerTickScheduler() {}

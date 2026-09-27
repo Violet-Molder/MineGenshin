@@ -64,7 +64,7 @@ public final class VesnaResources {
     public static final ActionStep BIANYI_STEP = new ActionStep(
             "skill_bianyi", 20, BIANYI_HIT_DELAY + 2, 4,
             List.of(new Move(0, 0.8)),
-            List.of(new Hit(BIANYI_HIT_DELAY, 0.0, 1.0, 1.5, 0.0, 2.5, false)),
+            List.of(new Hit(BIANYI_HIT_DELAY, 0.0, 1.0, 2.5)),
             List.of(new SoundRef(BIANYI_HIT_DELAY, "vesna_skill", 1.0f, 1.0f)),
             0, 0, 0, 0
     );
@@ -74,14 +74,14 @@ public final class VesnaResources {
         comboSteps.put(1, new ActionStep(
                 "attack_1", 40, 0, 2,
                 List.of(),
-                List.of(new Hit(3, 0.0, 1.5, 1.0, 0.0, 6.0, false)),
+                List.of(new Hit(3, 0.0, 1.5, 6.0)),
                 List.of(new SoundRef(3, "vesna_attack_1", 1.0f, 1.0f)),
                 0, 2, 0, 8
         ));
         comboSteps.put(2, new ActionStep(
                 "attack_2", 48, 0, 2,
                 List.of(),
-                List.of(new Hit(3, 0.0, 1.5, 2.0, 0.0, 6.0, false)),
+                List.of(new Hit(3, 0.0, 1.5, 6.0)),
                 List.of(new SoundRef(3, "vesna_attack_2", 1.0f, 1.0f)),
                 0, 2, 0, 8
         ));
@@ -89,8 +89,8 @@ public final class VesnaResources {
                 "attack_3", 25, 0, 2,
                 List.of(),
                 List.of(
-                        new Hit(3, 0.0, 1.5, 2.0, 0.0, 8.0, false),
-                        new Hit(6, 0.0, 1.5, 2.0, 0.0, 10.0, false)
+                        new Hit(3, 0.0, 1.5, 8.0),
+                        new Hit(6, 0.0, 1.5, 10.0)
                 ),
                 List.of(new SoundRef(3, "vesna_attack_3", 1.0f, 1.0f)),
                 0, 3, 0, 8
@@ -99,10 +99,10 @@ public final class VesnaResources {
                 "attack_4", 30, 0, 2,
                 List.of(),
                 List.of(
-                        new Hit(10, 0.0, 1.5, 1.0, 0.0, 8.0, true),
-                        new Hit(12, 0.0, 1.5, 1.0, 0.0, 8.0, true),
-                        new Hit(14, 0.0, 1.5, 1.0, 0.0, 8.0, true),
-                        new Hit(16, 0.0, 1.5, 1.0, 0.0, 8.0, true)
+                        new Hit(10, 0.0, 1.5, 8.0),
+                        new Hit(12, 0.0, 1.5, 8.0),
+                        new Hit(14, 0.0, 1.5, 8.0),
+                        new Hit(16, 0.0, 1.5, 8.0)
                 ),
                 List.of(new SoundRef(10, "vesna_attack_4", 1.0f, 1.0f)),
                 0, 4, 0, 8
@@ -111,10 +111,10 @@ public final class VesnaResources {
                 "attack_5", 50, 0, 2,
                 List.of(),
                 List.of(
-                        new Hit(2, 0.0, 1.5, 1.0, 0.0, 10.0, false),
-                        new Hit(4, 0.0, 1.5, 1.0, 0.0, 10.0, false),
-                        new Hit(6, 0.0, 1.5, 1.0, 0.0, 10.0, false),
-                        new Hit(8, 0.0, 1.5, 1.0, 0.0, 10.0, false)
+                        new Hit(2, 0.0, 1.5, 10.0),
+                        new Hit(4, 0.0, 1.5, 10.0),
+                        new Hit(6, 0.0, 1.5, 10.0),
+                        new Hit(8, 0.0, 1.5, 10.0)
                 ),
                 List.of(new SoundRef(2, "vesna_attack_5", 1.0f, 1.0f)),
                 0, 5, 0, 10
@@ -130,10 +130,10 @@ public final class VesnaResources {
                 "attack_2", 48, 0, 2,
                 List.of(),
                 List.of(
-                        new Hit(5, 0.0, 1.5, 2.0, 0.0, 12.0, false),
-                        new Hit(10, 0.0, 1.5, 2.0, 0.0, 12.0, false),
-                        new Hit(15, 0.0, 1.5, 2.0, 0.0, 12.0, false),
-                        new Hit(20, 0.0, 1.5, 2.5, 0.0, 14.0, true)
+                        new Hit(5, 0.0, 1.5, 12.0),
+                        new Hit(10, 0.0, 1.5, 12.0),
+                        new Hit(15, 0.0, 1.5, 12.0),
+                        new Hit(20, 0.0, 1.5, 14.0)
                 ),
                 List.of(new SoundRef(5, "vesna_attack_6", 1.0f, 1.0f)),
                 0, 6, 0, 12
@@ -177,7 +177,7 @@ public final class VesnaResources {
         ActionStep skillStep = new ActionStep(
                 "skill_no_energy", 20, 8, 3,
                 List.of(),
-                List.of(new Hit(6, 2.0, 1.0, 1.2, 0.0, 2.5, false)),
+                List.of(new Hit(6, 2.0, 1.0, 2.5)),
                 List.of(new SoundRef(6, "vesna_skill", 1.0f, 1.0f)),
                 0, 0, 360, 0
         );
@@ -196,7 +196,7 @@ public final class VesnaResources {
         ActionStep burstStep = new ActionStep(
                 "burst_dive", 40, 40, 4,
                 List.of(),
-                List.of(new Hit(18, 0.0, 0.0, 3.7, 0.0, 12.0, false)),
+                List.of(new Hit(18, 0.0, 0.0, 12.0)),
                 List.of(new SoundRef(18, "vesna_burst", 1.0f, 1.0f)),
                 0, 0, 400, 0
         )

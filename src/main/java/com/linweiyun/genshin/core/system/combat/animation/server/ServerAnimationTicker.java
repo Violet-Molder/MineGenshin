@@ -61,6 +61,21 @@ public final class ServerAnimationTicker {
         REMAINING_TICKS.remove(player.getUUID());
     }
 
+    /**
+     * 客户端上报了本机身体朝向：写进同步附件并推给所有跟踪者。
+     *
+     * <p>不在这里做任何限流 —— 客户端已经按「变化超过阈值」才发（见 {@code BodyYawSync}），
+     * 服务端收到就照发，多一道记账只会让两边的值更容易不一致。
+     */
+    public static void applyBodyYaw(ServerPlayer player, float yaw) {
+        if (!Float.isFinite(yaw)) {
+            return;
+        }
+
+        player.setData(AttachmentRegistration.BODY_YAW_ATTACHMENT, yaw);
+        player.syncData(AttachmentRegistration.BODY_YAW_ATTACHMENT);
+    }
+
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) {

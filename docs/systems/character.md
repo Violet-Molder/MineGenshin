@@ -23,10 +23,16 @@ core/character/
 ├── polearm/raiden_shogun/        长柄 · 雷电将军
 ├── polearm/arlecchino/           长柄 · 阿蕾奇诺
 ├── catalyst/columbina/           法器 · 哥伦比娅
-└── catalyst/vodyanitsa/          法器 · 沃雅妮莎
+├── catalyst/vodyanitsa/          法器 · 沃雅妮莎
+└── allweapon/linweiyun/          全武器类 · 林薇云（兜底角色）
 ```
 
-每个角色包内通常有三类东西：角色类本体、资源/动画常量（如 `VesnaAnimations`、`VesnaResources`）、天赋与技能数据（`VesnaTalent`）。基类分别在 `core/character/sword/SwordCharacter`、`polearm/PolearmCharacter`、`catalyst/CatalystCharacter`。
+每个角色包内通常有三类东西：角色类本体、资源/动画常量（如 `VesnaAnimations`、`VesnaResources`）、天赋与技能数据（`VesnaTalent`）。武器角色基类在 `core/character/<武器类型>/XxxCharacter`（`SwordCharacter`、`ClaymoreCharacter`、`PolearmCharacter`、`CatalystCharacter`、`BowCharacter`、`FistCharacter`），第七档「全武器类」是 `allweapon/AllWeaponCharacter`。
+
+> **武器类型 ≠ 武器角色**：武器类型是武器的属性，标准的六种；武器角色是角色的分类，比它多一档
+> 「全武器类」。判断"这个角色现在算不算单手剑角色"不要写 `instanceof SwordCharacter`，
+> 问 `PGCharacter#currentWeaponType()` / `isSwordCharacter()` 一族；全武器类角色会跟着
+> 外观里选中的武器种类回答（细节见[资源、渲染与界面](/doc/sys-render-asset)）。
 
 ## 一次"角色每 tick"的完整链
 
@@ -58,6 +64,10 @@ core/character/
 4. 资源目录 `assets/minegenshin/character/<角色id>/`（模型、动画、贴图）。
 5. 动作与技能：`<角色>Animations` / `<角色>Resources` 声明动作数据，在 `CharacterAnimationRegistry` 里挂一行。
 6. 数值默认值写进对应 `config/character/*Config`。
+
+> 外观与兜底：角色可以给一份自己的外观数据（`CharacterAppearanceData` 的子类，决定掩码怎么读、
+> 配置页里列出哪几项）；不给时用默认那套。模型 / 贴图 / 动画 / 配置页 / 天赋缺项时会回退到
+> 林薇云（兜底角色）—— 见[资源、渲染与界面](/doc/sys-render-asset)。
 
 完整示例与每一步的真实代码见 [角色系统详解（薇斯娜）](/doc/character-system)。
 

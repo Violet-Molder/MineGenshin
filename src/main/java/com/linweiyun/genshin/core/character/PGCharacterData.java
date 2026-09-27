@@ -5,7 +5,11 @@ import com.linweiyun.genshin.content.attribute.AttributeContainer;
 import com.linweiyun.genshin.content.attribute.AttributeInstance;
 import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
+import com.linweiyun.genshin.content.items.artifact.inventory.AllWeaponArtifactInventory;
 import com.linweiyun.genshin.core.character.attachment.CharacterAttachmentContainer;
+import com.linweiyun.genshin.core.character.appearance.CharacterAppearance;
+import com.linweiyun.genshin.core.character.appearance.CharacterAppearanceData;
+import com.linweiyun.genshin.core.character.appearance.SockType;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
@@ -140,6 +144,18 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
     private double weaponBaseATK = 0;
     @Persisted(key = "character_attachments")
     private CharacterAttachmentContainer characterAttachments = new CharacterAttachmentContainer();
+
+    // ==================== 外观选项 ====================
+    //
+    // 单开一个 @Persisted + @DescSynced 的字段，而不是挂到 PGCharacter 上：
+    // 外观是「这个角色长什么样」，和 HP / 等级一样属于角色数据，退场、换人、
+    // 存档往返都必须跟着走。规则与位布局见 CharacterAppearance / LegBoneRules / EarBoneRules。
+    //
+    // 字段名与档案键 "leg_appearance" 都保持不动 —— 掩码后来扩到了猫耳，但键一改
+    // 老存档里这一项就读不回来（会退回默认外观），名字留旧是刻意的。
+    @Persisted(key = "leg_appearance")
+    @DescSynced
+    private int legAppearance = CharacterAppearance.DEFAULT_MASK;
 
 
     //AI 运行时 Player 引用，设置时自动同步 UUID
@@ -453,12 +469,61 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
 
     public void setWeaponBaseATK(double value) { weaponBaseATK = value; markDirty(); }
 
+    // ==================== 外观选项 ====================
+
+    /** 外观位掩码（两条腿的鞋/袜子 + 猫耳），位布局见 {@link CharacterAppearance}。 */
+    public int getAppearance() {
+        return legAppearance;
+    }
+
+    public void setAppearance(int mask) {
+        if (mask == legAppearance) return;
+        legAppearance = mask;
+        // 全武器类角色：外观里选的武器种类就是"身上那一把"，换了种类就得重算武器属性
+        if (artifactInventory instanceof AllWeaponArtifactInventory) {
+            artifactInventory.markDirty(ArtifactInventory.SLOT_WEAPON);
+        }
+        markDirty();
+    }
+
+    // 注意：掩码的<b>读法</b>（哪几段是袜子 / 鞋 / 猫耳）不在这里 ——
+    // 那是"申鹤的外观数据"（{@code ShenheAppearanceData}）该知道的事。
+    // 这里只负责把那个 int 存住、标记脏、跟着存档与同步走。
+
     public ItemStack getFlower() { return artifactInventory.getItem(ArtifactInventory.SLOT_FLOWER); }
     public ItemStack getPlume() { return artifactInventory.getItem(ArtifactInventory.SLOT_PLUME); }
     public ItemStack getSands() { return artifactInventory.getItem(ArtifactInventory.SLOT_SANDS); }
     public ItemStack getGoblet() { return artifactInventory.getItem(ArtifactInventory.SLOT_GOBLET); }
     public ItemStack getCirclet() { return artifactInventory.getItem(ArtifactInventory.SLOT_CIRCLET); }
-    public ItemStack getWeapon() { return artifactInventory.getItem(ArtifactInventory.SLOT_WEAPON); }
+    public ItemStack getWeapon() { return artifactInventory.getItem(activeWeaponSlot()); }
+
+    /**
+     * 「身上那一把」武器在哪一格。
+     *
+     * <p>普通角色恒为 {@link ArtifactInventory#SLOT_WEAPON}（唯一那个武器槽）；
+     * 背包是 {@link AllWeaponArtifactInventory} 的全武器类角色（林薇云）则跟着
+     * 外观里选中的武器种类走 —— 选了单手剑，身上那把就是单手剑那一格。
+     */
+    public int activeWeaponSlot() {
+        if (!(artifactInventory instanceof AllWeaponArtifactInventory)) {
+            return ArtifactInventory.SLOT_WEAPON;
+        }
+        CharacterAppearanceData appearance = parentCharacter == null ? null : parentCharacter.appearanceData();
+        int offset = appearance == null ? 0 : appearance.weaponSlotOffset(legAppearance);
+        return ArtifactInventory.SLOT_WEAPON + offset;
+    }
+
+    /**
+     * 换一份背包实例 —— 全武器类角色在<b>角色构造期</b>把默认那 6 格换成 11 格的子类。
+     *
+     * <p>时机很重要：LDLib2 的 {@code @Persisted} 反序列化是"写进现成实例"
+     * （见 {@code PersistedParser#deserializeInternal}），实例类型不对的话多出来的槽位读不回来。
+     */
+    public void installArtifactInventory(ArtifactInventory inventory) {
+        if (inventory != null) {
+            this.artifactInventory = inventory;
+        }
+    }
 
     public List<ItemStack> getAllArtifactsAsList() {
         return artifactInventory.getAllArtifactsAsList();

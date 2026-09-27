@@ -5,15 +5,17 @@ import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
 import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.system.reaction.ReactionResult;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,12 +37,18 @@ import java.util.UUID;
  */
 public class SuperConductReaction extends ElementalReaction {
 
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     /** 超导伤害冷却：同一目标 10 tick 内不重复结算伤害（元素照常消耗）。 */
     private static final int DAMAGE_COOLDOWN_TICKS = 10;
 
-    private static final Map<UUID, Long> lastDamageTick = new HashMap<>();
+    /**
+     * 同一目标上次结算超导伤害的时刻。
+     *
+     * <p>键是实体 UUID，只 put 不 remove 的静态表会随刷怪无限增长（内存泄漏），
+     * 所以用有界 LRU：被淘汰等价于那条冷却记录自然过期。</p>
+     */
+    private static final Map<UUID, Long> lastDamageTick = BoundedLruMap.create();
 
     public SuperConductReaction(ElementalReactionType reactionType,
                                 String elementAId, String elementBId,
@@ -103,6 +111,9 @@ public class SuperConductReaction extends ElementalReaction {
         ModDamageSpec spec = ModDamageSpec.transformative(
                 ElementalReactionType.SUPERCONDUCT, ModElements.CYRO.get(), AttackType.SPECIAL);
         ModDamageSource source = ModDamageSource.from(spec, context.attackerEntity());
-        target.hurt(source, 0f);
+        // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
+        if (target.level() instanceof ServerLevel serverLevel) {
+            target.hurtServer(serverLevel, source, 0f);
+        }
     }
 }

@@ -17,7 +17,8 @@ import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
 import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,7 +44,7 @@ import java.util.List;
  * {@code isClientSide} 的写法差异 —— 那是历史写法，重构不动它）。
  */
 public class RaidenShogunSkill extends SkillBase {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     // ==================== 参数覆盖 ====================
 

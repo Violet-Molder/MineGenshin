@@ -8,7 +8,8 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.about.AttachmentType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,7 +42,7 @@ import java.util.UUID;
  * 数值、顺序、日志、判定条件一个都没动。
  */
 public class VodyanitsaSkill extends SkillBase {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
     // ==================== 普通攻击「水色咏叹」四段 ====================
 
     public static final float[] NA_1 = {

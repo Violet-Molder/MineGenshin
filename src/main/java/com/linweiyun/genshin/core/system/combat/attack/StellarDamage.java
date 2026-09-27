@@ -70,11 +70,14 @@ final class StellarDamage {
                 && !spec.getStellarContributors().isEmpty()) {
             logAttacker = spec.getStellarContributors().get(0);
         }
-        DamageTrace trace = DamageTrace.start(pipelineName(spec, branch));
-        trace.headAttack(spec.getAttackType(), StellarGlimmerBranch.damageElementOf(reactionType));
-        trace.head("反应", reactionType);
-        trace.head("分支", branch == null ? "非星烁" : branch.displayName());
-        trace.headEntities(null, target, logAttacker == null ? null : logAttacker.getName());
+        boolean tracing = DamageTrace.active();
+        DamageTrace trace = tracing ? DamageTrace.start(pipelineName(spec, branch)) : DamageTrace.none();
+        if (tracing) {
+            trace.headAttack(spec.getAttackType(), StellarGlimmerBranch.damageElementOf(reactionType));
+            trace.head("反应", reactionType);
+            trace.head("分支", branch == null ? "非星烁" : branch.displayName());
+            trace.headEntities(null, target, logAttacker == null ? null : logAttacker.getName());
+        }
 
         List<PGCharacter> contributors = spec.getStellarContributors();
         if (contributors == null || contributors.isEmpty()) {
@@ -91,33 +94,38 @@ final class StellarDamage {
         boolean byReaction = spec.isStellarReactionDamage();
 
         List<Result> results = new ArrayList<>();
-        List<String> valueTexts = new ArrayList<>();
+        // 数值行只给日志用：不输出时连这个列表都不建（每条理论伤害的数值串是这次伤害里最贵的一段）
+        List<String> valueTexts = tracing ? new ArrayList<>(contributors.size()) : null;
         for (PGCharacter contributor : contributors) {
             Result result = calculatePerCharacter(contributor, target, reactionType, coefficient,
                     baseBonusMult, baseBonusFlat, byReaction, spec.getSovereigntyBonus());
             results.add(result);
-            valueTexts.add(result.valueText);
+            if (valueTexts != null) {
+                valueTexts.add(result.valueText);
+            }
         }
         Combined combined = combine(results, byReaction);
         spec.setCrit(combined.crit);
 
-        // 只有「直伤 + 单人」才不加权（那是角色自己打出的那一下）；
-        // 「反应伤害」无论几个人都走加权公式（单人 = ×0.6），所以日志照印那条公式。
-        boolean noWeighting = results.size() == 1 && !byReaction;
-        trace.slim(noWeighting
-                ? "伤害 = 单人理论伤害（直伤，不参与加权）"
-                : "伤害 = 单人理论伤害 × 权重（逐名求和）");
-        trace.fullLine(byReaction ? SINGLE_FORMULA_BY_REACTION : SINGLE_FORMULA_BY_SKILL);
-        if (!noWeighting) {
-            trace.fullLine(COMBINE_FORMULA);
+        if (tracing) {
+            // 只有「直伤 + 单人」才不加权（那是角色自己打出的那一下）；
+            // 「反应伤害」无论几个人都走加权公式（单人 = ×0.6），所以日志照印那条公式。
+            boolean noWeighting = results.size() == 1 && !byReaction;
+            trace.slim(noWeighting
+                    ? "伤害 = 单人理论伤害（直伤，不参与加权）"
+                    : "伤害 = 单人理论伤害 × 权重（逐名求和）");
+            trace.fullLine(byReaction ? SINGLE_FORMULA_BY_REACTION : SINGLE_FORMULA_BY_SKILL);
+            if (!noWeighting) {
+                trace.fullLine(COMBINE_FORMULA);
+            }
+            for (int i = 0; i < valueTexts.size(); i++) {
+                trace.valueLine("单人" + (i + 1),
+                        valueTexts.get(i) + " = " + DamageTrace.fmt(results.get(i).theoryDamage));
+            }
+            trace.valueLine("伤害", combineValueText(results, noWeighting));
+            trace.result(combined.totalDamage);
+            trace.log();
         }
-        for (int i = 0; i < valueTexts.size(); i++) {
-            trace.valueLine("单人" + (i + 1),
-                    valueTexts.get(i) + " = " + DamageTrace.fmt(results.get(i).theoryDamage));
-        }
-        trace.valueLine("伤害", combineValueText(results, noWeighting));
-        trace.result(combined.totalDamage);
-        trace.log();
         return combined.totalDamage;
     }
 
@@ -177,20 +185,27 @@ final class StellarDamage {
 
         // 数值行 = 把数字代进展开公式（不是把每个乘区算好的结果填进去），
         // 每一项都要和展开公式里的名字一一对应。
-        float elevationBonus = DamageZones.elevationZone(character, branch) - 1.0f;
-        String valueText = "【" + (byReaction
-                ? DamageTrace.fmt(levelCoefficient) + " × " + DamageTrace.fmt(coefficient)
-                        + " × (1 + " + DamageTrace.fmt(baseBonusMult) + ")"
-                        + " + " + DamageTrace.fmt(baseBonusFlat)
-                : DamageTrace.fmt(atk) + " × " + DamageTrace.fmt(coefficient)
-                        + " × (1 + " + DamageTrace.fmt(baseBonusMult) + ")"
-                        + " + " + DamageTrace.fmt(baseBonusFlat)) + "】"
-                + " × 【1 + 16×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+2000)"
-                        + " + " + DamageTrace.fmt(glimmerBonus) + "】"
-                + " × 【1 - " + DamageTrace.fmt(rawResistance) + "】"
-                + " × 【" + (critRoll.isCrit() ? "1 + " + DamageTrace.fmt(critRoll.critDamage()) : "1") + "】"
-                + " × 【1 + " + DamageTrace.fmt(elevationBonus) + "】"
-                + " × 【1 + " + DamageTrace.fmt(sovereigntyBonus) + "】";
+        //
+        // 这一段每个贡献者都会拼一条两三百字的串（含十几次 fmt），只在真的会输出时才建：
+        // 日志关着的时候它是这条管线里最贵的一次白干。
+        String valueText = null;
+        if (DamageTrace.active()) {
+            float elevationBonus = DamageZones.elevationZone(character, branch) - 1.0f;
+            valueText = "【" + (byReaction
+                    ? DamageTrace.fmt(levelCoefficient) + " × " + DamageTrace.fmt(coefficient)
+                            + " × (1 + " + DamageTrace.fmt(baseBonusMult) + ")"
+                            + " + " + DamageTrace.fmt(baseBonusFlat)
+                    : DamageTrace.fmt(atk) + " × " + DamageTrace.fmt(coefficient)
+                            + " × (1 + " + DamageTrace.fmt(baseBonusMult) + ")"
+                            + " + " + DamageTrace.fmt(baseBonusFlat)) + "】"
+                    + " × 【1 + 16×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+2000)"
+                            + " + " + DamageTrace.fmt(glimmerBonus) + "】"
+                    + " × 【1 - " + DamageTrace.fmt(rawResistance) + "】"
+                    + " × 【" + (critRoll.isCrit()
+                            ? "1 + " + DamageTrace.fmt(critRoll.critDamage()) : "1") + "】"
+                    + " × 【1 + " + DamageTrace.fmt(elevationBonus) + "】"
+                    + " × 【1 + " + DamageTrace.fmt(sovereigntyBonus) + "】";
+        }
 
         return new Result(null, character, damage, critRoll.isCrit(), valueText);
     }
@@ -250,7 +265,11 @@ final class StellarDamage {
 
     // ==================== 结果类型 ====================
 
-    /** 单个角色的理论伤害 + 它在日志里的数值写法。 */
+    /**
+     * 单个角色的理论伤害 + 它在日志里的数值写法。
+     *
+     * <p>{@code valueText} 只给日志用，日志关着时是 {@code null}。</p>
+     */
     static final class Result {
         final UUID playerUUID;
         final PGCharacter character;

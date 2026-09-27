@@ -10,7 +10,8 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.talent.TalentBase;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.registry.register.ModCharacterEffects;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -47,7 +48,7 @@ import java.util.UUID;
  * 都调 {@link #shredWindAround}，风旋的其它行为一行没改。
  */
 public class VodyanitsaTalent extends TalentBase {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     /** 「遥久之歌」的覆盖范围（突破天赋 1 用）。 */
     public static final double SONG_AURA_RANGE = 13.0;

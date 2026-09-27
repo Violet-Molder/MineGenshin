@@ -2,7 +2,8 @@ package com.linweiyun.genshin.core.monster;
 
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatLiving;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
@@ -16,7 +17,7 @@ import java.util.Objects;
 
 @EventBusSubscriber
 public class MonsterLevelSpawnHandler {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     @SubscribeEvent
     public static void onFinalizeSpawn(FinalizeSpawnEvent event) {

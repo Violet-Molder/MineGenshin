@@ -77,21 +77,26 @@ public final class GenshinAssets {
     public static final String SOUND_DEFINITION_FILE = "sounds.json";
 
     /**
-     * 共用模型/贴图目录。
+     * 共用模型 / 贴图 / 动画目录（角色自己目录里缺的那一项回落到这里）。
      *
-     * <p>本 MOD 基本上只有一套角色模型，所以<b>默认模型和贴图都放这里</b>：
+     * <p>本 MOD 基本上只有一套角色模型 —— 它就是<b>林薇云</b>的模型，
+     * 所以这一档直接指向她自己的目录：别的角色缺项时回落到她，她自己也用这一份。
      * <pre>
-     * character/default/default.geo.json
-     * character/default/textures/default.png
+     * character/linweiyun/linweiyun.geo.json
+     * character/linweiyun/textures/linweiyun.png
+     * character/linweiyun/linweiyun.animation.json  （可选：角色没有自己的动画文件时借它）
      * </pre>
-     * 角色只有动画是独立的。真需要专属模型时，用显式路径构造
-     * {@link com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData} 即可。
+     * <b>读哪一份由运行期决定，不由代码决定</b>：每个角色都先看
+     * {@code character/<角色id>/}，那里没有的项才借这里（三项各自独立判断）。
+     * 所以「自己的模型 + 共用的贴图」这种组合是正常状态，把文件放进角色目录就自动生效。
      */
-    public static final String DEFAULT_ASSET_DIR = CHARACTER_ROOT + "/default";
+    public static final String DEFAULT_ASSET_DIR = CHARACTER_ROOT + "/" + "linweiyun";
     /** 共用模型的文件名。 */
-    public static final String DEFAULT_MODEL_FILE = "default.geo.json";
+    public static final String DEFAULT_MODEL_FILE = "linweiyun.geo.json";
     /** 共用贴图的文件名。 */
-    public static final String DEFAULT_TEXTURE_FILE = "default.png";
+    public static final String DEFAULT_TEXTURE_FILE = "linweiyun.png";
+    /** 共用动画的文件名（可缺省：没有它时角色只能借到模型与贴图）。 */
+    public static final String DEFAULT_ANIMATION_FILE = "linweiyun.animation.json";
 
     // ==================== 角色 ====================
 
@@ -103,6 +108,26 @@ public final class GenshinAssets {
     /** 共用贴图的完整相对路径：{@code character/default/textures/default.png}。 */
     public static String defaultTexturePath() {
         return DEFAULT_ASSET_DIR + "/" + ModAssetPaths.TEXTURE_DIR + "/" + DEFAULT_TEXTURE_FILE;
+    }
+
+    /** 共用动画的完整相对路径：{@code character/default/default.animation.json}。 */
+    public static String defaultAnimationPath() {
+        return DEFAULT_ASSET_DIR + "/" + DEFAULT_ANIMATION_FILE;
+    }
+
+    /** 共用模型的缓存键：{@code minegenshin:character/default/default}。 */
+    public static Identifier defaultModel() {
+        return fromModelPath(defaultModelPath());
+    }
+
+    /** 共用贴图的位置：{@code minegenshin:character/default/textures/default.png}。 */
+    public static Identifier defaultTexture() {
+        return fromTexturePath(defaultTexturePath());
+    }
+
+    /** 共用动画的缓存键：{@code minegenshin:character/default/default}。 */
+    public static Identifier defaultAnimation() {
+        return fromAnimationPath(defaultAnimationPath());
     }
 
     /** 某个角色的动画文件相对路径：{@code character/<角色id>/<角色id>.animation.json}。 */

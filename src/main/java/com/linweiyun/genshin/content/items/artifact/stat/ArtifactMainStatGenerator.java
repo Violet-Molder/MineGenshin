@@ -3,15 +3,16 @@ package com.linweiyun.genshin.content.items.artifact.stat;
 import com.linweiyun.genshin.config.artifact.ArtifactMainStatConfig;
 import com.linweiyun.genshin.content.items.artifact.type.ArtifactType;
 import com.linweiyun.genshin.content.stat.TeyvatItemStat;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Random;
 
 public class ArtifactMainStatGenerator {
-    public static final Logger LOGGER = LoggerFactory.getLogger("Minegenshin/ArtifactMainStatGenerator");
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     // SANDS 可选池：HP% / ATK% / DEF% / 元素精通 / 充能效率
     private static final List<TeyvatItemStat> SANDS_POOL = List.of(

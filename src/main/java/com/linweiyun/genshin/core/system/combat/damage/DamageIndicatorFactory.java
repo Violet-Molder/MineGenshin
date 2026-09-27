@@ -4,12 +4,13 @@ import com.linweiyun.genshin.config.WorldTextColorConfig;
 import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.network.DamageIndicatorRpc;
+import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
+import com.linweiyun.genshin.core.system.performance.DamageNumberThrottle;
+import com.linweiyun.genshin.core.system.performance.DamageTextColorCache;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -17,10 +18,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 /**
  * 伤害飘字工厂 —— 所有飘字的统一入口。
  *
@@ -33,44 +35,66 @@ import java.util.UUID;
  *   - damage / crit / reaction / heal / text
  */
 public final class DamageIndicatorFactory {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
-    private static final Map<UUID, Vec3> LAST_SPAWN_POS = new HashMap<>();
+    /**
+     * 上一次给该目标生成飘字的位置，用来避免连续两条飘字重叠。
+     *
+     * <p>原来用无界 {@code HashMap} 只 put 不 remove，怪物死光、玩家换维度之后
+     * 这些 UUID 条目会一直留在静态表里。改成带上限的 LRU：访问即刷新，
+     * 超过 {@value #MAX_LAST_SPAWN_POS} 个目标就淘汰最久没打过的。</p>
+     */
+    private static final int MAX_LAST_SPAWN_POS = 1024;
+    private static final Map<UUID, Vec3> LAST_SPAWN_POS =
+            BoundedLruMap.create(MAX_LAST_SPAWN_POS);
 
     private DamageIndicatorFactory() {}
 
     public static int getColorForElement(GenshinElement element) {
-        if (element == ModElements.PYRO.get()) return parseColor(WorldTextColorConfig.PYRO_COLOR.get());
-        if (element == ModElements.HYDRO.get()) return parseColor(WorldTextColorConfig.HYDRO_COLOR.get());
-        if (element == ModElements.DENDRO.get()) return parseColor(WorldTextColorConfig.DENDRO_COLOR.get());
-        if (element == ModElements.ELECTRO.get()) return parseColor(WorldTextColorConfig.ELECTRO_COLOR.get());
-        if (element == ModElements.ANEMO.get()) return parseColor(WorldTextColorConfig.ANEMO_COLOR.get());
-        if (element == ModElements.CYRO.get()) return parseColor(WorldTextColorConfig.CYRO_COLOR.get());
-        if (element == ModElements.FROZEN.get()) return parseColor(WorldTextColorConfig.FROZEN_COLOR.get());
-        if (element == ModElements.GEO.get()) return parseColor(WorldTextColorConfig.GEO_COLOR.get());
-        return parseColor(WorldTextColorConfig.PHYSICAL_COLOR.get());
+        if (element == ModElements.PYRO.get()) return colorOf(WorldTextColorConfig.PYRO_COLOR);
+        if (element == ModElements.HYDRO.get()) return colorOf(WorldTextColorConfig.HYDRO_COLOR);
+        if (element == ModElements.DENDRO.get()) return colorOf(WorldTextColorConfig.DENDRO_COLOR);
+        if (element == ModElements.ELECTRO.get()) return colorOf(WorldTextColorConfig.ELECTRO_COLOR);
+        if (element == ModElements.ANEMO.get()) return colorOf(WorldTextColorConfig.ANEMO_COLOR);
+        if (element == ModElements.CYRO.get()) return colorOf(WorldTextColorConfig.CYRO_COLOR);
+        if (element == ModElements.FROZEN.get()) return colorOf(WorldTextColorConfig.FROZEN_COLOR);
+        if (element == ModElements.GEO.get()) return colorOf(WorldTextColorConfig.GEO_COLOR);
+        return colorOf(WorldTextColorConfig.PHYSICAL_COLOR);
     }
 
     public static int getColorForReaction(ElementalReactionType type) {
         return switch (type) {
-            case ELECTRO_CHARGED, LUNAR_CHARGED -> parseColor(WorldTextColorConfig.ELECTRO_CHARGED_COLOR.get());
-            case SWIRL -> parseColor(WorldTextColorConfig.SWIRL_COLOR.get());
-            case FROZEN -> parseColor(WorldTextColorConfig.FROZEN_COLOR.get());
-            case STELLAR_SWIRL_WIND, STELLAR_SWIRL_ICE -> parseColor(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR.get());
-            default -> parseColor(WorldTextColorConfig.VAPORIZE_COLOR.get());
+            case ELECTRO_CHARGED, LUNAR_CHARGED -> colorOf(WorldTextColorConfig.ELECTRO_CHARGED_COLOR);
+            case SWIRL -> colorOf(WorldTextColorConfig.SWIRL_COLOR);
+            case FROZEN -> colorOf(WorldTextColorConfig.FROZEN_COLOR);
+            case STELLAR_SWIRL_WIND, STELLAR_SWIRL_ICE -> colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
+            default -> colorOf(WorldTextColorConfig.VAPORIZE_COLOR);
         };
     }
 
     public static int getLunarTopColor() {
-        return parseColor(WorldTextColorConfig.LUNAR_TOP_COLOR.get());
+        return colorOf(WorldTextColorConfig.LUNAR_TOP_COLOR);
     }
 
+    /**
+     * 按配置项取颜色。
+     *
+     * <p>热路径上原来是「取字符串 → {@code Integer.decode}」，每次伤害都会走一遍；
+     * 现在交给 {@link DamageTextColorCache#colorOf}：配置项值不变时直接命中上次结果。</p>
+     */
+    private static int colorOf(net.neoforged.neoforge.common.ModConfigSpec.ConfigValue<String> configValue) {
+        return DamageTextColorCache.colorOf(configValue);
+    }
+
+    /**
+     * 解析 {@code #RRGGBB} 形式的颜色串。
+     *
+     * @deprecated 走 {@link DamageTextColorCache#parseHex} / {@link #colorOf}，
+     *             直接解析字符串拿不到「配置项值没变」这一层的缓存。
+     */
+    @Deprecated
     private static int parseColor(String hex) {
-        try {
-            return Integer.decode(hex.startsWith("#") ? hex : "#" + hex);
-        } catch (NumberFormatException e) {
-            return 0xFFFFFF;
-        }
+        return DamageTextColorCache.parseHex(hex);
     }
 
     public enum Style {
@@ -84,6 +108,19 @@ public final class DamageIndicatorFactory {
 
         public static final Options DEFAULT = new Options(
                 DEFAULT_BASE_SCALE, DEFAULT_START_SCALE, DEFAULT_DURATION_MS);
+
+        /**
+         * 暴击飘字：更大的起跳与收束。
+         *
+         * <p>暴击是高频路径（攻速堆高后每几 tick 一次），原来是
+         * {@code Options.builder().baseScale(4.4f).startScale(12.4f).build()} ——
+         * 每次暴击新建一个 Builder 加一个 Options。这里提成常量，参数值完全一致。</p>
+         */
+        public static final Options CRIT = new Options(4.4f, 12.4f, DEFAULT_DURATION_MS);
+
+        /** 月感电伤害数字（斜体 + 月色渐变）：普通 / 暴击两套尺寸 */
+        public static final Options LUNAR = new Options(2.2f, 6.2f, 950L);
+        public static final Options LUNAR_CRIT = new Options(2.6f, 7.0f, 1100L);
 
         public final float baseScale;
         public final float startScale;
@@ -113,8 +150,8 @@ public final class DamageIndicatorFactory {
         }
     }
 
-    private static final double BROADCAST_RADIUS     = 48.0;
-    private static final double BROADCAST_RADIUS_SQR = BROADCAST_RADIUS * BROADCAST_RADIUS;
+    /** 飘字广播半径（方块）—— 半径内谁收到由 {@code sendToNearby} 交给 PlayerList 筛 */
+    private static final double BROADCAST_RADIUS = 48.0;
 
     // =====================================================================
     //  1. damage
@@ -316,21 +353,23 @@ public final class DamageIndicatorFactory {
                                        ElementalReactionType type) {
         if (type == null) return;
         int color = getColorForReaction(type);
-        Vec3 center = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
-        for (ServerPlayer player : level.players()) {
-            if (player.distanceToSqr(center) <= BROADCAST_RADIUS_SQR) {
-                DamageIndicatorRpc.sendReactionAtPos(
-                        player,
-                        type.getDisplayName(),
-                        center,
-                        color, color,
-                        (byte) Style.REACTION.ordinal(),
-                        false,
-                        Options.DEFAULT.baseScale, Options.DEFAULT.startScale,
-                        (int) Options.DEFAULT.durationMs
-                );
-            }
-        }
+        double centerX = pos.getX() + 0.5;
+        double centerY = pos.getY() + 0.5;
+        double centerZ = pos.getZ() + 0.5;
+        // 一次编码、按半径广播（与 emit 同一条通道）
+        DamageIndicatorRpc.sendToNearby(
+                level,
+                centerX, centerY, centerZ, BROADCAST_RADIUS,
+                centerX, centerY, centerZ,
+                centerX, centerY, centerZ,
+                type.getDisplayName(),
+                color, color,
+                (byte) Style.REACTION.ordinal(),
+                false,
+                Options.DEFAULT.baseScale, Options.DEFAULT.startScale,
+                (int) Options.DEFAULT.durationMs,
+                0, false
+        );
     }
 
     // =====================================================================
@@ -339,14 +378,34 @@ public final class DamageIndicatorFactory {
 
     private static void spawnDamage(LivingEntity target, DamageSource source, float finalDamage,
                                     int topColor, int bottomColor, Style style, Options options) {
-        String text = String.valueOf(Math.round(finalDamage));
-        spawnRaw(target, source == null ? null : source.getEntity(), text, topColor, bottomColor, style, options);
+        spawnNumber(target, source == null ? null : source.getEntity(), finalDamage,
+                topColor, bottomColor, style, options, false);
     }
 
     private static void spawnValue(LivingEntity target, float value,
                                    int topColor, int bottomColor, Style style, Options options) {
-        String text = String.valueOf(Math.round(value));
-        spawnRaw(target, null, text, topColor, bottomColor, style, options);
+        spawnNumber(target, null, value, topColor, bottomColor, style, options, false);
+    }
+
+    /**
+     * 数值类飘字的统一入口：伤害数字 / 治疗量都从这里走。
+     *
+     * <p>把 float 直接交给节流台账（{@link DamageNumberThrottle#planNumber}），
+     * 省掉旧路径「{@code String.valueOf(Math.round(v))} 生成文本 → 台账再解析回数值累加」
+     * 的那一趟格式化 + 解析。</p>
+     */
+    private static void spawnNumber(LivingEntity target, Entity attacker, float value,
+                                    int topColor, int bottomColor, Style style, Options options,
+                                    boolean italic) {
+        if (target == null) return;
+        if (!(target.level() instanceof ServerLevel level)) return;
+        if (options == null) options = Options.DEFAULT;
+
+        // 生成侧合并 / 节流（性能系统·计算侧）：纯表现层决策，不参与任何伤害结算
+        DamageNumberThrottle.Plan plan = DamageNumberThrottle.planNumber(
+                target, value, (byte) style.ordinal(), topColor, bottomColor, italic);
+        emit(level, target, attacker, plan.text, topColor, bottomColor, style, options, italic,
+                plan.mergeKey, plan.merge);
     }
 
     private static void spawnRaw(LivingEntity target, Entity attacker, String text,
@@ -363,77 +422,121 @@ public final class DamageIndicatorFactory {
     private static void spawnRawInternal(LivingEntity target, Entity attacker, String text,
                                          int topColor, int bottomColor, Style style, Options options,
                                          boolean italic) {
-        if (options == null) options = Options.DEFAULT;
         if (target == null) return;
         if (text == null || text.isEmpty()) return;
         if (!(target.level() instanceof ServerLevel level)) return;
+        if (options == null) options = Options.DEFAULT;
 
+        // 生成侧合并 / 节流（性能系统·计算侧）：
+        // 攻速堆高后同一目标每 tick 都能刷出好几条飘字，这里把「同一目标的连续伤害」
+        // 并成一条会累加的数字，客户端活跃条数从「随攻击次数线性增长」变成「每目标 1 条」。
+        // 纯表现层决策，不参与任何伤害结算；关掉 performance.toml 的 merge 即回到逐条飘字。
+        DamageNumberThrottle.Plan plan = DamageNumberThrottle.plan(
+                target, text, (byte) style.ordinal(), topColor, bottomColor, italic);
+        emit(level, target, attacker, plan.text, topColor, bottomColor, style, options, italic,
+                plan.mergeKey, plan.merge);
+    }
+
+    /**
+     * 位置抖动 + 半径广播，两个入口（数值类 / 文字类）共用。
+     *
+     * <h2>为什么这里全是基本量</h2>
+     * 高攻速下这一段每次伤害都要跑一遍，而旧写法光是「试一个候选点」就建一个 {@link Vec3}
+     * ——随机位置最多试 8 次，加上目标中心、攻击者中心、插值结果，一次伤害能造出十几个 {@link Vec3}，
+     * 全是要被 GC 收掉的小对象。现在坐标一律用 {@code double} 算，
+     * 只在「记下这个目标上次飘在哪」时落一个 {@link Vec3}（那张表需要按目标存一份位置）。
+     *
+     * <h2>广播方式</h2>
+     * 逐玩家 {@code sendToPlayer} 会为每个接收者重复编码同一个包；这里换成
+     * {@link DamageIndicatorRpc#sendToNearby}：编码一次，半径内的玩家由
+     * {@code PlayerList} 统一投递。
+     */
+    private static void emit(ServerLevel level, LivingEntity target, Entity attacker, String text,
+                             int topColor, int bottomColor, Style style, Options options,
+                             boolean italic, int mergeKey, boolean merge) {
         RandomSource rand = level.getRandom();
 
-        Vec3 targetCenter = target.position()
-                .add(0, target.getBbHeight() * 0.85, 0);
+        double targetX = target.getX();
+        double targetY = target.getY() + target.getBbHeight() * 0.85;
+        double targetZ = target.getZ();
 
         double extraY = (style == Style.REACTION) ? 0.6 : 0.0;
         double spreadH = 1.5;
         double verticalBase = 0.35;
         double verticalRange = 0.6;
 
-        Vec3 finalPos = null;
         int maxRetries = 8;
         UUID targetId = target.getUUID();
         Vec3 lastPos = LAST_SPAWN_POS.get(targetId);
+        double lastX = lastPos == null ? 0.0 : lastPos.x;
+        double lastY = lastPos == null ? 0.0 : lastPos.y;
+        double lastZ = lastPos == null ? 0.0 : lastPos.z;
 
+        double finalX = 0.0;
+        double finalY = 0.0;
+        double finalZ = 0.0;
+        boolean found = false;
         for (int attempt = 0; attempt < maxRetries; attempt++) {
-            Vec3 candidate = targetCenter.add(
-                    (rand.nextDouble() - 0.5) * spreadH,
-                    verticalBase + rand.nextDouble() * verticalRange + extraY,
-                    (rand.nextDouble() - 0.5) * spreadH
-            );
-            if (lastPos == null || lastPos.distanceToSqr(candidate) > 0.25) {
-                finalPos = candidate;
-                LAST_SPAWN_POS.put(targetId, finalPos);
+            double cx = targetX + (rand.nextDouble() - 0.5) * spreadH;
+            double cy = targetY + verticalBase + rand.nextDouble() * verticalRange + extraY;
+            double cz = targetZ + (rand.nextDouble() - 0.5) * spreadH;
+            if (lastPos == null || distSqr(cx, cy, cz, lastX, lastY, lastZ) > 0.25) {
+                finalX = cx;
+                finalY = cy;
+                finalZ = cz;
+                found = true;
                 break;
             }
         }
-        if (finalPos == null) {
-            finalPos = targetCenter.add(
-                    (rand.nextDouble() - 0.5) * spreadH,
-                    verticalBase + rand.nextDouble() * verticalRange + extraY,
-                    (rand.nextDouble() - 0.5) * spreadH
-            );
-            LAST_SPAWN_POS.put(targetId, finalPos);
+        if (!found) {
+            finalX = targetX + (rand.nextDouble() - 0.5) * spreadH;
+            finalY = targetY + verticalBase + rand.nextDouble() * verticalRange + extraY;
+            finalZ = targetZ + (rand.nextDouble() - 0.5) * spreadH;
         }
+        LAST_SPAWN_POS.put(targetId, new Vec3(finalX, finalY, finalZ));
 
-        Vec3 originPos;
+        double originX;
+        double originY;
+        double originZ;
         if (attacker != null && attacker != target && attacker.level() == level) {
-            Vec3 attackerCenter = attacker.position()
-                    .add(0, attacker.getBbHeight() * 0.7, 0);
-            originPos = attackerCenter.lerp(targetCenter, 0.3);
+            // 攻击者胸口 → 目标胸口，取 30% 处（与旧实现 attackerCenter.lerp(targetCenter, 0.3) 等价）
+            double attackerX = attacker.getX();
+            double attackerY = attacker.getY() + attacker.getBbHeight() * 0.7;
+            double attackerZ = attacker.getZ();
+            originX = attackerX + (targetX - attackerX) * 0.3;
+            originY = attackerY + (targetY - attackerY) * 0.3;
+            originZ = attackerZ + (targetZ - attackerZ) * 0.3;
         } else {
-            originPos = targetCenter.add(0, 0.6, 0);
+            originX = targetX;
+            originY = targetY + 0.6;
+            originZ = targetZ;
         }
 
-        int sent = 0;
-        for (ServerPlayer player : level.players()) {
-            if (player.distanceToSqr(target) <= BROADCAST_RADIUS_SQR) {
-                try {
-                    DamageIndicatorRpc.sendToPlayer(
-                            player,
-                            finalPos.x, finalPos.y, finalPos.z,
-                            originPos.x, originPos.y, originPos.z,
-                            text,
-                            topColor, bottomColor,
-                            (byte) style.ordinal(),
-                            italic,
-                            options.baseScale, options.startScale,
-                            (int) options.durationMs
-                    );
-                    sent++;
-                } catch (Throwable t) {
-                    LOGGER.error("[DI-Factory] sendToPlayer threw", t);
-                }
-            }
+        try {
+            DamageIndicatorRpc.sendToNearby(
+                    level,
+                    targetX, targetY, targetZ, BROADCAST_RADIUS,
+                    finalX, finalY, finalZ,
+                    originX, originY, originZ,
+                    text,
+                    topColor, bottomColor,
+                    (byte) style.ordinal(),
+                    italic,
+                    options.baseScale, options.startScale,
+                    (int) options.durationMs,
+                    mergeKey, merge
+            );
+        } catch (Throwable t) {
+            LOGGER.error("[DI-Factory] sendToNearby threw", t);
         }
+    }
+
+    private static double distSqr(double ax, double ay, double az,
+                                  double bx, double by, double bz) {
+        double dx = ax - bx;
+        double dy = ay - by;
+        double dz = az - bz;
+        return dx * dx + dy * dy + dz * dz;
     }
 
     // =====================================================================
@@ -449,7 +552,7 @@ public final class DamageIndicatorFactory {
     public static void lunarDamageGradient(LivingEntity target, DamageSource source, float finalDamage, Options options) {
         if (source == null) return;
         int topColor = getLunarTopColor();
-        spawnRawInternal(target, source.getEntity(), String.valueOf(Math.round(finalDamage)),
+        spawnNumber(target, source.getEntity(), finalDamage,
                 topColor, WHITE, Style.NORMAL, options, true);
     }
 
@@ -470,9 +573,31 @@ public final class DamageIndicatorFactory {
 
     public static void stellarWindDamageGradient(LivingEntity target, DamageSource source, float finalDamage, Options options) {
         if (source == null) return;
-        int bottomColor = parseColor(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR.get());
-        spawnRawInternal(target, source.getEntity(), String.valueOf(Math.round(finalDamage)),
+        int bottomColor = colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
+        spawnNumber(target, source.getEntity(), finalDamage,
                 WHITE, bottomColor, Style.NORMAL, options, true);
+    }
+
+    /**
+     * 星烁（星扩散 / 星超导）伤害数字 —— 按伤害元素选底部色，与反应文字同一套配色 + 斜体。
+     *
+     * <p>星扩散-风走风色、星扩散-冰走冰色，和 {@code stellarWindReactionGradient} /
+     * {@code stellarIceReactionGradient} 对得上；没专用星辉底色的元素（例如星超导-雷）
+     * 退回元素自身颜色，斜体保持不变。</p>
+     */
+    public static void stellarDamageGradient(LivingEntity target, DamageSource source, float finalDamage,
+                                             GenshinElement element, Options options) {
+        if (source == null) return;
+        if (element == ModElements.ANEMO.get()) {
+            stellarWindDamageGradient(target, source, finalDamage, options);
+            return;
+        }
+        if (element == ModElements.CYRO.get()) {
+            stellarIceDamageGradient(target, source, finalDamage, options);
+            return;
+        }
+        spawnNumber(target, source.getEntity(), finalDamage,
+                WHITE, getColorForElement(element), Style.NORMAL, options, true);
     }
 
     public static void stellarIceDamageGradient(LivingEntity target, DamageSource source, float finalDamage) {
@@ -481,8 +606,8 @@ public final class DamageIndicatorFactory {
 
     public static void stellarIceDamageGradient(LivingEntity target, DamageSource source, float finalDamage, Options options) {
         if (source == null) return;
-        int bottomColor = parseColor(WorldTextColorConfig.STELLAR_BOTTOM_ICE_COLOR.get());
-        spawnRawInternal(target, source.getEntity(), String.valueOf(Math.round(finalDamage)),
+        int bottomColor = colorOf(WorldTextColorConfig.STELLAR_BOTTOM_ICE_COLOR);
+        spawnNumber(target, source.getEntity(), finalDamage,
                 WHITE, bottomColor, Style.NORMAL, options, true);
     }
 
@@ -492,7 +617,7 @@ public final class DamageIndicatorFactory {
 
     public static void stellarWindReactionGradient(LivingEntity target, ElementalReactionType type, Options options) {
         if (type == null) return;
-        int bottomColor = parseColor(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR.get());
+        int bottomColor = colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
         spawnRawInternal(target, null, type.getDisplayName(),
                 WHITE, bottomColor, Style.REACTION, options, true);
     }
@@ -503,7 +628,7 @@ public final class DamageIndicatorFactory {
 
     public static void stellarIceReactionGradient(LivingEntity target, ElementalReactionType type, Options options) {
         if (type == null) return;
-        int bottomColor = parseColor(WorldTextColorConfig.STELLAR_BOTTOM_ICE_COLOR.get());
+        int bottomColor = colorOf(WorldTextColorConfig.STELLAR_BOTTOM_ICE_COLOR);
         spawnRawInternal(target, null, type.getDisplayName(),
                 WHITE, bottomColor, Style.REACTION, options, true);
     }

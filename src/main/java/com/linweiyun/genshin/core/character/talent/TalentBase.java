@@ -43,6 +43,14 @@ import net.minecraft.world.entity.player.Player;
 public class TalentBase {
 
     /**
+     * <b>兜底天赋</b>：没有自己天赋的角色（含「缺数据就回退」的那一支）拿到的那一个。
+     *
+     * <p>它是空实现 —— 突破门槛、队伍效果、每刻重算一个都没有，所以 {@code getTalent().xxx()}
+     * 这类调用永远安全。角色一旦有自己的天赋类，就在自己的无参构造器里换掉它。
+     */
+    public static final TalentBase DEFAULT = new TalentBase();
+
+    /**
      * 每刻调用一次（<b>仅服务端</b>，由角色主类的 {@code tick} 转发）。
      *
      * <p>需要持续生效的被动（整肃的独立倒计时、按队伍元素构成重算属性…）覆盖它。

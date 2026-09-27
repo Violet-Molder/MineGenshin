@@ -7,11 +7,12 @@ import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.reaction.*;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import org.slf4j.Logger;
 
 public class ElectroChargedReaction extends ElementalReaction {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
     public static final float CONSUME_PER_TRIGGER = 0.4f;
 
     public ElectroChargedReaction(ElementalReactionType type,

@@ -3,6 +3,8 @@ package com.linweiyun.genshin.client.combat.action;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActions;
 import com.linweiyun.genshin.core.system.combat.animation.config.DefaultCharacterAnimations;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.Vodyanitsa;
+import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheAnimations;
+import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheResources;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.character.sword.vesna.VesnaAnimations;
 
@@ -27,7 +29,11 @@ public final class CharacterAnimationRegistry {
     public static void registerAll() {
         CharacterActions.register(Vesna.ID, ResourceDrivenActionHandler.INSTANCE, VesnaAnimations.INSTANCE);
 
-        registerPlaceholder("shenhe");
+        // 申鹤：有专属常态动画名（sneak / sneaking / swim_stand）和普攻 + 收尾的动画，
+        // 所以走自己的 ShenheAnimations —— 动作编排仍然给通用的 ResourceDrivenActionHandler。
+        CharacterActions.register(ShenheResources.ID, ResourceDrivenActionHandler.INSTANCE,
+                ShenheAnimations.INSTANCE);
+
         registerPlaceholder("arlecchino");
         registerPlaceholder("columbina");
         registerPlaceholder("raiden_shogun");

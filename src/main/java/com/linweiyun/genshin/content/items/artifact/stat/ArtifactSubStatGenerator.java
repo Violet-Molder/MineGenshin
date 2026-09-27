@@ -4,7 +4,8 @@ import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.content.items.artifact.type.ArtifactType;
 import com.linweiyun.genshin.content.stat.TeyvatItemStat;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Random;
 
 public class ArtifactSubStatGenerator {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     // 副词条可选池（原神规则：不能与主词条同属性）
     // 基础4个固定副词条 + 元素精通：固定值ATK/HP/DEF，百分比ATK%/HP%/DEF%/充能/暴击/暴伤

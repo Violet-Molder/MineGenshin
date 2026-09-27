@@ -2,7 +2,8 @@ package com.linweiyun.genshin.core.character.attachment;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
@@ -13,7 +14,7 @@ import org.slf4j.Logger;
  * 的 ResourceLocation 后从 {@link ModRegistries#CHARACTER_ATTACHMENT_TYPE_REGISTRY} 查找。
  */
 public final class CharacterAttachmentTypes {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     private CharacterAttachmentTypes() {}
 

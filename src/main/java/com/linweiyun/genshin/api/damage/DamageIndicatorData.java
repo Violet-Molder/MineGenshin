@@ -5,6 +5,8 @@ package com.linweiyun.genshin.api.damage;
  *
  * @param originX 起点（攻击方）坐标
  * @param targetX 落点（受击方）坐标
+ * @param mergeKey 合并键：同一次连击里保持不变，0 表示不参与合并
+ * @param merge    是否是「并入已有飘字」的更新包
  */
 public record DamageIndicatorData(
         double originX, double originY, double originZ,
@@ -16,5 +18,7 @@ public record DamageIndicatorData(
         boolean italic,
         float baseScale,
         float startScale,
-        int durationMs
+        int durationMs,
+        int mergeKey,
+        boolean merge
 ) {}

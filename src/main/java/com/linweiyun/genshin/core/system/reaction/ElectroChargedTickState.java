@@ -8,11 +8,13 @@ import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.system.performance.HotPathLog;
 import com.linweiyun.genshin.core.system.reaction.builtin.ElectroChargedReaction;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
@@ -20,7 +22,7 @@ import org.slf4j.Logger;
 import java.util.UUID;
 
 public class ElectroChargedTickState implements IPersistedSerializable {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
     private static final float CONSUME_PER_TICK = 0.4f;
     private static final int TICK_INTERVAL = 20;
 
@@ -122,7 +124,10 @@ public class ElectroChargedTickState implements IPersistedSerializable {
             active = true;
             tickCounter = TICK_INTERVAL - 1;
             targetEntity = target;
-            LOGGER.info("[感电自激活] target={}", target.getName().getString());
+            // 每次挂上水雷都会走这里：攻速高时一秒几十条，节流后再看（见 HotPathLog）
+            if (HotPathLog.allow(LOGGER, "electro-charged-activate", "感电自激活")) {
+                LOGGER.info("[感电自激活] target={}", target.getName().getString());
+            }
         }
     }
 
@@ -134,10 +139,16 @@ public class ElectroChargedTickState implements IPersistedSerializable {
                 ElementalReactionType.ELECTRO_CHARGED, ModElements.ELECTRO.get());
         ModDamageSource source = ModDamageSource.from(spec, calcAttacker);
 
-        LOGGER.info("[感电触发] target={} | chain={} | calcAttacker={}",
-                target.getName().getString(), chain, calcAttacker.getName().getString());
+        // 每次感电结算都会走这里（还有连锁），是这条反应里最热的一条日志
+        if (HotPathLog.allow(LOGGER, "electro-charged-tick", "感电触发")) {
+            LOGGER.info("[感电触发] target={} | chain={} | calcAttacker={}",
+                    target.getName().getString(), chain, calcAttacker.getName().getString());
+        }
 
-        target.hurt(source, 0f);
+        // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
+        if (target.level() instanceof ServerLevel serverLevel) {
+            target.hurtServer(serverLevel, source, 0f);
+        }
         DamageIndicatorFactory.reaction(target, ElementalReactionType.ELECTRO_CHARGED);
 
         if (chain) {
@@ -161,7 +172,7 @@ public class ElectroChargedTickState implements IPersistedSerializable {
             ElementalAttachmentInstance h = ElectroChargedReaction.findElement(nc, ModElements.HYDRO.get());
             if (h != null && h.getUnit() > 0) {
                 ModDamageSource chainSource = ModDamageSource.from(spec, source);
-                nearby.hurt(chainSource, 0f);
+                nearby.hurtServer(level, chainSource, 0f);
                 DamageIndicatorFactory.reaction(nearby, ElementalReactionType.ELECTRO_CHARGED);
             }
         }

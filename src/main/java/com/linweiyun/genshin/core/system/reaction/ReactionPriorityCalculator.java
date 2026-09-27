@@ -9,8 +9,10 @@ import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.system.performance.TickSnapshot;
 import net.minecraft.server.level.ServerLevel;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
@@ -20,7 +22,7 @@ import java.util.List;
 
 public class ReactionPriorityCalculator {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     /** 未登记在默认顺序表里的主元素统一排到最后（比表内任何下标都大）。 */
     public static final int UNKNOWN_PRIORITY = 50;
@@ -82,7 +84,33 @@ public class ReactionPriorityCalculator {
         return hasColumbinaInParty(level);
     }
 
+    /** 队伍扫描的每刻快照（见 {@link TickSnapshot}） */
+    private static final TickSnapshot COLUMBINA_SNAPSHOT = new TickSnapshot();
+
+    /**
+     * 队伍里有没有哥伦比娅。
+     *
+     * <p>这个方法挂在「每实体每刻」的感电自激活判定里，而它要遍历全维度玩家 × 队伍四人；
+     * 于是按「维度 + 游戏刻」缓存一格 —— 队伍构成一刻之内不会变，
+     * 同一刻第二次问就只是一次查表。换人最迟下一 tick 生效。</p>
+     */
     public static boolean hasColumbinaInParty(ServerLevel level) {
+        long tick = level.getGameTime();
+        Boolean cached = COLUMBINA_SNAPSHOT.getOrNull(level, tick);
+        if (cached != null) {
+            return cached;
+        }
+        boolean value = scanColumbinaInParty(level);
+        COLUMBINA_SNAPSHOT.put(level, tick, value);
+        return value;
+    }
+
+    /** 服务器停机时清掉快照（会持有 ServerLevel 引用）。 */
+    public static void clearSnapshots() {
+        COLUMBINA_SNAPSHOT.clear();
+    }
+
+    private static boolean scanColumbinaInParty(ServerLevel level) {
         for (Player p : level.players()) {
             PlayerCharactersAttachment att = p.getData(
                     AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);

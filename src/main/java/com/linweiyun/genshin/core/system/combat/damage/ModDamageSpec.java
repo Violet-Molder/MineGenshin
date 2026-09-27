@@ -7,6 +7,9 @@ import com.linweiyun.genshin.core.system.combat.decay.DecayGroup;
 import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.genshin.core.system.poise.HitImpact;
+import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
+import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -150,14 +153,136 @@ public class ModDamageSpec {
      */
     private float poiseDamage = Float.NaN;
 
-    /** 默认削韧：<b>普通攻击 0.15</b>，其余攻击方式一律 0。 */
+    /**
+     * 这一下的削韧系数 —— 来自招式数据里的 {@code Hit.poise}。
+     *
+     * <p>由 {@link Builder#build()} 从 {@code HitPoise.current()} 自动读走，
+     * 所以角色技能<b>一行都不用改</b>：它在「这一招的第几个伤害点」里建的伤害规格，
+     * 自然就带着那个伤害点的系数。
+     */
+    private float hitPoiseCoefficient = 1.0f;
+
+    /**
+     * 这一下的<b>冲击类型</b> —— 来自招式数据里的 {@code Hit.impact}。
+     *
+     * <p>由 {@link Builder#build()} 从 {@link HitImpact#current()} 自动读走；
+     * 破韧那一刻 {@code PoiseService.onBreak} 会把它交给冲击解算器。
+     *
+     * <p><b>{@code null} 是正常取值</b>：意思是「招式没写」，具体是哪一档由
+     * {@link #getHitImpact(PGCharacter)} 按攻击者的武器类型查
+     * {@link WeaponPoiseTable}，查不到再退回 {@link #defaultImpact(AttackType)}。
+     */
+    private ImpactLevel hitImpact = HitImpact.DEFAULT_IMPACT;
+
+    /**
+     * 按攻击类型查表得到的<b>基准削韧</b>。
+     *
+     * <h2>刻度</h2>
+     * 这一张表走的是<b>文献口径</b>（削韧与韧性条同一套刻度，见方案 §5 的方案 C）：
+     * 普攻 10 点、战技 15 点、大招 25 点，而护盾那边用一个显式折算
+     * （{@code ShieldService.POISE_TO_SHIELD}）把两套刻度解耦 ——
+     * 所以换刻度不会波及护盾的既有数值，换的时候也只改这一张表。
+     *
+     * <h2>具体值还是占位</h2>
+     * 用户已裁定「韧性表暂时不写」，所以这里是按攻击类型给的<b>统一占位值</b>，
+     * 不区分角色。以后要按角色逐招细分（文献的逐角色削韧表），
+     * 用 {@link #withPoiseDamage(float)} 在招式里覆盖，或者把表接进角色配置。
+     *
+     * <p>反应类伤害（剧变 / 月曜 / 星烁 / 扩散）在这里是 0：
+     * 它们的削韧按「反应」那张表走（超载 90、扩散 130…），属于后续批次，
+     * 不能拿「攻击类型」这张表去套。
+     */
     public static float defaultPoise(AttackType attackType) {
-        return attackType == AttackType.NORMAL_ATTACK ? 0.15f : 0f;
+        return switch (attackType) {
+            case NORMAL_ATTACK -> 10f;
+            case CHARGED_ATTACK -> 15f;
+            case PLUNGING_ATTACK -> 20f;
+            case ELEMENTAL_SKILL -> 15f;
+            case ELEMENTAL_BURST -> 25f;
+            // 怪物的一次普通攻击 —— 玩家就是靠它被打到破韧、动作被中断的
+            case MONSTER -> 10f;
+            default -> 0f;
+        };
     }
 
-    /** 实际削韧值：没显式设过就走默认。 */
+    /**
+     * 实际削韧值 = 基准削韧 × 这一下的系数（{@code Hit.poise}）。
+     *
+     * <p>基准的取法分三层，<b>顺序固定</b>：
+     * <ol>
+     *   <li>招式自己写的 {@link #withPoiseDamage(float)}（最优先，角色逐招微调用它）；</li>
+     *   <li>{@link WeaponPoiseTable}：普攻 / 重击 / 下坠由<b>武器类型</b>决定；</li>
+     *   <li>{@link #defaultPoise(AttackType)}：战技 / 爆发 / 怪物这类武器表管不着的兜底占位值。</li>
+     * </ol>
+     */
     public float getPoiseDamage() {
-        return Float.isNaN(this.poiseDamage) ? defaultPoise(this.attackType) : this.poiseDamage;
+        return getPoiseDamage(null);
+    }
+
+    /**
+     * 实际削韧值，并允许按<b>攻击者的武器类型</b>取基准。
+     *
+     * <p>和 {@link #getPoiseDamage()} 的差别只有一处：没有显式配过基准时，
+     * 先问 {@link WeaponPoiseTable}，拿不到才落回攻击类型表。
+     */
+    public float getPoiseDamage(@Nullable PGCharacter attacker) {
+        float base;
+        if (!Float.isNaN(this.poiseDamage)) {
+            base = this.poiseDamage;
+        } else {
+            float weaponBase = WeaponPoiseTable.basePoise(
+                    WeaponPoiseTable.weaponOf(attacker), this.attackType);
+            base = Float.isNaN(weaponBase) ? defaultPoise(this.attackType) : weaponBase;
+        }
+        return base * this.hitPoiseCoefficient;
+    }
+
+    /**
+     * 没显式写过冲击时，<b>按攻击类型</b>给的兜底档。
+     *
+     * <p>这张表只服务于「武器表管不着」的场合（怪物攻击、环境伤害）；
+     * 角色的普攻 / 重击 / 下坠一律先查 {@link WeaponPoiseTable}。
+     *
+     * <p>取值理由：<b>凡是攻击都必须能打断</b>（≥ 轻击 = 2），这是「破韧后攻击就能打断动作」
+     * 那条规则的另外一面；只有完全不产生冲击的来源（{@code SPECIAL}、反应类）才是无影响。
+     */
+    public static ImpactLevel defaultImpact(AttackType attackType) {
+        if (attackType == null) {
+            return ImpactLevel.NONE;
+        }
+        return switch (attackType) {
+            case NORMAL_ATTACK, ELEMENTAL_SKILL, MONSTER -> ImpactLevel.LIGHT;
+            case CHARGED_ATTACK, ELEMENTAL_BURST -> ImpactLevel.KNOCKBACK_WEAK;
+            case PLUNGING_ATTACK -> ImpactLevel.KNOCKBACK;
+            // 特殊/环境伤害与三种反应伤害：它们的冲击由反应表 / 调用方自己给
+            default -> ImpactLevel.NONE;
+        };
+    }
+
+    /** 这一下的冲击类型（破韧瞬间用）；{@code null} = 招式没写，见 {@link #getHitImpact(PGCharacter)}。 */
+    public ImpactLevel getHitImpact() {
+        return hitImpact;
+    }
+
+    /**
+     * 这一下的冲击类型，允许按攻击者的武器类型补默认值。
+     *
+     * <p>顺序：招式显式写的 → 武器表 → 攻击类型兜底表。
+     * 永远不会返回 {@code null}，破韧冲击的调用方可以放心直接用。
+     */
+    public ImpactLevel getHitImpact(@Nullable PGCharacter attacker) {
+        if (this.hitImpact != null) {
+            return this.hitImpact;
+        }
+        ImpactLevel fromWeapon = WeaponPoiseTable.baseImpact(
+                WeaponPoiseTable.weaponOf(attacker), this.attackType);
+        return fromWeapon != null ? fromWeapon : defaultImpact(this.attackType);
+    }
+
+    /** 显式指定这一下的冲击类型；null 视为无影响，不会被当成默认微颤。 */
+    public ModDamageSpec withHitImpact(ImpactLevel impact) {
+        this.hitImpact = impact != null ? impact : ImpactLevel.NONE;
+        return this;
     }
 
     /** 显式指定这一招的削韧值（负数夹到 0）。 */
@@ -377,7 +502,7 @@ public class ModDamageSpec {
     public void setStellarContributors(List<PGCharacter> contributors) { this.stellarContributors = contributors; }
 
     public ModDamageSpec withFlatDamageBonus(float newFlatBonus) {
-        return new ModDamageSpec(
+        ModDamageSpec copy = new ModDamageSpec(
                 this.attackType, this.element,
                 this.atkMultiplier, this.hpMultiplier, this.defMultiplier, this.emMultiplier,
                 this.skillMultiplierBonus, newFlatBonus,
@@ -387,6 +512,9 @@ public class ModDamageSpec {
                 this.stellarCoefficient, this.stellarBaseBonusMult, this.stellarBaseBonusFlat,
                 this.stellarReactionDamage
         );
+        copy.hitPoiseCoefficient = this.hitPoiseCoefficient;
+        copy.hitImpact = this.hitImpact;
+        return copy;
     }
 
     public ModDamageSpec withAttackerCharacter(PGCharacter character) {
@@ -408,6 +536,8 @@ public class ModDamageSpec {
         copy.stellarBaseBonusMultValue = this.stellarBaseBonusMultValue;
         copy.lunarContributors = this.lunarContributors;
         copy.stellarContributors = this.stellarContributors;
+        copy.hitPoiseCoefficient = this.hitPoiseCoefficient;
+        copy.hitImpact = this.hitImpact;
         return copy;
     }
 
@@ -539,13 +669,18 @@ public class ModDamageSpec {
         public Builder attackerCharacter(PGCharacter c) { this.attackerCharacter = c; return this; }
 
         public ModDamageSpec build() {
-            return new ModDamageSpec(
+            ModDamageSpec spec = new ModDamageSpec(
                     attackType, element,
                     atkMultiplier, hpMultiplier, defMultiplier, emMultiplier,
                     skillMultiplierBonus, flatDamageBonus,
                     elementAmount, decayGroup,
                     attackerCharacter
             );
+            // 这一下是哪个伤害点：系数由 ActionState 在触发伤害回调前挂好
+            spec.hitPoiseCoefficient = com.linweiyun.genshin.core.system.poise.HitPoise.current();
+            // 冲击类型同理：破韧那一刻由 PoiseService.onBreak 交给 ImpactSolver
+            spec.hitImpact = HitImpact.current();
+            return spec;
         }
     }
 

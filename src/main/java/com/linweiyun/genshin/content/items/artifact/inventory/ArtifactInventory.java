@@ -7,7 +7,8 @@ import com.linweiyun.genshin.content.items.weapon.WeaponItem;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -36,7 +37,7 @@ import java.util.List;
     public class ArtifactInventory implements Container, IPersistedSerializable {
 
     /** 日志记录器，用于输出调试信息 */
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     /** 装备槽位总数，5个圣遗物 + 1个武器 */
     public static final int SLOT_COUNT = 6;
@@ -54,6 +55,7 @@ import java.util.List;
     public static final int SLOT_CIRCLET = 4;
     /** 武器槽位索引 */
     public static final int SLOT_WEAPON = 5;
+
 
     // ==================== 持久化字段（会被自动保存到存档） ====================
     /** 生之花（Flower）圣遗物 */
@@ -80,7 +82,12 @@ import java.util.List;
      * 脏标记数组，用于追踪哪些槽位的数据发生了变化。
      * 常用于客户端-服务端同步或存档保存优化。
      */
-    private final boolean[] dirtyFlags = new boolean[SLOT_COUNT];
+    private final boolean[] dirtyFlags = new boolean[slotCount()];
+
+    /** 这个背包用到几个槽位；全武器类角色（林薇云）在子类里覆盖成 11 */
+    public int slotCount() {
+        return SLOT_COUNT;
+    }
 
     /**
      * 数据变化回调函数，当容器内容发生变化时触发。
@@ -163,7 +170,8 @@ import java.util.List;
      */
     public static boolean isValidForSlot(int slot, ItemStack stack) {
         if (stack.isEmpty()) return true;
-        if (slot == SLOT_WEAPON) {
+        // 5 及以上都是武器槽：全武器类角色一个武器种类一格（见 AllWeaponArtifactInventory）
+        if (slot >= SLOT_WEAPON) {
             return stack.getItem() instanceof WeaponItem;
         }
         if (!(stack.getItem() instanceof ArtifactItem artifact)) return false;
@@ -185,7 +193,7 @@ import java.util.List;
      * @param slot 槽位索引
      */
     public void markDirty(int slot) {
-        if (slot >= 0 && slot < SLOT_COUNT) {
+        if (slot >= 0 && slot < slotCount()) {
             dirtyFlags[slot] = true;
         }
     }
@@ -197,7 +205,7 @@ import java.util.List;
      * @return 如果该槽位被标记为脏则返回 true
      */
     public boolean isDirty(int slot) {
-        return slot >= 0 && slot < SLOT_COUNT && dirtyFlags[slot];
+        return slot >= 0 && slot < slotCount() && dirtyFlags[slot];
     }
 
     /**
@@ -206,7 +214,7 @@ import java.util.List;
      * @param slot 槽位索引
      */
     public void clearDirty(int slot) {
-        if (slot >= 0 && slot < SLOT_COUNT) {
+        if (slot >= 0 && slot < slotCount()) {
             dirtyFlags[slot] = false;
         }
     }
@@ -217,7 +225,7 @@ import java.util.List;
      * @return 如果至少有一个槽位被标记为脏则返回 true
      */
     public boolean hasDirtySlots() {
-        for (int i = 0; i < SLOT_COUNT; i++) {
+        for (int i = 0; i < slotCount(); i++) {
             if (dirtyFlags[i]) return true;
         }
         return false;
@@ -226,13 +234,13 @@ import java.util.List;
     // ==================== 私有辅助方法：槽位与字段映射 ====================
 
     /**
-     * 根据槽位索引获取对应的物品堆（私有辅助方法）
+     * 根据槽位索引获取对应的物品堆（子类覆盖它就能多出几格，见 {@code AllWeaponArtifactInventory}）
      *
      * @param slot 槽位索引
      * @return 对应槽位的物品堆
      * @throws IllegalStateException 如果槽位索引不合法
      */
-    private ItemStack getStackBySlot(int slot) {
+    protected ItemStack getStackBySlot(int slot) {
         return switch (slot) {
             case SLOT_FLOWER -> flower;
             case SLOT_PLUME -> plume;
@@ -250,7 +258,7 @@ import java.util.List;
      * @param slot  槽位索引
      * @param stack 要设置的物品堆
      */
-    private void setStackBySlot(int slot, ItemStack stack) {
+    protected void setStackBySlot(int slot, ItemStack stack) {
         switch (slot) {
             case SLOT_FLOWER -> flower = stack;
             case SLOT_PLUME -> plume = stack;
@@ -270,7 +278,7 @@ import java.util.List;
      */
     @Override
     public int getContainerSize() {
-        return SLOT_COUNT;
+        return slotCount();
     }
 
     /**
@@ -417,7 +425,7 @@ import java.util.List;
         sands = ItemStack.EMPTY;
         goblet = ItemStack.EMPTY;
         circlet = ItemStack.EMPTY;
-        for (int i = 0; i < SLOT_COUNT; i++) {
+        for (int i = 0; i < slotCount(); i++) {
             markDirty(i);
         }
         setChanged();

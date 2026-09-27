@@ -40,6 +40,26 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
     private Identifier defaultTexture;
     private Identifier defaultAnimation;
 
+    /**
+     * 角色数据里<b>声明</b>的那三项（读取时的第二候选）。
+     *
+     * <p>只有角色数据声明了「不在自己目录里」的路径时才用得上；声明的是自己目录那条时
+     * 它与主选相同，{@link AssetFallback} 会自动跳过它。
+     */
+    private Identifier declaredModel;
+    private Identifier declaredTexture;
+    private Identifier declaredAnimation;
+
+    /**
+     * <b>共用目录</b>里的三项（读取时的最后一档，即 {@code character/default/} 那一套）。
+     *
+     * <p>角色用它们是「先看自己目录、没有才借共用的那一份」，三项各自独立判断，
+     * 判据在 {@link AssetFallback}。不设置 = 不借（行为与从前一致）。
+     */
+    private Identifier sharedModel;
+    private Identifier sharedTexture;
+    private Identifier sharedAnimation;
+
     /** 这个模型属于哪个角色；为 null 时默认规则不接管。 */
     @Nullable
     private String characterId;
@@ -67,6 +87,27 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
         if (model != null) this.defaultModel = model;
         if (texture != null) this.defaultTexture = texture;
         if (animation != null) this.defaultAnimation = animation;
+    }
+
+    /** 写「角色数据里声明的那条」（第二候选）。传 null 的项保持不变。 */
+    public void setDeclaredPaths(@Nullable Identifier model, @Nullable Identifier texture,
+                                 @Nullable Identifier animation) {
+        if (model != null) this.declaredModel = model;
+        if (texture != null) this.declaredTexture = texture;
+        if (animation != null) this.declaredAnimation = animation;
+    }
+
+    /**
+     * 写「共用目录那一套」（最后一档）。传 null 的项保持不变。
+     *
+     * <p>角色模型按 {@link GenshinAssets#defaultModel()} / {@link GenshinAssets#defaultTexture()} /
+     * {@link GenshinAssets#defaultAnimation()} 挂，也就是 {@code character/default/} 里的三项。
+     */
+    public void setSharedPaths(@Nullable Identifier model, @Nullable Identifier texture,
+                               @Nullable Identifier animation) {
+        if (model != null) this.sharedModel = model;
+        if (texture != null) this.sharedTexture = texture;
+        if (animation != null) this.sharedAnimation = animation;
     }
 
     /** 换角色：同时按新角色重算默认路径。 */
@@ -133,17 +174,23 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
 
     @Override
     public Identifier getModelResource(com.geckolib.renderer.base.GeoRenderState renderState) {
-        return rewrite(GeoAssetKind.MODEL, defaultModel);
+        return AssetFallback.model(rewrite(GeoAssetKind.MODEL, defaultModel),
+                rewrite(GeoAssetKind.MODEL, declaredModel),
+                rewrite(GeoAssetKind.MODEL, sharedModel));
     }
 
     @Override
     public Identifier getTextureResource(com.geckolib.renderer.base.GeoRenderState renderState) {
-        return rewrite(GeoAssetKind.TEXTURE, defaultTexture);
+        return AssetFallback.texture(rewrite(GeoAssetKind.TEXTURE, defaultTexture),
+                rewrite(GeoAssetKind.TEXTURE, declaredTexture),
+                rewrite(GeoAssetKind.TEXTURE, sharedTexture));
     }
 
     @Override
     public Identifier getAnimationResource(T animatable) {
-        return rewrite(GeoAssetKind.ANIMATION, defaultAnimation);
+        return AssetFallback.animation(rewrite(GeoAssetKind.ANIMATION, defaultAnimation),
+                rewrite(GeoAssetKind.ANIMATION, declaredAnimation),
+                rewrite(GeoAssetKind.ANIMATION, sharedAnimation));
     }
 
     /** 把默认路径过一遍规则链；链上没人接管就原样返回。 */

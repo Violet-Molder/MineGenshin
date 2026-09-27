@@ -2,7 +2,6 @@ package com.linweiyun.genshin.client.render.character;
 
 import com.linweiyun.genshin.core.character.CharacterHelper;
 
-import com.linweiyun.genshin.config.character.CharacterSystemConfig;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActions;
@@ -10,8 +9,13 @@ import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimat
 import com.linweiyun.genshin.core.system.combat.animation.config.FirstPersonAnims;
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo;
+import com.linweiyun.genshin.client.render.character.appearance.CharacterPropBones;
+import com.linweiyun.genshin.client.render.character.appearance.CharacterFaceBones;
+import com.linweiyun.genshin.client.render.character.appearance.CharacterPuppetBones;
+import com.linweiyun.genshin.client.render.character.appearance.CharacterAppearanceOptionBones;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -74,7 +78,7 @@ import java.util.Set;
  */
 public final class FirstPersonCharacterRenderer {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
 
     /** 头部骨骼名（模型里 {@code head} 的子骨骼是 hair / ear_left / ear_right / eyes / eyelid / eyebrows）。 */
     private static final String HEAD_BONE = "head";
@@ -121,11 +125,7 @@ public final class FirstPersonCharacterRenderer {
             return;
         }
 
-        // 关了特殊模型 / 这个角色没开第一人称 → 原版手臂
-        if (!CharacterSystemConfig.customModel(charId)) {
-            return;
-        }
-
+        // 这个角色没开第一人称 → 原版手臂
         CharacterAnimations animations = CharacterActions.animationsFor(player);
         FirstPersonAnims firstPerson = animations == null ? FirstPersonAnims.DISABLED : animations.firstPerson();
         if (firstPerson == null || !firstPerson.enabled()) {
@@ -202,9 +202,21 @@ public final class FirstPersonCharacterRenderer {
                 .gameRenderState().levelRenderState.cameraRenderState;
 
         // 藏头：相机在头壳内部，不藏就是「从里面看内壁」
+        // 木偶套件（坐骑 / 法吉偶 / 屏幕 / 齿轮）同理要藏 —— 第一人称下它们会糊在镜头边缘。
+        // 这里用 hideAllUpdater 而不是 updaterFor：第一人称下四个道具一律不画，
+        // 不看动画状态（第三人称那条路在普攻/重击里会让屏幕出场）。
         target.renderer().performRenderPass(target.animatable(), player, poseStack,
                 event.getSubmitNodeCollector(), cameraState, event.getPackedLight(),
-                event.getPartialTick(), HIDE_HEAD);
+                event.getPartialTick(),
+                CharacterRenderDispatcher.combine(HIDE_HEAD,
+                        CharacterRenderDispatcher.combine(CharacterPropBones.hideAllUpdater(),
+                                CharacterRenderDispatcher.combine(CharacterFaceBones.updaterFor(player),
+                                        CharacterRenderDispatcher.combine(
+                                                CharacterPuppetBones.updaterFor(player),
+                                                // 手里那把武器：第一人称也跟着「常态显示武器」走
+                                                //（关着时和以前一样全藏）
+                                                CharacterAppearanceOptionBones.updaterFor(
+                                                        player, CharacterHelper.getCurrentCharacter(player)))))));
 
         poseStack.popPose();
 

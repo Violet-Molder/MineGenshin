@@ -6,7 +6,7 @@ import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
-import com.linweiyun.genshin.render.gui.screens.GUIServerHelperGIM;
+import com.linweiyun.genshin.client.render.gui.screen.ScreenNavigator;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -73,33 +73,36 @@ public class KeyInputHandler {
         // O：队伍界面
         boolean isODown = KeyMappingRegistry.O_KEY.get().isDown();
         if (isODown && !wasOKeyDown) {
-            GUIServerHelperGIM.openCharacterPartyScreen(player);
+            ScreenNavigator.openCharacterPartyScreen(player);
         }
         wasOKeyDown = isODown;
 
         // U：角色信息
         boolean isCharInfoDown = KeyMappingRegistry.CHARACTER_INFO_SCREEN_KEY.get().isDown();
         if (isCharInfoDown && !wasCharInfoKeyDown) {
-            GUIServerHelperGIM.openArtifactEquipScreen(player, -1);
+            ScreenNavigator.openArtifactEquipScreen(player, -1);
         }
         wasCharInfoKeyDown = isCharInfoDown;
 
         // B：背包
         boolean isArtifactDown = KeyMappingRegistry.ARTIFACT_EQUIP_SCREEN_KEY.get().isDown();
         if (isArtifactDown && !wasArtifactKeyDown) {
-            GUIServerHelperGIM.openBackpackScreen(player);
+            ScreenNavigator.openBackpackScreen(player);
         }
         wasArtifactKeyDown = isArtifactDown;
 
-        // N：升格
+        // N：升格界面（和「角色配置」换过位，2026-09-27 又换回来了：配置页留在 K）
         boolean isArtifact2Down = KeyMappingRegistry.ARTIFACT_EQUIP_SCREEN_KEY_2.get().isDown();
         if (isArtifact2Down && !wasArtifactKey2Down) {
-            GUIServerHelperGIM.openAscensionScreen(player);
+            ScreenNavigator.openAscensionScreen(player);
         }
         wasArtifactKey2Down = isArtifact2Down;
 
-        // K：配置界面
+        // K：角色配置页（页面由角色自己提供，见 ICharacterConfigUI）
         boolean isConfigDown = KeyMappingRegistry.CONFIG_SCREEN_KEY.get().isDown();
+        if (isConfigDown && !wasConfigKeyDown) {
+            ScreenNavigator.openCharacterConfigScreen(player);
+        }
         wasConfigKeyDown = isConfigDown;
 
         // 角色死亡/切换时把蓄力状态清掉，避免残留的按住标记卡住下一段

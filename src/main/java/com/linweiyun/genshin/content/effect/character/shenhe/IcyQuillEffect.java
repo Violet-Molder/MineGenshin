@@ -11,13 +11,14 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
 public class IcyQuillEffect implements ICharacterEffect {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
     public static final String ICY_QUILL_COUNT_KEY = "icy_quill_count";
 
     @Override

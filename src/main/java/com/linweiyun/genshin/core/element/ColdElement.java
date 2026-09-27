@@ -1,8 +1,9 @@
 package com.linweiyun.genshin.core.element;
 
 import net.minecraft.resources.Identifier;
+import com.linweiyun.genshin.core.system.control.ControlRequest;
+import com.linweiyun.genshin.core.system.control.ControlService;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -90,18 +91,22 @@ public class ColdElement extends GenshinElement {
     }
 
     /**
-     * 冻结：禁 AI。
+     * 冻结：禁 AI —— <b>走控制入口</b>。
+     *
+     * <p>用户口径（2026-09-25）：「所有控制类效果走一个入口，包括冻结的 NoAI。」
+     * 所以这里不再自己 {@code setNoAi}，而是发一次 {@link ControlRequest#freeze}：
+     * <ul>
+     *   <li>判据由实体给（{@code Controllable#blocksControl}）—— 首领一类实体可以在这里免疫冻结；
+     *       解冻请求永远放行，不然目标会被永久冻住；</li>
+     *   <li>效果也在实体上（{@code Controllable#freezeAction}），要改「冻住长什么样」只改那一处。</li>
+     * </ul>
      *
      * <p><b>覆盖范围是「所有非玩家 Mob」</b>，不区分是不是本模组的生物 —— 附着系统本身对任何
      * {@code LivingEntity} 都生效，原版僵尸被冻住也该被冻住。以前这条只认 {@code TeyvatLiving}，
-     * 于是「原版怪被冻住」永远不成立。
+     * 于是「原版怪被冻住」永远不成立；现在原版生物由 mixin 注入，
+     * 拿到的是同一套默认实现，这条依然成立。
      */
     private static void applyFreeze(LivingEntity entity, boolean frozen) {
-        if (!(entity instanceof Mob mob)) {
-            return;
-        }
-        if (mob.isNoAi() != frozen) {
-            mob.setNoAi(frozen);
-        }
+        ControlService.apply(entity, ControlRequest.freeze(frozen));
     }
 }

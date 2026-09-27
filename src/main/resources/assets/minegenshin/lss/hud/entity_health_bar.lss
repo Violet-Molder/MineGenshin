@@ -31,3 +31,26 @@
 .mob-health-bar .bar-container {
     background: sprite(minegenshin:gui/short_character_hp_green.png);
 }
+
+/* ================= 削韧条（MobPoiseBar） ================= */
+
+.mob-poise-bar {
+    fill-direction: RIGHT_TO_LEFT;
+    interpolate: false;
+    layout-direction: ltr;
+}
+
+/* 没破韧：金色，按「已攒削韧 ÷ 这一档的长度」从右往左长 */
+.mob-poise-bar.normal .bar-icon {
+    background: sprite(minegenshin:gui/short_character_hp_bar_white.png) color(#F2D159);
+}
+
+/* 破韧：整条变白 —— 一眼看出「现在这个破绽窗口是开着的」 */
+.mob-poise-bar.broken .bar-icon {
+    background: sprite(minegenshin:gui/short_character_hp_bar_white.png) color(#FFFFFF);
+}
+
+/* 空槽背景：压暗，别和血条抢视线 */
+.mob-poise-bar .bar-container {
+    background: sprite(minegenshin:gui/short_character_hp_green.png) color(#383F4C);
+}

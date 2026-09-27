@@ -11,7 +11,8 @@ import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.DescSynced;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import lombok.Getter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
@@ -47,7 +48,7 @@ import static net.minecraft.network.chat.Component.translatable;
 @Getter
 public class Vesna extends SwordCharacter implements IStellarHousehold, IStellarStateHolder {
     public static final String ID = "vesna";    public static final int UID = 115001;
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     public static final int WIND_RIDER_DURATION_TICKS = 15 * 20;
     /** 每层剑气 = 6 点能量 */

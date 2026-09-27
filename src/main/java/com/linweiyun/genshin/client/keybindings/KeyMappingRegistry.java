@@ -81,9 +81,8 @@ public class KeyMappingRegistry {
           new ActionKey("key.minegenshin.attack", InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             @Override
             protected void onPressed(LocalPlayer player) {
-              ActionStateMachine.isAttackButtonDown = true;
-              ActionStateMachine.attackHoldTimer = 0;
-              ActionStateMachine.tryAttack(player);
+              // 大剑（持续型重击）按下先不出普攻，见 ActionStateMachine#pressAttack
+              ActionStateMachine.pressAttack(player);
             }
 
             @Override
@@ -148,10 +147,22 @@ public class KeyMappingRegistry {
           new KeyMapping("key.minegenshin.artifact_equip_screen_key", InputConstants.Type.KEYSYM,
                   GLFW.GLFW_KEY_B, CATEGORY));
 
+  /** 升格界面（N）。 */
   public static final Lazy<KeyMapping> ARTIFACT_EQUIP_SCREEN_KEY_2 = Lazy.of(() ->
           new KeyMapping("key.minegenshin.artifact_equip_screen_key_2", InputConstants.Type.KEYSYM,
                   GLFW.GLFW_KEY_N, CATEGORY));
 
+  /**
+   * 角色配置页（K）。
+   *
+   * <p>这个键原来绑在 K 上、且在 {@code KeyInputHandler} 里<b>只读了 isDown 什么都没做</b>
+   * （空壳）。现在它真的接上了：打开当前出战角色的配置页
+   * （{@code ScreenNavigator.openCharacterConfigScreen}）。
+   *
+   * <p><b>2026-09-27 用户口径：就留在 K</b>（曾经计划过和「升格界面」对调、让配置页用 N，
+   * 后来取消）—— 所以这里绑 K，升格界面（{@link #ARTIFACT_EQUIP_SCREEN_KEY_2}）回到 N。
+   * 注意用户自己的 options.txt 里一直留着的也是 K，改回来之后文字与实机就一致了。
+   */
   public static final Lazy<KeyMapping> CONFIG_SCREEN_KEY = Lazy.of(() ->
           new KeyMapping("key.minegenshin.config_key", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, CATEGORY));
 

@@ -1,8 +1,10 @@
 package com.linweiyun.genshin.client.render.character;
 
 import com.linweiyun.genshin.client.render.geo.GenshinGeoModel;
+import com.linweiyun.genshin.core.asset.GenshinAssets;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import lombok.Getter;
 import org.slf4j.Logger;
 
@@ -17,7 +19,7 @@ import org.slf4j.Logger;
  */
 public class CharacterPlayerModel extends GenshinGeoModel<GenshinReplacedPlayer> {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
 
     @Getter
     private CharacterRenderData renderData;
@@ -26,22 +28,38 @@ public class CharacterPlayerModel extends GenshinGeoModel<GenshinReplacedPlayer>
         super();
     }
 
-    /** 切换角色：换 id 的同时按新角色重算三个默认路径。 */
+    /**
+     * 切换角色：换 id 的同时按新角色重算三项目标路径。
+     *
+     * <p>读取时的候选链是三档，三项各自独立判断（判据见 {@code AssetFallback}）：
+     * <ol>
+     *   <li><b>自己目录</b> {@code character/<角色id>/…}（{@code setCharacterId} 按 id 算出来）；</li>
+     *   <li><b>角色数据里声明的那条</b>（允许和 id 不同名）；</li>
+     *   <li><b>共用目录</b> {@code character/default/…}。</li>
+     * </ol>
+     * 所以「还没画自己的模型 / 只做了模型、贴图以后再补」都不需要改代码：
+     * 文件放进角色目录就自动生效，没放就往下借。
+     */
     public void updateRenderData(CharacterRenderData data) {
         if (data == null) {
             return;
         }
         this.renderData = data;
 
-        // 用 id 挂上，让默认路径规则能把这个模型认成「哪个角色的」
+        // ① 主选：角色自己目录（character/<角色id>/…），同时让默认路径规则认得出「这是哪个角色」
         setCharacterId(data.id());
-        // 再用角色数据里声明的文件名覆盖（允许和 id 不同名）
-        setPaths(data.modelIdentifier(), data.textureIdentifier(), data.animationIdentifier());
+        // ② 角色数据里声明的那条
+        setDeclaredPaths(data.modelIdentifier(), data.textureIdentifier(), data.animationIdentifier());
+        // ③ 共用目录：character/default/ 那一套
+        setSharedPaths(GenshinAssets.defaultModel(), GenshinAssets.defaultTexture(),
+                GenshinAssets.defaultAnimation());
         // 额外动画文件（第一人称、动作包……）
         setAnimationFallbackPaths(data.extraAnimationPaths());
 
-        LOGGER.info("[CharacterPlayerModel] 角色 '{}' 路径: model={}, texture={}, animation={}, 额外动画={}",
+        LOGGER.info("[CharacterPlayerModel] 角色 '{}' 路径: 自己={}/{}/{}，声明={}/{}/{}，共用={}/{}/{}，额外动画={}",
                 data.id(), defaultModelResource(), defaultTextureResource(), defaultAnimationResource(),
+                data.modelIdentifier(), data.textureIdentifier(), data.animationIdentifier(),
+                GenshinAssets.defaultModel(), GenshinAssets.defaultTexture(), GenshinAssets.defaultAnimation(),
                 data.extraAnimationPaths());
     }
 }

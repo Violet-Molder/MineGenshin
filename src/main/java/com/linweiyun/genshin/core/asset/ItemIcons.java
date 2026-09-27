@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.core.asset;
 
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -43,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class ItemIcons {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     /** 找不到任何图时用的兜底。 */
     public static final String EMPTY = GenshinAssets.MOD_ID + ":gui/empty.png";

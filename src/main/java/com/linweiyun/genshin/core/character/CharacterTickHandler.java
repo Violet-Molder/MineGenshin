@@ -78,6 +78,9 @@ public class CharacterTickHandler {
                     if (player instanceof ServerPlayer sp) {
                         NetworkManager.setGenshinModeToPlayer(sp, false);
                     }
+                    // 全灭被动退出：这里也要把角色属性折算回玩家身上
+                    com.linweiyun.genshin.core.system.compat.PlayerStatBridge
+                            .onGenshinModeChanged(player, false);
                 }
             }
         }

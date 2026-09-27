@@ -19,8 +19,10 @@ public final class DocCatalog {
             new Doc("sys-attribute-effect", "属性与角色效果", "docs/systems/attribute-effect.md", "系统详解"),
             new Doc("sys-loot-monster", "掉落与怪物等级", "docs/systems/loot-monster.md", "系统详解"),
             new Doc("sys-shield-status", "护盾与状态", "docs/systems/shield-status.md", "系统详解"),
+            new Doc("sys-poise-control", "韧性与控制", "docs/systems/poise-control.md", "系统详解"),
             new Doc("sys-render-asset", "资源、渲染与界面", "docs/systems/render-asset.md", "系统详解"),
             new Doc("sys-network-event", "网络、事件与数据生成", "docs/systems/network-event-datagen.md", "系统详解"),
+            new Doc("sys-performance", "性能优化系统", "docs/systems/performance.md", "系统详解"),
             // 现有深入文档
             new Doc("entity-development", "实体开发文档", "web/src/main/resources/static/entity-development.html", "深入文档"),
             new Doc("entity-ai", "实体 AI 指南", "docs/entity-ai-goal-guide.md", "深入文档"),

@@ -10,7 +10,8 @@ import com.linweiyun.genshin.core.asset.ModAssetPaths;
 import com.linweiyun.genshin.core.asset.GenshinAssets;
 import com.linweiyun.genshin.core.asset.pack.GeoPackSource;
 import com.linweiyun.genshin.core.asset.pack.GenshinGsonLoader;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -59,6 +60,8 @@ import java.util.concurrent.Executor;
  * 扫描时把「磁盘上有什么」与「包里有什么」拼成同一张候选表：包内条目按同一套路径 / 后缀规则
  * 参与扫描，读取走 {@link GenshinGsonLoader#readPacked}。找得到整包读取器的环境才读得出包，
  * 找不到的环境包内为空，模型 / 动画自然显示不出来。
+ * 两边同名时用哪一份由 {@link GeoPackSource#usePacked} 裁定：<b>包内条目优先</b>
+ * （磁盘上同名位置另有一份随包副本，两份不等价），{@code local/} 那一份例外。
  *
  * <h2>两种资源</h2>
  * 对象目录里还有一个免打包子目录 {@code local/}（见 {@code ModAssetPaths.LOCAL_DIR}）：
@@ -69,7 +72,7 @@ import java.util.concurrent.Executor;
  */
 public final class GenshinGeoCache implements PreparableReloadListener {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
 
     /**
      * GeckoLib 的默认烘培器（Gson）的「能读整包」版。
@@ -250,7 +253,7 @@ public final class GenshinGeoCache implements PreparableReloadListener {
         Map<Identifier, BakedAnimations> foundAnimations = new HashMap<>(animations);
         MathParser mathParser = MathParser.createWithDeduplication();
 
-        // 整包里的条目：磁盘上没有同名文件时才用它们（磁盘优先，开发期丢一份文件进去可覆盖）
+        // 整包里的条目：同名时用哪一份由 GeoPackSource.usePacked 裁定（整包优先，local/ 例外）
         Map<Identifier, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
 
         for (String root : ROOTS) {
@@ -282,6 +285,8 @@ public final class GenshinGeoCache implements PreparableReloadListener {
             ordered.addAll(localFiles);
 
             int before = foundModels.size() + foundAnimations.size();
+            int fromDisk = 0;
+            int fromPack = 0;
             for (Identifier raw : ordered) {
                 String path = raw.getPath();
 
@@ -298,9 +303,20 @@ public final class GenshinGeoCache implements PreparableReloadListener {
                 // 免打包目录不算资源身份：character/x/local/y 与 character/x/y 是同一个键
                 Identifier key = ModAssetPaths.withoutLocalDir(GeckoLibResources.stripPrefixAndSuffix(raw));
 
-                // 两个来源二选一：磁盘上的文件优先，否则用整包里那份
-                Resource onDisk = resources.get(raw);
-                byte[] packed = onDisk == null ? packedEntries.get(raw) : null;
+                // 两个来源二选一：判据统一在 GeoPackSource.usePacked（整包优先、local/ 例外）。
+                // 同名位置在磁盘上另有一份随包副本，两份不等价，不能按「磁盘优先」来挑。
+                byte[] packed = GeoPackSource.usePacked(raw, packedEntries.containsKey(raw))
+                        ? packedEntries.get(raw)
+                        : null;
+                Resource onDisk = packed == null ? resources.get(raw) : null;
+                if (packed == null && onDisk == null) {
+                    continue;
+                }
+                if (packed != null) {
+                    fromPack++;
+                } else {
+                    fromDisk++;
+                }
 
                 try {
                     if (isModel) {
@@ -320,8 +336,8 @@ public final class GenshinGeoCache implements PreparableReloadListener {
             }
 
             LOGGER.info("[GenshinGeoCache] 扫描根 '{}'：命中资源 {} 个（磁盘 {} / 资源包 {}），烘培成功 {} 个",
-                    root, candidates.size(), resources.size(),
-                    candidates.size() - resources.size(), foundModels.size() + foundAnimations.size() - before);
+                    root, candidates.size(), fromDisk, fromPack,
+                    foundModels.size() + foundAnimations.size() - before);
         }
 
         return new Scanned(Map.copyOf(foundModels), Map.copyOf(foundAnimations));

@@ -10,7 +10,8 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -30,7 +31,7 @@ import java.util.List;
  */
 public class ColumbinaSkill extends SkillBase {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
     private static final float[] COMBO_MULTIPLIERS = {0.4f, 0.45f, 0.6f};
     private static final float CHARGED_HP_RATIO = 0.03f;
 

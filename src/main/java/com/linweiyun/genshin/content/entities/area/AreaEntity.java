@@ -6,7 +6,8 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -39,7 +40,7 @@ import java.util.UUID;
  */
 public abstract class AreaEntity extends Entity implements IPersistedSerializable {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     /**
      * 寿命诊断日志开关（排查「领域不会自然消亡」用，平时留 false）。

@@ -67,7 +67,7 @@ public final class VodyanitsaResources {
         ActionStep charge = new ActionStep(
                 "charge", 30, 10, 3,
                 List.of(),
-                List.of(new Hit(10, 3.0, 1.5, 1.0, 0.0, 3.5, false)),
+                List.of(new Hit(10, 3.0, 1.5, 3.5)),
                 List.of(),
                 0, 2, 0, 0
         ).withEngagement(NO_GENERIC_MOVE).withAttackRange(ATTACK_RANGE);
@@ -76,7 +76,7 @@ public final class VodyanitsaResources {
         ActionStep skill = new ActionStep(
                 "skill", 30, 14, 3,
                 List.of(),
-                List.of(new Hit(10, 4.0, 1.0, 1.0, 0.0, 4.0, false)),
+                List.of(new Hit(10, 4.0, 1.0, 4.0)),
                 List.of(),
                 0, 0, Vodyanitsa.SKILL_COOLDOWN_TICKS, 0
         ).withEngagement(NO_GENERIC_MOVE).withAttackRange(ATTACK_RANGE);
@@ -85,7 +85,7 @@ public final class VodyanitsaResources {
         ActionStep burst = new ActionStep(
                 "burst", 40, 40, 4,
                 List.of(),
-                List.of(new Hit(12, 6.0, 1.0, 1.0, 0.0, 6.0, false)),
+                List.of(new Hit(12, 6.0, 1.0, 6.0)),
                 List.of(),
                 0, 0, Vodyanitsa.BURST_COOLDOWN_TICKS, 0
         ).withEngagement(NO_GENERIC_MOVE).withAttackRange(ATTACK_RANGE);
@@ -112,7 +112,7 @@ public final class VodyanitsaResources {
         return new ActionStep(
                 animation, duration, hitDelay + 2, priority,
                 List.of(),
-                List.of(new Hit(hitDelay, 1.5, 1.5, 1.0, 0.0, scope, false)),
+                List.of(new Hit(hitDelay, 1.5, 1.5, scope)),
                 List.of(),
                 0, soundCharge, 0, comboWindow
         ).withEngagement(NO_GENERIC_MOVE).withAttackRange(ATTACK_RANGE);

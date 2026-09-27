@@ -50,14 +50,15 @@ final class DirectDamagePipeline {
         PGCharacter targetCharacter = AttackerResolver.resolveCharacter(target);
         boolean hasAttacker = attacker != null;
 
+        // 日志不输出时（见 DamageTrace#active）连头部的字符串都不拼
+        boolean tracing = DamageTrace.active();
         DamageTrace trace = DamageTrace.start("直伤");
-        trace.headAttack(spec.getAttackType(), spec.getElement())
-                .headEntities(sourceEntity, target, hasAttacker ? attacker.getName() : null);
+        if (tracing) {
+            trace.headAttack(spec.getAttackType(), spec.getElement())
+                    .headEntities(sourceEntity, target, hasAttacker ? attacker.getName() : null);
+        }
 
         // ── ⓪ 基础伤害区 ──
-        DamageZones.ZoneText baseZone = hasAttacker
-                ? DamageZones.baseZoneText(attacker, spec)
-                : new DamageZones.ZoneText("0", "0");
         float baseDamage = hasAttacker ? DamageZones.baseDamage(attacker, spec) : 0f;
 
         // ── ① 衰减 ──
@@ -145,9 +146,6 @@ final class DirectDamagePipeline {
         DamageZones.CritRoll critRoll = DamageZones.rollCrit(attacker, spec);
         spec.setCrit(critRoll.isCrit());
         float baseMultiplierBonus = hasAttacker ? spec.getSkillMultiplierBonus() : 0f;
-        DamageZones.ZoneText bonusZone = hasAttacker
-                ? DamageZones.damageBonusZoneText(attacker, spec)
-                : new DamageZones.ZoneText("1", "1");
         float elementalBonus = hasAttacker ? DamageZones.elementalBonus(attacker, spec) : 0f;
         float effectBonus = hasAttacker ? DamageZones.effectBonus(attacker, spec) : 0f;
         // 按招式盖的增伤（也在增伤区；天赋自己算好的那一档）
@@ -185,28 +183,40 @@ final class DirectDamagePipeline {
         //     展开公式 伤害 = 【攻击力 × 攻击力倍率 + 附加伤害】 × 【1 + 暴击伤害】 × …
         //     数值　　 伤害 = 【1144.625 × 0.130 + 0】        × 【1 + 0.966】    × …
         //     （直接把 1.966 填进去的话，就没法把数字和公式里的名字对应起来了。）
-        trace.zone("基础区", baseZone.formula(), baseZone.value());
-        trace.zone("暴击区", "1 + 暴击伤害",
-                critRoll.isCrit() ? "1 + " + DamageTrace.fmt(critRoll.critDamage()) : "1");
-        trace.zone("倍率区", "1 + 倍率提升", "1 + " + DamageTrace.fmt(baseMultiplierBonus));
-        trace.zone("增伤区", bonusZone.formula(), bonusZone.value());
-        trace.zone("防御区", "(攻方等级×5+500)/(攻方等级×5+500+守方防御)",
-                "(" + attackerLevel + "×5+500)/(" + attackerLevel + "×5+500+"
-                        + DamageTrace.fmt(defenderDefense) + ")");
-        trace.zone("抗性区", "1 - 抗性", "1 - " + DamageTrace.fmt(rawResistance));
-        if (amplifying) {
-            trace.zone("反应倍率区", "反应倍率", DamageTrace.fmt(amplifyMultiplier));
-            float em = (float) DamageZones.elementalMastery(hasAttacker ? attacker : null);
-            trace.zone("反应加成区", "1 + 2.78×元素精通/(元素精通+1400)",
-                    "1 + 2.78×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+1400)");
+        //
+        // 整块包在 tracing 里：这里是每次直伤最贵的一段字符串拼接（含若干次 fmt），
+        // 日志不输出时它纯粹是白干（见 DamageTrace#active）。
+        if (tracing) {
+            DamageZones.ZoneText baseZone = hasAttacker
+                    ? DamageZones.baseZoneText(attacker, spec)
+                    : new DamageZones.ZoneText("0", "0");
+            DamageZones.ZoneText bonusZone = hasAttacker
+                    ? DamageZones.damageBonusZoneText(attacker, spec)
+                    : new DamageZones.ZoneText("1", "1");
+
+            trace.zone("基础区", baseZone.formula(), baseZone.value());
+            trace.zone("暴击区", "1 + 暴击伤害",
+                    critRoll.isCrit() ? "1 + " + DamageTrace.fmt(critRoll.critDamage()) : "1");
+            trace.zone("倍率区", "1 + 倍率提升", "1 + " + DamageTrace.fmt(baseMultiplierBonus));
+            trace.zone("增伤区", bonusZone.formula(), bonusZone.value());
+            trace.zone("防御区", "(攻方等级×5+500)/(攻方等级×5+500+守方防御)",
+                    "(" + attackerLevel + "×5+500)/(" + attackerLevel + "×5+500+"
+                            + DamageTrace.fmt(defenderDefense) + ")");
+            trace.zone("抗性区", "1 - 抗性", "1 - " + DamageTrace.fmt(rawResistance));
+            if (amplifying) {
+                trace.zone("反应倍率区", "反应倍率", DamageTrace.fmt(amplifyMultiplier));
+                float em = (float) DamageZones.elementalMastery(hasAttacker ? attacker : null);
+                trace.zone("反应加成区", "1 + 2.78×元素精通/(元素精通+1400)",
+                        "1 + 2.78×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+1400)");
+            }
+            trace.zone("大权区", "1 + 大权加成", "1 + " + DamageTrace.fmt(spec.getSovereigntyBonus()));
+            trace.zone("衰减区", "衰减伤害系数", DamageTrace.fmt(decayCoefficient));
+            if (immuneToDamage) {
+                trace.zone("免疫区", "元素免疫", "0");
+            }
+            trace.result(finalDamage);
+            trace.log();
         }
-        trace.zone("大权区", "1 + 大权加成", "1 + " + DamageTrace.fmt(spec.getSovereigntyBonus()));
-        trace.zone("衰减区", "衰减伤害系数", DamageTrace.fmt(decayCoefficient));
-        if (immuneToDamage) {
-            trace.zone("免疫区", "元素免疫", "0");
-        }
-        trace.result(finalDamage);
-        trace.log();
         return finalDamage;
     }
 

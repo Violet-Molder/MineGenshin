@@ -1625,8 +1625,9 @@ Minecraft 渲染玩家
 
 | 方法 | 输入（Vesna） | 输出（相对路径） |
 |---|---|---|
-| `GenshinAssets.defaultModelPath()` | — | `character/default/default.geo.json` |
-| `GenshinAssets.defaultTexturePath()` | — | `character/default/textures/default.png` |
+| `GenshinAssets.defaultModelPath()` | — | `character/linweiyun/linweiyun.geo.json` |
+| `GenshinAssets.defaultTexturePath()` | — | `character/linweiyun/textures/linweiyun.png` |
+| `GenshinAssets.defaultAnimationPath()` | — | `character/linweiyun/linweiyun.animation.json` |
 | `GenshinAssets.characterAnimationPath(id)` | `"vesna"` | `character/vesna/vesna.animation.json` |
 | `GenshinAssets.characterModelPath(id)` | `"vesna"` | `character/vesna/vesna.geo.json`（专属模型时） |
 
@@ -1635,10 +1636,15 @@ Minecraft 渲染玩家
 对应磁盘位置：
 
 ```
-assets/minegenshin/character/default/default.geo.json
-assets/minegenshin/character/default/textures/default.png
+assets/minegenshin/character/linweiyun/linweiyun.geo.json
+assets/minegenshin/character/linweiyun/textures/linweiyun.png
 assets/minegenshin/character/vesna/vesna.animation.json
 ```
+
+> 这三行是**逻辑路径**，也是代码里写的路径。自带资源的模型与动画实际收在资源包
+> （整包一个文件，详见 9.1）里；
+> 要覆盖其中某一条，把同名文件放进对象目录下的 `local/` 即可 —— 明文直读、同名优先，
+> 逻辑路径与缓存键都不变。
 
 ## 5.3 动画控制器在渲染里的位置
 
@@ -2653,10 +2659,10 @@ target = SUMMON_TARGETING.resolve(
 ```
 assets/minegenshin/
 ├── character/<角色id>/      ← 角色：一个角色一个文件夹，内部再按类型分
-│      vesna.geo.json          （可选，默认共用 character/default/default.geo.json）
+│      vesna.geo.json          （可选，缺项时共用 character/linweiyun/linweiyun.geo.json）
 │      vesna.animation.json
 │      vesna_fp.animation.json （可选，第一人称单独一个文件）
-│      textures/vesna.png      （角色模型贴图；默认共用 character/default/textures/default.png）
+│      textures/vesna.png      （角色模型贴图；缺项时共用 character/linweiyun/textures/linweiyun.png）
 │      textures/avatar.png     ← 列表头像
 │      textures/avatar_hud.png ← HUD / 圣遗物佩戴者叠加头像
 │      textures/pose_prepare.png  ← 编队立绘：可选中的角色
@@ -2666,6 +2672,7 @@ assets/minegenshin/
 │      sounds/
 │            attack_1.ogg      ← 丢进来就生效：事件名 = <角色id>_<文件名>
 │            skill.ogg
+│      local/<名字>.geo.json    ← 自己的模型 / 动画放这里：明文直读，同名时优先
 ├── item/<物品id>/           ← 物品：入口文件 + 贴图与图标
 │      definition.json         物品定义（原版入口 items/<id>.json）
 │      model.json              平面模型（原版入口 models/item/<id>.json）
@@ -2683,6 +2690,20 @@ assets/minegenshin/
 ├── icon/<分类>/<名字>.png    ← 跨对象图标（elemental/pyro.png 等）
 └── lang/                     ← 原版语言文件（唯一剩下的原版入口）
 ```
+
+**模型与动画：资源包 + `local/` 明文目录。** 自带角色的模型与动画**不再以一份份可读 JSON
+出现在仓库与发行包里**，而是收进一个资源包（整包一个文件，具体位置属实现细节）。
+对外只有三条约定：
+
+1. **逻辑路径不变**：代码里照旧写 `character/vesna/vesna.geo.json`，后缀判断、缓存键、
+   目录索引全部沿用本文档的规则，读取侧只换了「字节从哪来」；
+2. **自己的模型 / 动画放 `local/`**：`character/<角色id>/local/vesna.geo.json`、
+   `entity/<实体id>/local/<id>.animation.json` 这类路径**明文直读**，放进去重启即生效，
+   同名时**`local/` 里那份优先于资源包**；
+3. **磁盘优先于资源包**：同一逻辑路径仓库里也有文件时以文件为准，方便临时对照调试。
+
+`local/` 只是「从哪读、谁优先」，**不算资源身份**：`character/vesna/local/vesna.geo.json` 与
+`character/vesna/vesna.geo.json` 是同一个键，所以 `CharacterRenderData` 和调用方一个字都不用改。
 
 **纹理与音频各占一个子目录**：一个角色以后会有很多张图（模型贴图、头像、立绘、图标）和很多条语音，
 所以对象内部按类型再分一层 `textures/` 与 `sounds/`；模型与动画留在对象根（文件名自带类型后缀）。
@@ -2810,7 +2831,7 @@ GeoPathOverrides.forNamespace("minegenshin", (kind, owner, original) -> ...);   
 | 第二轮位置 | 当前位置 |
 |---|---|
 | `character/<id>/avatar.png` 等 5 张角色图 | `character/<id>/textures/*.png` |
-| `character/default/textures/default.png` | `character/default/textures/default.png` |
+| `character/linweiyun/textures/linweiyun.png` | `character/linweiyun/textures/linweiyun.png` |
 | `item/<id>/texture.png`、`item/<id>/icon.png` | `item/<id>/textures/{texture,icon}.png` |
 | `entity/<id>/<id>.png` | `entity/<id>/textures/<id>.png` |
 | `items/<id>.json`、`models/item/<id>.json`、`textures/item/<id>.png` | `item/<id>/definition.json`、`item/<id>/model.json`、`item/<id>/textures/texture.png` |
@@ -2832,8 +2853,8 @@ GeoPathOverrides.forNamespace("minegenshin", (kind, owner, original) -> ...);   
 
 ```java
 // ① 默认：共用模型 + 共用贴图 + 自己的动画
-//    character/default/default.geo.json
-//    character/default/textures/default.png
+//    character/linweiyun/linweiyun.geo.json
+//    character/linweiyun/textures/linweiyun.png
 //    character/vesna/vesna.animation.json
 CharacterRenderData.character("vesna", mapping, 1.0f, mounts...);
 
@@ -2869,8 +2890,8 @@ new CharacterRenderData(
 
 | 资源 | 默认位置 | 谁决定 | 怎么改 |
 |---|---|---|---|
-| 模型 | `character/default/default.geo.json` | `CharacterRenderData.modelPath` | ①②③④ 任一 |
-| 贴图 | `character/default/textures/default.png` | `CharacterRenderData.texturePath` | ①②③④ 任一 |
+| 模型 | `character/linweiyun/linweiyun.geo.json` | `CharacterRenderData.modelPath` | ①②③④ 任一 |
+| 贴图 | `character/linweiyun/textures/linweiyun.png` | `CharacterRenderData.texturePath` | ①②③④ 任一 |
 | 动画 | `character/<id>/<id>.animation.json` | `CharacterRenderData.animationPath` | ①②③④ 任一 |
 | 额外动画 | 无 | `withAnimationFile(...)` | 链式追加 |
 | 音效文件 | `character/<id>/sounds/*.ogg` | 约定（`GenshinAssets`） | 见 [10.5](#105-音效文件放哪怎么被加载) |
@@ -2907,9 +2928,9 @@ GeoPathOverrides.register((kind, owner, original) -> {
 
 ```
 src/main/resources/assets/minegenshin/character/lumine/
-      lumine.geo.json
       lumine.png
-      lumine.animation.json
+      local/lumine.geo.json          ← 模型 / 动画明文放这里（自带资源走资源包，见 9.1）
+      local/lumine.animation.json
       sounds.json                 （可选）
       sounds/*.ogg                （可选）
 ```
@@ -3193,7 +3214,9 @@ RenderHandEvent（NeoForge 游戏总线，每只手各发一次）
 
 1. **不用建新模型，用同一个 `.geo.json`**。第一人称动画和第三人称动画共享骨骼，
    只是另一个 `.animation.json` 文件。我把它们分成两个文件就是为了互不干扰。
-2. **打开 Blockbench → 加载 `character/default/default.geo.json`**（Geo 模型格式）。
+2. **打开 Blockbench → 加载角色模型的 `.geo.json`**（Geo 模型格式）。
+   仓库里自带的模型收在资源包中（见 9.1），本机改模型用的是自己留档的那份明文；
+   只想覆盖某一条时把它放进 `character/<角色id>/local/`，明文直读、同名优先。
 3. **建动画时把 `Loop` 设成 `Once`**（攻击是一次性的），`Animation Length` 按刻数 / 20 设
    （普攻 1 段是 40 刻 → 2.0 秒；我文件里写的 0.75 是「挥动本身」的长度，比动作总时长短，
    剩下的时间是收招，会由状态机自动回常态）。

@@ -3,7 +3,8 @@ package com.linweiyun.genshin.core.system.combat.action;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 import com.linweiyun.genshin.core.system.combat.action.data.Hit;
 import com.linweiyun.genshin.core.system.combat.action.data.Move;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +26,7 @@ import java.util.List;
  */
 public final class ServerActionExecutor {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     private ServerActionExecutor() {}
 

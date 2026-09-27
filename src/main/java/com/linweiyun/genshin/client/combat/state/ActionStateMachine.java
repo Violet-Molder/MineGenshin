@@ -10,14 +10,14 @@ import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActionHandler;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActions;
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
-import com.linweiyun.genshin.config.character.CharacterSystemConfig;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.ActionServer;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.combat.action.InterruptReason;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.LocalPlayer;
@@ -45,8 +45,9 @@ import org.slf4j.Logger;
  *   <li>状态机与动画时长仍由「资源 → 技能」链路提供（{@code VesnaResources.ACTION_DATA} →
  *       {@code VesnaSkill} → {@code ActionSet}），动作类只负责把数值喂进来。</li>
  *   <li>音效 id 随动画同步包一起发出，服务端再广播给其他玩家。</li>
- *   <li>「动作系统开关」关闭时，{@code changeState} 不再设硬直 / 移动锁，{@code canInterrupt} 恒真
- *       —— 即「所有按键及时响应，不采用前后摇」。</li>
+ *   <li>所有角色都接入完整动作系统（前摇 / 硬直 / 移动封锁 / 延迟伤害），
+ *       没有「关掉动作系统」那一档：{@code changeState} 永远写三类计时器，
+ *       {@code canInterrupt} 永远按执行期 / 后摇的规则判。</li>
  * </ol>
  *
  * <h2>动画层级（优先级）</h2>
@@ -74,7 +75,7 @@ import org.slf4j.Logger;
 @EventBusSubscriber(modid = Minegenshin.MOD_ID, value = Dist.CLIENT)
 public final class ActionStateMachine {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     /** 常态状态名。与 {@code ActionStep.animation} 的取值域不冲突。 */
     public static final String DEFAULT_STATE = "default";
@@ -91,6 +92,22 @@ public final class ActionStateMachine {
 
     /** 动画层级：1 常态 / 2 普攻·技能 / 3 闪避 / 4 大招。 */
     public static int currentPriority = PRIO_NORMAL;
+
+    /**
+     * 当前动作是不是<b>持续型</b>（大剑重击那种：进状态、松手或到时才结束）。
+     *
+     * <p>由 {@link #changeState(String, int, int, int, int, int, boolean)} 的
+     * {@code loopAnimation} 写入，任何别的 {@code changeState} / {@link #resetToDefault()}
+     * 都会把它关掉 —— 所以它天然是一面「现在到底还在不在持续招式里」的旗子，
+     * 不需要各处自己维护一份、也就不会漏关。三个地方读它：
+     * <ul>
+     *   <li>{@code PlayerAnimationController}：动画要循环播（而不是播完停在最后一帧）；</li>
+     *   <li>{@code ThirdPersonCamera}：视角跟随只在持续期间挂着，松手/到时/被打断自动落回；</li>
+     *   <li>{@link #interruptOnNormalInput}：<b>这段状态整段豁免「常态输入打断」</b>
+     *       —— 持续招式与位移是兼容关系，走位/跳跃/潜行都只是带着它走，不取消它。</li>
+     * </ul>
+     */
+    private static boolean currentStateLoops = false;
 
     /** 当前动作剩余总刻数。 */
     public static int animationTick = 0;
@@ -134,6 +151,14 @@ public final class ActionStateMachine {
     /** 重击是否已经因为这次按住触发过（松手才复位）。 */
     public static boolean chargedAttackTriggered = false;
 
+    /**
+     * 这一次按住把普攻延后了（大剑：见 {@code CharacterActionHandler#deferNormalAttackOnPress}）。
+     *
+     * <p>为 {@code true} 时，松手那一刻若这次按住没进过重击状态，就补一次普攻 ——
+     * 单击依旧是普攻。触发型重击（单手剑 / 长柄）永远是 {@code false}，按下即出普攻。
+     */
+    private static boolean deferredNormalAttack = false;
+
     /** 长按战技的判定阈值（刻）：对齐旧的 1000ms 手感。 */
     public static final int SKILL_HOLD_TICKS = 20;
 
@@ -170,6 +195,11 @@ public final class ActionStateMachine {
 
     public static int actionSequence() {
         return actionSequence;
+    }
+
+    /** 当前动作是不是持续型（循环动画那段）；见 {@link #currentStateLoops}。 */
+    public static boolean currentStateLoops() {
+        return currentStateLoops;
     }
 
     private ActionStateMachine() {
@@ -288,9 +318,26 @@ public final class ActionStateMachine {
      * 定身期间输入已经被换成 FrozenInput，这里再看一遍输入会读到「玩家其实按着 W」，
      * 所以定身没结束就不做打断判定 —— 否则一按攻击就被自己的移动输入取消。
      *
+     * <p><b>持续型状态（大剑重击）整段不参与这个判定</b>：它跟位移是<b>兼容</b>关系而不是
+     * 互斥关系，按 WASD / 空格 / 潜行只是带着这一招走，不是取消它。见方法内的注释与
+     * {@code ClaymoreSkill} 的类注释。
+     *
      * @return 是否已经复位回常态；为 {@code true} 时调用方应立即结束本 tick
      */
     private static boolean interruptOnNormalInput(LocalPlayer player) {
+        // ⭐ 持续型状态（目前只有大剑重击）与位移兼容：走位 / 跳跃 / 潜行都不取消它，
+        //    出口只有三个 —— 松手（releaseAttack → CHARGE_RELEASE）、到时（动画时间轴走完）、
+        //    以及换人/死亡那种强制打断。
+        //
+        //    为什么必须显式写这一条，而不是靠下面的 actionLocked() 挡住：
+        //    持续重击确实会把执行期铺满整段（所以现在「碰巧」也打不断），
+        //    但那是「执行期霸体」的副作用，跟「位移兼容」是两件事 ——
+        //    以后哪个角色把 protectDuration 改成「盖住最后一个伤害点」而不是整段，
+        //    移动就会立刻把这一招顶掉。
+        if (currentStateLoops()) {
+            return false;
+        }
+
         if (!movementFrozen() && !actionLocked()
                 && animationTick > 0 && !DEFAULT_STATE.equals(currentState)) {
             ClientInput input = player.input;
@@ -420,11 +467,6 @@ public final class ActionStateMachine {
      *                          这一条 —— 见下面为什么层级比较不再参与判定
      */
     public static boolean canInterrupt(int requestedPriority) {
-        // 动作系统关闭：不做前摇/硬直判定，任何动作都能立刻接上
-        if (!actionSystemEnabled()) {
-            return true;
-        }
-
         // 大招期间不可打断（绝对霸体）
         if (currentPriority >= PRIO_FINAL) {
             return false;
@@ -448,6 +490,26 @@ public final class ActionStateMachine {
     }
 
     // ---- 动作入口（供键位调用）----
+
+    /**
+     * 左键按下。
+     *
+     * <p>默认按下即出普攻（原来的行为）。大剑这类持续型重击的角色由
+     * {@link CharacterActionHandler#deferNormalAttackOnPress} 声明「延后」：按下先不出招，
+     * 于是按住左键不会先打掉一段普攻再进重击 —— 该补的普攻由 {@link #releaseAttack} 负责。
+     */
+    public static void pressAttack(Player player) {
+        isAttackButtonDown = true;
+        attackHoldTimer = 0;
+        chargedAttackTriggered = false;
+
+        deferredNormalAttack = handlerFor(player).deferNormalAttackOnPress(player);
+        if (deferredNormalAttack) {
+            return;
+        }
+
+        tryAttack(player);
+    }
 
     public static void tryAttack(Player player) {
         if (currentPriority >= PRIO_FINAL) {
@@ -492,16 +554,32 @@ public final class ActionStateMachine {
         }
     }
 
-    /** 左键松开：交回角色的蓄力判定。 */
+    /**
+     * 左键松开：交回角色的蓄力判定，并处理「延后的那一下普攻」。
+     *
+     * <p>大剑按住左键时按下那一刻没出普攻（见 {@link #pressAttack}）。若这次按住
+     * <b>没进过重击状态</b>（松得太早、或被硬直挡下），就在这里补一次普攻，
+     * 保证「单击 = 普攻」的手感还在；已经进过重击状态的就不用补了。
+     */
     public static void releaseAttack(Player player) {
+        // 只认「这一次按住真的按着」：换人/死亡那条清理路径会把按下标记抹掉，
+        // 那种情况下不该在松手时替新角色补一刀。
+        boolean deferred = deferredNormalAttack && isAttackButtonDown;
+
         isAttackButtonDown = false;
         int chargeTime = attackHoldTimer;
         attackHoldTimer = 0;
+        boolean chargedTriggered = chargedAttackTriggered;
         chargedAttackTriggered = false;
+        deferredNormalAttack = false;
 
         CharacterActionHandler handler = handlerFor(player);
         if (handler != null) {
             handler.releaseAttack(player, chargeTime);
+        }
+
+        if (deferred && !chargedTriggered) {
+            tryAttack(player);
         }
     }
 
@@ -624,9 +702,8 @@ public final class ActionStateMachine {
         approachFrozen = false;
         animationTick = Math.max(1, totalTicks);
 
-        boolean actionSystem = actionSystemEnabled();
-        actionLockFrames = actionSystem ? Math.max(0, lockFrames) : 0;
-        movementLockFrames = actionSystem ? Math.max(0, movementLock) : 0;
+        actionLockFrames = Math.max(0, lockFrames);
+        movementLockFrames = Math.max(0, movementLock);
         lockDelayFrames = 0; // 已经飞过来了：准备阶段早就结束，到位就是执行期
     }
 
@@ -649,6 +726,17 @@ public final class ActionStateMachine {
      */
     public static void changeState(String newState, int priority, int totalTicks, int lockFrames,
                                    int movementLockTicks, int lockDelayTicks) {
+        changeState(newState, priority, totalTicks, lockFrames, movementLockTicks, lockDelayTicks, false);
+    }
+
+    /**
+     * 同上一个重载，额外声明这段动作是<b>持续型</b>（动画循环播、视角跟随可挂）。
+     *
+     * @param loopAnimation 见 {@link #currentStateLoops}；只有「进状态、松手/到时才结束」
+     *                      的招式才传 {@code true}（目前只有大剑的持续重击）
+     */
+    public static void changeState(String newState, int priority, int totalTicks, int lockFrames,
+                                   int movementLockTicks, int lockDelayTicks, boolean loopAnimation) {
         LocalPlayer player = Minecraft.getInstance().player;
 
         // 换动作 → 上一次出手的突进 / 下坠大招作废。
@@ -671,15 +759,14 @@ public final class ActionStateMachine {
         currentState = newState;
         currentPriority = priority;
         animationTick = totalTicks;
+        currentStateLoops = loopAnimation;
         actionSequence++;
 
-        // 动作系统关闭：不设硬直与定身，按键随时可以打断
-        boolean actionSystem = actionSystemEnabled();
-        actionLockFrames = actionSystem ? lockFrames : 0;
-        lockDelayFrames = actionSystem ? Math.max(0, lockDelayTicks) : 0;
+        actionLockFrames = lockFrames;
+        lockDelayFrames = Math.max(0, lockDelayTicks);
 
         if (movementLockTicks >= 0) {
-            movementLockFrames = actionSystem ? movementLockTicks : 0;
+            movementLockFrames = movementLockTicks;
         }
 
         if (priority >= PRIO_ATTACK) {
@@ -708,6 +795,7 @@ public final class ActionStateMachine {
         currentState = DEFAULT_STATE;
         currentPriority = PRIO_NORMAL;
         animationTick = 0;
+        currentStateLoops = false;
         actionLockFrames = 0;
         lockDelayFrames = 0;
         movementLockFrames = 0;
@@ -797,12 +885,4 @@ public final class ActionStateMachine {
         return animations == null ? null : animations.soundForState(stateName);
     }
 
-    /** 本地玩家当前角色是否启用了动作系统（前后摇 / 延迟伤害）。 */
-    public static boolean actionSystemEnabled() {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) {
-            return true;
-        }
-        return CharacterSystemConfig.actionSystem(CharacterHelper.getActiveCharacterId(player));
-    }
 }

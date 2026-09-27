@@ -27,7 +27,8 @@ import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -51,7 +52,7 @@ import org.slf4j.Logger;
  * 保持原样不改成 {@code [VesnaSkill]}，免得按标签过滤日志的人对不上。
  */
 public class VesnaSkill extends SkillBase {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     // ==================== 本角色独立衰减序列 ====================
 

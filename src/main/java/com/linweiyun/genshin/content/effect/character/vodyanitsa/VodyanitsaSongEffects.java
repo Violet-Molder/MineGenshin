@@ -11,6 +11,8 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
@@ -34,7 +36,7 @@ import net.minecraft.world.entity.player.Player;
 public final class VodyanitsaSongEffects {
 
     /** 日志：突破天赋 2 的判定过程（排查「为什么附加伤害是 0」用）。 */
-    public static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+    public static final org.slf4j.Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     private VodyanitsaSongEffects() {
     }

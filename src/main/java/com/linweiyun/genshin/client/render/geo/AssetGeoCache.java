@@ -10,7 +10,6 @@ import com.linweiyun.genshin.core.asset.ModAssetPaths;
 import com.linweiyun.genshin.core.asset.pack.GeoJsonReader;
 import com.linweiyun.genshin.core.asset.pack.GeoPackSource;
 import com.linweiyun.genshin.core.asset.pack.GenshinGsonLoader;
-import com.mojang.logging.LogUtils;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -28,6 +27,8 @@ import net.minecraft.server.packs.resources.PreparableReloadListener.Preparation
 import net.minecraft.server.packs.resources.PreparableReloadListener.SharedState;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 
 /**
  * 统一布局资源索引缓存：扫描 {@code item/}、{@code block/}、{@code entity/} 三个根，
@@ -65,7 +66,7 @@ import org.slf4j.Logger;
  * {@code preferTexture} 里各有一条与扫描顺序无关的判定）。
  */
 public final class AssetGeoCache implements PreparableReloadListener {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
     /** GeckoLib 烘培器的「能读整包」版；包内条目走 {@code readPacked}，所以用具体类型。 */
     private static final GenshinGsonLoader LOADER = new GenshinGsonLoader();
     private static final String[] ROOTS = new String[]{AssetCategory.ITEM.folder(), AssetCategory.BLOCK.folder(), AssetCategory.ENTITY.folder()};
@@ -228,7 +229,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
         Map<String, AssetGeoCache.DirFiles> foundIndex = new HashMap<>(index);
         MathParser mathParser = MathParser.createWithDeduplication();
 
-        // 整包里的条目：磁盘上没有同名文件时才用它们（磁盘优先）
+        // 整包里的条目：同名时用哪一份由 GeoPackSource.usePacked 裁定（整包优先，local/ 例外）
         Map<Identifier, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
 
         for (String root : ROOTS) {
@@ -248,6 +249,8 @@ public final class AssetGeoCache implements PreparableReloadListener {
             }
 
             int before = foundModels.size() + foundAnimations.size();
+            int fromDisk = 0;
+            int fromPack = 0;
 
             for (Identifier raw : candidates) {
                 String path = raw.getPath();
@@ -255,19 +258,34 @@ public final class AssetGeoCache implements PreparableReloadListener {
                     if (isVanillaEntryFile(raw)) {
                         continue;
                     }
-                    // 两个来源二选一：磁盘上的文件优先，否则用整包里那份
+                    // 两个来源二选一：判据统一在 GeoPackSource.usePacked（整包优先、local/ 例外）。
+                    // 同名位置在磁盘上另有一份随包副本，两份不等价，不能按「磁盘优先」来挑。
                     Resource onDisk = resources.get(raw);
-                    byte[] packed = onDisk == null ? packedEntries.get(raw) : null;
+                    byte[] packed = GeoPackSource.usePacked(raw, packedEntries.containsKey(raw))
+                            ? packedEntries.get(raw)
+                            : null;
+                    if (onDisk == null && packed == null) {
+                        continue;
+                    }
+                    if (packed != null) {
+                        fromPack++;
+                    } else if (onDisk != null) {
+                        fromDisk++;
+                    }
                     // 贴图在对象目录的 textures/ 子目录里，索引时要归到它所属的对象目录
                     String dir = ModAssetPaths.objectDirOf(ModAssetPaths.dirOf(raw));
                     if (dir != null) {
                         if (path.endsWith(".png")) {
-                            if (onDisk == null) {
+                            // 贴图两个来源都算：包里有（onDisk 拿到的那份就是包内条目）或磁盘上有
+                            // （local/ 与「包里没有这条」两路）。少了这一条，进包的贴图会被跳过，
+                            // 对象目录就只剩模型 / 动画、贴图回落成缺贴图。
+                            if (onDisk == null && packed == null) {
                                 continue;
                             }
                             foundIndex.merge(dir, new AssetGeoCache.DirFiles(null, null, raw), AssetGeoCache::preferTexture);
                         } else if (path.endsWith(".json") && !ModAssetPaths.isBlockState(raw)) {
-                            AssetGeoCache.ContentKind kind = classify(onDisk, packed, raw);
+                            // 判类型也要看「真正会用的那一份」：整包赢了就传包内字节（磁盘传 null）
+                            AssetGeoCache.ContentKind kind = classify(packed == null ? onDisk : null, packed, raw);
                             if (kind == AssetGeoCache.ContentKind.UNKNOWN) {
                                 kind = ModAssetPaths.isAnimationFile(raw) ? AssetGeoCache.ContentKind.ANIMATION : AssetGeoCache.ContentKind.MODEL;
                                 LOGGER.info("[AssetGeoCache] {} 的内容判不出类型，按文件名当作 {}", raw, kind);
@@ -275,7 +293,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
 
                             try {
                                 if (kind == AssetGeoCache.ContentKind.ANIMATION) {
-                                    JsonObject json = onDisk != null
+                                    JsonObject json = packed == null
                                             ? (JsonObject)LOADER.deserializeGeckoLibAnimationFile(raw, onDisk)
                                             : LOADER.readPacked(raw, packed);
                                     BakedAnimations baked = LOADER.bakeGeckoLibAnimationsFile(raw, json, mathParser);
@@ -286,7 +304,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
                                         LOGGER.warn("[AssetGeoCache] 动画烘培返回 null，跳过：{}", raw);
                                     }
                                 } else {
-                                    JsonObject json = onDisk != null
+                                    JsonObject json = packed == null
                                             ? (JsonObject)LOADER.deserializeGeckoLibModelFile(raw, onDisk)
                                             : LOADER.readPacked(raw, packed);
                                     BakedGeoModel baked = LOADER.bakeGeckoLibModelFile(raw, json);
@@ -307,7 +325,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
 
             LOGGER.info(
                 "[AssetGeoCache] 扫描根 '{}'：命中资源 {} 个（磁盘 {} / 资源包 {}），新烘培 {} 个",
-                new Object[]{root, candidates.size(), resources.size(), candidates.size() - resources.size(),
+                new Object[]{root, candidates.size(), fromDisk, fromPack,
                         foundModels.size() + foundAnimations.size() - before}
             );
         }

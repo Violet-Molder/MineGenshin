@@ -3,7 +3,8 @@ package com.linweiyun.genshin.content.effect.character.impl;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectInstance;
 import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
@@ -26,7 +27,7 @@ import org.slf4j.Logger;
  */
 public class RadianceStellarConduceEffect implements ICharacterEffect {
 
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     /** 和星扩散同一个持续时间：8 秒。 */
     public static final int DURATION_TICKS = 160;

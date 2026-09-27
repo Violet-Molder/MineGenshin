@@ -23,6 +23,11 @@
 #
 # 注意：**会直接覆盖 fp 文件**。改 fp 姿势请改覆盖的那几根（脚本保留它们），
 # 或者先备份。特效轨道永远取自第三人称文件，不需要手动同步。
+#
+# 目录说明：geo 动画的母本就放在 src\main\resources 的正常资源路径下
+# （objects 里那些 .geo.json / .animation.json 本身不提交仓库），脚本直接读写它们。
+# 改完跑 gradlew build（或 gradlew verifyGeoAssets 单独确认），
+# 构建会重新收成整包文件。
 
 param(
     [string]$CharacterDir = 'src\main\resources\assets\minegenshin\character\vesna',

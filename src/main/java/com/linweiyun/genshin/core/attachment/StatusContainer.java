@@ -15,7 +15,8 @@ import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import io.netty.buffer.ByteBuf;
@@ -58,7 +59,7 @@ import java.util.function.Predicate;
  * 无需修改本类。
  */
 public class StatusContainer implements IPersistedSerializable {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
     public final static Codec<StatusContainer> CODEC = PersistedParser.createCodec(StatusContainer::new);
     public final static StreamCodec<ByteBuf, StatusContainer> STREAM_CODEC = PersistedParser.createStreamCodec(StatusContainer::new);
 

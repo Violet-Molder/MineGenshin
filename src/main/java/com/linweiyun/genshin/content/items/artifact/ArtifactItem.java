@@ -9,7 +9,8 @@ import com.linweiyun.genshin.content.items.component.ArtifactStatsComponent;
 import com.linweiyun.genshin.content.stat.TeyvatItemStat;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -27,7 +28,7 @@ import java.util.Random;
 import java.util.function.Consumer;
 
 public class ArtifactItem extends TeyvatItem {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
     protected ArtifactType type;
     protected DeferredHolder<ArtifactSet, ArtifactSet> set;
 

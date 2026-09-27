@@ -8,7 +8,8 @@ import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
@@ -41,7 +42,7 @@ import org.slf4j.Logger;
  * 顺序与重构前 {@code Vesna.tick} 里的一致。
  */
 public class VesnaTalent extends TalentBase {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     // ==================== 整肃（突破天赋 1） ====================
 

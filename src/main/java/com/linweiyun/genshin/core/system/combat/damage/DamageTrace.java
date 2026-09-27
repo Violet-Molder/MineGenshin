@@ -2,7 +2,8 @@ package com.linweiyun.genshin.core.system.combat.damage;
 
 import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
@@ -50,10 +51,32 @@ public final class DamageTrace {
     /** 开发环境总开关：false 时 LOGGER 为无操作实现，所有日志完全静默。发布前改为 false。 */
     private static final boolean DEV_LOGGING = false;
 
-    private static final Logger LOGGER = DEV_LOGGING ? LogUtils.getLogger() : NOPLogger.NOP_LOGGER;
+    private static final Logger LOGGER = DEV_LOGGING ? ModLog.getLogger(LogGroup.COMBAT) : NOPLogger.NOP_LOGGER;
 
-    /** 总开关：false 时 {@link #log()} 什么都不做。 */
+    /**
+     * 总开关：false 时 {@link #log()} 什么都不做。
+     *
+     * <p>它只控制「收不收」，真正决定「要不要拼字符串」的是 {@link #active()}。</p>
+     */
     public static boolean ENABLED = true;
+
+    /**
+     * <b>真正会输出吗</b> —— 总开关打开、开发日志打开、底层 logger 也允许 INFO 时才为 true。
+     *
+     * <p>这个判断存在的意义是<b>省掉构建本身</b>：公式日志的每一行都是调用方现场拼出来的
+     * （{@code "1 + " + fmt(x)} 这种），{@code ENABLED} 只挡得住「收」挡不住「拼」。
+     * 而 {@link #DEV_LOGGING} 为 false 时 {@link #LOGGER} 是 {@code NOPLogger}，
+     * 拼出来的那一大串最后只会被丢掉 —— 每次伤害白拼一遍，攻速一高就是纯粹的 CPU 与 GC 开销。</p>
+     *
+     * <p>所以四个伤害管线里的日志块都包在 {@code if (DamageTrace.active())} 里；
+     * {@code DEV_LOGGING} 是编译期常量 false，JIT 会把整块当死代码消掉。</p>
+     */
+    public static boolean active() {
+        return ENABLED && DEV_LOGGING && LOGGER.isInfoEnabled();
+    }
+
+    /** 不记录时共用的空实现：所有写入口都是空操作，所以可以被所有伤害共享。 */
+    private static final DamageTrace NOOP = new DamageTrace("");
 
     private final String pipeline;
     private final List<String> head = new ArrayList<>();
@@ -73,8 +96,24 @@ public final class DamageTrace {
         this.pipeline = pipeline;
     }
 
+    /**
+     * 开始记录一次伤害。
+     *
+     * <p>不记录时直接返回共享的空实现 —— 连这个对象的 2 个 StringBuilder、
+     * 5 个 ArrayList 都不再为每次伤害各建一份。</p>
+     */
     public static DamageTrace start(String pipeline) {
-        return new DamageTrace(pipeline);
+        return active() ? new DamageTrace(pipeline) : NOOP;
+    }
+
+    /**
+     * 不记录时用的空实现。
+     *
+     * <p>给「连 {@code pipelineName(...)} 这种小参数都懒得算」的调用方用：
+     * {@code trace = active() ? start(name) : none()}。</p>
+     */
+    public static DamageTrace none() {
+        return NOOP;
     }
 
     public boolean isEmpty() {
@@ -84,7 +123,7 @@ public final class DamageTrace {
     // ==================== 头部 ====================
 
     public DamageTrace head(String key, Object value) {
-        if (ENABLED) {
+        if (active()) {
             head.add(key + "=" + fmt(value));
         }
         return this;
@@ -105,7 +144,7 @@ public final class DamageTrace {
 
     /** 缩写公式（只列参与的乘区）。不调的话用 {@link #zone} 收上来的乘区名拼。 */
     public DamageTrace slim(String formula) {
-        if (ENABLED) {
+        if (active()) {
             this.slim = formula;
         }
         return this;
@@ -119,7 +158,7 @@ public final class DamageTrace {
      * @param value     数值写法：<b>把数字代进上面那条公式</b>（只有数字与运算符，不加描述）
      */
     public DamageTrace zone(String shortName, String formula, String value) {
-        if (!ENABLED) {
+        if (!active()) {
             return this;
         }
         shortNames.add(shortName);
@@ -134,7 +173,7 @@ public final class DamageTrace {
 
     /** 另起一行展开公式（多人反应用：单人公式 / 加权公式）。 */
     public DamageTrace fullLine(String formula) {
-        if (ENABLED) {
+        if (active()) {
             fullLines.add(formula);
         }
         return this;
@@ -142,7 +181,7 @@ public final class DamageTrace {
 
     /** 另起一行数值（多人反应用：单人1 / 单人2 / 加权）。 */
     public DamageTrace valueLine(String label, String value) {
-        if (ENABLED) {
+        if (active()) {
             valueLabels.add(label);
             valueLines.add(value);
         }
@@ -151,7 +190,7 @@ public final class DamageTrace {
 
     /** 结果（追加到最后一行数值的末尾）。 */
     public DamageTrace result(Object value) {
-        if (ENABLED) {
+        if (active()) {
             result = fmt(value);
         }
         return this;
@@ -160,7 +199,7 @@ public final class DamageTrace {
     // ==================== 输出 ====================
 
     public void log() {
-        if (!ENABLED) {
+        if (!active()) {
             return;
         }
 

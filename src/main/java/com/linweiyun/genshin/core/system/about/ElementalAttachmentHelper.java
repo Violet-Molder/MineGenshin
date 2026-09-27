@@ -8,7 +8,8 @@ import com.linweiyun.genshin.core.system.about.host.ElementalHost;
 import com.linweiyun.genshin.core.system.about.host.EntityHost;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionManager;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
 
@@ -30,7 +31,7 @@ import org.slf4j.Logger;
  */
 public class ElementalAttachmentHelper {
 
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     // ========== 附着入口 —— 唯一入口是「宿主」 ==========
 

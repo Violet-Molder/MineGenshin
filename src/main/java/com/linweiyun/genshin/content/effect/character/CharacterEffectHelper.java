@@ -2,14 +2,15 @@ package com.linweiyun.genshin.content.effect.character;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.PGCharacterData;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
 
 public class CharacterEffectHelper {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
     /**
      * 获取角色身上的效果容器
      * @param character 角色数据

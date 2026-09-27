@@ -5,7 +5,8 @@ import com.linweiyun.genshin.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.linweiyun.genshin.core.system.about.block.BlockElementStore;
 import com.linweiyun.genshin.core.system.registry.register.ModStatusDataComponents;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -22,7 +23,7 @@ import org.slf4j.Logger;
  * BlockPos（方块）           → Chunk 数据里的 StatusContainer（返回只读快照）
  */
 public class StatusAccessor {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     public static StatusContainer of(LivingEntity entity) {
         return entity.getData(AttachmentRegistration.CONTAINER);

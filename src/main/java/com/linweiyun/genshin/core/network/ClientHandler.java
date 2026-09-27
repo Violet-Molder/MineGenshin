@@ -147,7 +147,26 @@ public class ClientHandler {
 
         // 界面不是每刻重建的 —— 不显式刷新的话，点了「激活」之后面板会一直停在未激活，
         // 要玩家再点一次别的圣遗物才更新。
-        com.linweiyun.genshin.render.gui.screens.artifact.ScreenArtifactEquip.refreshIfOpen();
+        com.linweiyun.genshin.client.render.gui.screen.ScreenArtifactEquip.refreshIfOpen();
+        // 新的角色装备页（按键 U）同样要立刻重画：它持有的是「点选那一刻」的旧拷贝。
+        com.linweiyun.genshin.client.render.gui.screen.CharacterEquipUI.refreshIfOpen();
+    }
+
+    /**
+     * 玩家主物品栏里那件圣遗物被激活之后，服务端把它推回来 —— 写回原版物品栏对应那一格。
+     *
+     * <p>同 {@link #applyActivatedArtifactClientHandler}：客户端只负责采用服务端那一份，
+     * 绝不本地抽词条（本地随机数和服务端不是同一套）。
+     */
+    public static void applyActivatedInventoryArtifact(int playerSlotIndex, ItemStack activated) {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (player == null) return;
+        if (activated == null || activated.isEmpty()) return;
+        var inventory = player.getInventory();
+        if (playerSlotIndex < 0 || playerSlotIndex >= inventory.getContainerSize()) return;
+        inventory.setItem(playerSlotIndex, activated.copy());
+        // 角色装备页（按键 U）拿着的是点选那一刻的旧拷贝，必须显式重画
+        com.linweiyun.genshin.client.render.gui.screen.CharacterEquipUI.refreshIfOpen();
     }
 
 //    // ========== 原神背包同步（服务端→客户端） ==========

@@ -1,4 +1,5 @@
 # Generates src/main/resources/assets/minegenshin/character/vesna/vesna_burst.animation.json
+# (母本就放在正常资源路径下，不提交仓库；跑 gradlew build / runClient 时自动收进整包)
 # One animation: burst_dive  (jump up -> rotate into head-down dive pose -> hold, code takes over the descent)
 # Pure ASCII output; keys are Bedrock/GeckoLib style, times in seconds.
 $ErrorActionPreference = 'Stop'

@@ -8,10 +8,13 @@ import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
+import com.linweiyun.genshin.core.system.compat.PlayerStatBridge;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,11 +42,42 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>所以「纯元素盾」的表现是：伤害一点都进不来，但盾量只被元素和削韧磨掉 ——
  * 打九万伤害和打一百伤害对盾的影响完全一样。
+ *
+ * <p><b>非原神模式的兜底</b>：原版 / 其他 MOD 的普通攻击既没有 {@code ModDamageSpec}
+ * （没有削韧值），也不带元素附着 —— 纯元素盾会永远打不破。所以接收端给这类攻击补一条
+ * 「按物理非钝击算」的兜底削韧（{@link #plainAttackPoise}），每次
+ * {@value #PLAIN_ATTACK_POISE} 点。原神模式玩家的攻击自带口径，不走这条。
  */
 public final class ShieldService {
 
     /** 盾牌型盾的正面扇形半角（度）：只有落在这个范围内的攻击才打在盾面上。 */
     public static final float HELD_FRONT_HALF_ANGLE = 70f;
+
+    /**
+     * 非原神模式下「普通攻击」的兜底削韧量：按<b>物理非钝击</b>算，每次 10。
+     *
+     * <p>和本 MOD 一次普通攻击的基准削韧（{@code ModDamageSpec: 10}）同刻度 ——
+     * 削韧与韧性条统一走文献口径（方案 §5 的方案 C），盾那边用
+     * {@link #POISE_TO_SHIELD} 折算，所以这个数字看起来变大了，盾的手感没变。
+     */
+    public static final float PLAIN_ATTACK_POISE = 10f;
+
+    /**
+     * <b>削韧刻度 → 盾量刻度</b>的显式折算：扣盾量 = 削韧值 × 这个系数。
+     *
+     * <h2>为什么需要它</h2>
+     * 削韧字段现在同时服务两个系统，而两者的刻度差约 100 倍：
+     * <ul>
+     *   <li><b>韧性条</b>走文献口径（普攻 10、小型敌人条长 30）；</li>
+     *   <li><b>盾量</b>是本项目自己既有的设计（冰史莱姆盾 8.0），一个数量级上的小刻度。</li>
+     * </ul>
+     * 直接把文献口径的削韧拿去扣盾，一下就能把冰史莱姆的盾打穿。
+     * 所以在这里把两者解耦：盾的既有数值一个都不用动，改刻度只影响这一个系数。
+     *
+     * <p>{@code 0.01} 是这么定的：文献口径的一次普攻（10）× 0.01 = 0.1 盾量，
+     * 与改造前 {@link #PLAIN_ATTACK_POISE} 的旧值（0.1）一致 —— 盾的手感不变。
+     */
+    public static final float POISE_TO_SHIELD = 0.01f;
 
     private ShieldService() {
     }
@@ -82,6 +116,41 @@ public final class ShieldService {
         }
         ShieldProfile profile = state.profile();
         return profile != null && profile.shape() == ShieldShape.AURA;
+    }
+
+    /**
+     * 有盾期间，攻击<b>进不进韧性条</b> —— 不进。
+     *
+     * <p>用户口径（R9）：<b>护盾 = 霸体</b>，对玩家对敌人都一样。
+     * 所以盾在的时候这一步直接挡掉：削韧不会累积到目标的韧性条上，
+     * 也就谈不上「有盾还能被打到破韧」。盾自己照旧被磨 ——
+     * 那是 {@link #absorbDamage} 里的既有行为（「护盾也受破韧影响」）。
+     *
+     * <p>唯一的事实来源放在这里（而不是让每个调用点自己判断），
+     * 免得以后出现「某个入口忘了问盾」这种漏网。
+     */
+    public static boolean blocksPoise(LivingEntity entity) {
+        return isSuperArmorShield(get(entity));
+    }
+
+    /**
+     * 有盾期间，控制效果（含聚怪牵引）<b>生不生效</b> —— 不生效。
+     *
+     * <p>与 {@link #blocksPoise} 同源：护盾 = 霸体，所以「有盾时聚怪也无效」。
+     * 拆成两个方法是因为调用方不同（一个在伤害收口、一个在控制系统），
+     * 但判断依据必须是同一份，不许各写一份。
+     */
+    public static boolean blocksControl(LivingEntity entity) {
+        return blocksPoise(entity);
+    }
+
+    private static boolean isSuperArmorShield(ShieldState state) {
+        if (!state.isActive()) {
+            return false;
+        }
+        ShieldProfile profile = state.profile();
+        // 模板丢了但盾还在（理论上不该发生）：按霸体处理，宁可挡住也不要漏防
+        return profile == null || profile.grantsSuperArmor();
     }
 
     /**
@@ -173,7 +242,7 @@ public final class ShieldService {
         // 例外：被盾整个吞掉的元素（冰盾遇水、遇冰）连削韧也不吃 —— 只受击，盾一点都不掉。
         boolean swallowed = profile.blocksAttachment(element);
         if (!swallowed && profile.breakType() != ShieldBreakType.DAMAGE && poiseDamage > 0f) {
-            state.consume(poiseDamage);
+            state.consume(poiseDamage * POISE_TO_SHIELD);
             onShieldChanged(target, state, profile);
         }
 
@@ -237,7 +306,62 @@ public final class ShieldService {
         if (source instanceof ModDamageSource modSource && modSource.getSpec() != null) {
             return ShieldElement.of(modSource.getSpec().getElement());
         }
+        // 其他 MOD 打进来、被换算成角色口径的伤害：元素类型挂在换算伤害源上
+        GenshinElement convertedElement = com.linweiyun.genshin.core.system.compat.CompatConvertedDamageSource
+                .elementOf(source);
+        if (convertedElement != null) {
+            return ShieldElement.of(convertedElement);
+        }
         return ShieldElement.PHYSICAL;
+    }
+
+    /**
+     * 非原神模式下，这次「不走本 MOD 伤害管线」的普通攻击该给盾多少削韧。
+     *
+     * <p>为什么需要这条：原版 / 其他 MOD 的攻击在接收端只有
+     * {@code LivingEntity#hurtServer} 那个入口，既没有 {@code ModDamageSpec} 可读削韧，
+     * 也不一定带元素附着。纯元素盾只吃元素与削韧，于是「剑砍上去一点反应都没有、盾永远打不破」。
+     * 这里把它按<b>物理非钝击</b>处理，每次给 {@link #PLAIN_ATTACK_POISE} 点削韧，
+     * 让非原神模式下的普通攻击也能磨盾。
+     *
+     * <p>三种情况不给：
+     * <ul>
+     *   <li>没有发起者的伤害（摔落 / 火焰 / 仙人掌 / 虚空…）—— 那不是「普通攻击」；</li>
+     *   <li>原神模式玩家的攻击 —— 那类攻击走 {@code ModDamageSpec}，自带削韧与元素口径；</li>
+     *   <li>盾本来就不吃这一下（伤害盾不吃削韧、被盾整个吞掉的元素连削韧也不吃）——
+     *       这些判断统一在 {@link #absorbDamage} 里做，这里只负责给值。</li>
+     * </ul>
+     *
+     * @return 本次要给盾的削韧量；0 表示不给
+     */
+    public static float plainAttackPoise(@Nullable DamageSource source) {
+        if (source == null) {
+            return 0f;
+        }
+        if (source.getEntity() == null && source.getDirectEntity() == null) {
+            return 0f;
+        }
+        Player attacker = attackerPlayer(source);
+        if (attacker != null && PlayerStatBridge.isGenshinMode(attacker)) {
+            return 0f;
+        }
+        return PLAIN_ATTACK_POISE;
+    }
+
+    /** 找出这次伤害的发起玩家（和 {@code CompatEventHandler} 同一口径：造成实体优先，其次抛射物主人）。 */
+    @Nullable
+    private static Player attackerPlayer(@Nullable DamageSource source) {
+        if (source == null) {
+            return null;
+        }
+        if (source.getEntity() instanceof Player player) {
+            return player;
+        }
+        if (source.getDirectEntity() instanceof Projectile projectile
+                && projectile.getOwner() instanceof Player owner) {
+            return owner;
+        }
+        return null;
     }
 
     // ==================== 元素附着入口 ====================

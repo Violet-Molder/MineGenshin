@@ -8,7 +8,8 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
 import com.linweiyun.genshin.content.items.ModItems;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,7 +33,7 @@ import java.util.function.Supplier;
 
 public class WishSystem {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
     private static final Random RANDOM = new Random();
     private static final int WISH_COST = 160;
     private static WishConfig cachedConfig;

@@ -19,6 +19,20 @@ public interface CharacterActionHandler {
     default void attack(Player player) {
     }
 
+    /**
+     * 左键<b>按下</b>时要不要把这一下普攻延后到松手再补。
+     *
+     * <p>持续型重击（大剑）返回 {@code true}：按下先不出招，蓄力到阈值就进重击状态，
+     * 没到阈值就松手才在松手那一刻补一次普攻 —— 这样单击仍然是普攻、按住则只有重击，
+     * 不会出现「先普攻一次再接重击」。
+     *
+     * <p>触发型重击（单手剑 / 长柄）保持 {@code false}：按下即出普攻，按住再加一次重击，
+     * 行为一字未动。
+     */
+    default boolean deferNormalAttackOnPress(Player player) {
+        return false;
+    }
+
     /** 弹反成功后的反击。 */
     default void counterAttack(Player player) {
     }

@@ -7,13 +7,15 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
+import com.linweiyun.genshin.core.system.performance.HotPathLog;
 import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
 import com.linweiyun.genshin.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -25,7 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 public class LunarChargedReaction extends ElementalReaction {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     public LunarChargedReaction(ElementalReactionType type,
                                  String elementAId, String elementBId,
@@ -74,8 +76,11 @@ public class LunarChargedReaction extends ElementalReaction {
             existingCloud.addContributors(contributorList);
             existingCloud.recordLunarTrigger(triggerCharacter);
             existingCloud.refreshDuration();
-            LOGGER.info("[月感电] 刷新雷暴云 duration={} | contributors={}",
-                    existingCloud.getDuration(), contributorList.size());
+            // 每次月感电反应都会刷一次云：高频触发时节流（见 HotPathLog）
+            if (HotPathLog.allow(LOGGER, "lunar-charged-refresh", "月感电刷云")) {
+                LOGGER.info("[月感电] 刷新雷暴云 duration={} | contributors={}",
+                        existingCloud.getDuration(), contributorList.size());
+            }
         } else {
             ThunderCloudEntity cloud = new ThunderCloudEntity(
                     ModEntities.THUNDER_CLOUD.get(), level);
@@ -86,8 +91,10 @@ public class LunarChargedReaction extends ElementalReaction {
 
             cloud.dealLunarDamage(target, level);
 
-            LOGGER.info("[月感电] 生成雷暴云 pos={},{},{} | contributors={}",
-                    target.getX(), target.getEyeY() + 2.0, target.getZ(), contributorList.size());
+            if (HotPathLog.allow(LOGGER, "lunar-charged-spawn", "月感电生成云")) {
+                LOGGER.info("[月感电] 生成雷暴云 pos={},{},{} | contributors={}",
+                        target.getX(), target.getEyeY() + 2.0, target.getZ(), contributorList.size());
+            }
         }
 
         DamageIndicatorFactory.lunarReactionGradient(target, ElementalReactionType.LUNAR_CHARGED);

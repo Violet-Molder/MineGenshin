@@ -38,6 +38,15 @@ public final class ShieldProfile {
     private final boolean permanent;
 
     /**
+     * 这面盾是不是「霸体」—— 有盾期间既不进韧性条、也不吃控制。
+     *
+     * <p>默认 true（用户口径：护盾 = 霸体，对玩家对敌人都一样）。
+     * 留成一项配置是为了将来能做一个<b>不给霸体</b>的盾（例如「纸盾」那种只有量、不防打断的），
+     * 而不是要现在就把某个盾改成 false。
+     */
+    private final boolean grantsSuperArmor;
+
+    /**
      * 这个盾是哪个元素的（决定盾条颜色等表现）。白盾/伤害盾这类没有元素的填 null。
      */
     @Nullable
@@ -56,6 +65,7 @@ public final class ShieldProfile {
         this.immuneToChill = builder.immuneToChill;
         this.permanent = builder.permanent;
         this.element = builder.element;
+        this.grantsSuperArmor = builder.grantsSuperArmor;
     }
 
     /** 盾的元素；没有就是 null（白盾）。 */
@@ -117,6 +127,11 @@ public final class ShieldProfile {
         return this.permanent;
     }
 
+    /** 有这面盾时算不算霸体（挡削韧 + 挡控制）。 */
+    public boolean grantsSuperArmor() {
+        return this.grantsSuperArmor;
+    }
+
     /** 盾量完全由元素/削韧扣掉时也要走元素反应吗（默认走）。 */
     public String describe() {
         return "ShieldProfile{" + this.key + ", " + this.effect + ", " + this.shape + ", " + this.breakType
@@ -144,6 +159,7 @@ public final class ShieldProfile {
         builder.immuneToChill = source.immuneToChill;
         builder.permanent = source.permanent;
         builder.element = source.element;
+        builder.grantsSuperArmor = source.grantsSuperArmor;
         return builder;
     }
 
@@ -160,6 +176,7 @@ public final class ShieldProfile {
         private boolean immuneToFreeze;
         private boolean immuneToChill;
         private boolean permanent = true;
+        private boolean grantsSuperArmor = true;
         private com.linweiyun.genshin.core.element.GenshinElement element;
 
         public Builder element(com.linweiyun.genshin.core.element.GenshinElement element) {
@@ -229,6 +246,16 @@ public final class ShieldProfile {
 
         public Builder timed() {
             this.permanent = false;
+            return this;
+        }
+
+        /**
+         * 关掉「有盾 = 霸体」：这面盾只挡伤害，不挡削韧、不挡控制。
+         *
+         * <p>不调就是默认的霸体盾（用户口径）。
+         */
+        public Builder noSuperArmor() {
+            this.grantsSuperArmor = false;
             return this;
         }
 

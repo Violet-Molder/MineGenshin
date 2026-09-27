@@ -12,8 +12,10 @@ import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.genshin.content.skill_node.GatherPull;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
@@ -24,7 +26,7 @@ import org.slf4j.Logger;
 import java.util.*;
 
 public class StellarVortexEntity extends AreaEntity {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     private static final int EXPLODE_TIMER = 60;
     private static final int MAX_LEVEL = 6;
@@ -32,6 +34,36 @@ public class StellarVortexEntity extends AreaEntity {
     private static final float LEVEL3_HORIZONTAL_RANGE = 7.0f;
     private static final int LEVEL3_THRESHOLD = 3;
     private static final float ICE_ATTACH_QUANTITY = 1.0f;
+
+    /**
+     * 星璇的牵引等级：<b>最低档 L1</b> —— 初始削韧等于 1 档韧性条的长度，
+     * 所以原版普通生物被它砸一下就破韧、随即被拉走；
+     * 大体型（劫掠兽那一类，4 档）要更高档的聚怪才打得动，
+     * 三个 BOSS 与其它模组的实体是免疫，任何等级都拉不动。
+     * 等级只决定<b>初始削韧多大</b>，和「拉得多快」无关，速度看下面那条。
+     */
+    private static final GatherPull.Level GATHER_LEVEL = GatherPull.Level.L1;
+
+    /** 牵引速度：<b>1 格 / 1.5 秒</b>（用户口径）。 */
+    private static final double GATHER_BLOCKS_PER_SECOND = 1.0 / 1.5;
+
+    /**
+     * 牵引核心的半宽/半高 —— 目标进到「星璇中心这一小圈」里就不再受力。
+     *
+     * <p>核心是<b>一块区域</b>而不是一个点（这正是 {@link GatherPull} 用两个 AABB 的原因）：
+     * 到位就该停，不然一群怪会叠在同一个坐标上。
+     */
+    private static final double GATHER_CORE_HALF = 0.5;
+    private static final double GATHER_CORE_HALF_HEIGHT = 1.0;
+
+    /**
+     * 牵引期间的持续削韧：每秒再削掉多少（<b>占位值</b>，用户已裁定韧性表先不细调）。
+     *
+     * <p>「聚怪本身会削韧」那条规则有两截：<b>一开始的高额初始削韧</b>（等级决定，
+     * 在 {@link GatherPull} 里）与这里的<b>持续削韧</b>。前者负责打破，后者负责压住 ——
+     * 破韧后持续牵引还会把韧性恢复按住（强控），所以拉着的时候破绽窗口不会自己走完。
+     */
+    private static final float GATHER_POISE_PER_SECOND = 4f;
 
     @Persisted(key = "sv_level")
     private int vortexLevel = 1;
@@ -79,6 +111,15 @@ public class StellarVortexEntity extends AreaEntity {
 
     // 伤害最高的贡献者（用于视觉效果等）
     private transient PGCharacter lastTopContributor;
+
+    /**
+     * 每刻用的牵引节点。位置固定、只有半径会随等级变，所以按半径失效重建 ——
+     * 别每刻 new 一个新的（这是每刻都会跑的热路径）。
+     */
+    private transient GatherPull gatherPull;
+
+    /** {@link #gatherPull} 是按哪个水平半径建的；和当前半径不一致就重建。 */
+    private transient float gatherPullRadius = -1f;
 
     public StellarVortexEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -333,10 +374,47 @@ public class StellarVortexEntity extends AreaEntity {
         super.serverTick();
         if (this.isRemoved() || exploded) return;
 
+        applyGatherPull();
+
         explodeTimer--;
         if (explodeTimer <= 0) {
             explode();
         }
+    }
+
+    /**
+     * 每刻把自己范围内的敌人往星璇位置拉一次 —— 存在期间一直在拉，不是只有生成那一瞬。
+     *
+     * <p>三条规则都落在 {@link GatherPull} 里，这里只负责「提供参数」：
+     * <ul>
+     *   <li><b>等级 L1</b>：初始削韧 = 1 档韧性条长，原版普通生物一下破韧、随即被拉；</li>
+     *   <li><b>速度 1 格 / 1.5 秒</b>；</li>
+     *   <li><b>不拉玩家</b>：星璇是己方技能产物，把玩家自己拽过去是纯粹的负体验。</li>
+     * </ul>
+     * 没被这一笔打破的敌人<b>只会掉韧性条、不会被拉动</b>（未破韧就是不能聚怪）；
+     * 打破之后才被按住 AI 拖走；有护盾的敌人整个不生效 —— 这些判据都在
+     * {@link GatherPull} 与 {@code ControlService} 里，本类不重复判断。
+     */
+    private void applyGatherPull() {
+        GatherPull pull = gatherPull();
+        if (pull != null) {
+            pull.execute();
+        }
+    }
+
+    /** 取本枚星璇的牵引节点（按半径缓存，等级 3 扩大范围时会自动重建一次）。 */
+    private GatherPull gatherPull() {
+        if (gatherPull != null && gatherPullRadius == this.horizontalRadius) {
+            return gatherPull;
+        }
+        AABB core = AABB.ofSize(this.position(),
+                GATHER_CORE_HALF * 2.0, GATHER_CORE_HALF_HEIGHT * 2.0, GATHER_CORE_HALF * 2.0);
+        this.gatherPull = new GatherPull(this, GATHER_LEVEL, core, getAreaOfInfluence(),
+                GatherPull.perTick(GATHER_BLOCKS_PER_SECOND))
+                .withPoisePerSecond(GATHER_POISE_PER_SECOND)
+                .withFilter(target -> !(target instanceof Player));
+        this.gatherPullRadius = this.horizontalRadius;
+        return this.gatherPull;
     }
 
     public AABB getAreaOfInfluence() {

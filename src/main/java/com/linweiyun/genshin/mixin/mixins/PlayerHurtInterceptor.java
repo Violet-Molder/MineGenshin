@@ -38,7 +38,11 @@ public class PlayerHurtInterceptor {
         boolean isTeyvatMonsterOrBoss = attacker instanceof TeyvatMonster
                 || attacker instanceof ITeyvatBoss;
 
-        boolean isAlreadyConverted = source instanceof TeyvatConvertedDamageSource;
+        // 已经换算过的伤害源不再吃那个 ×2.5：
+        //   TeyvatConvertedDamageSource —— 怪物攻击力换算，已经是原神口径；
+        //   CompatConvertedDamageSource —— 玩家打出去的其他 MOD 伤害换算，同样已经是角色口径。
+        boolean isAlreadyConverted = source instanceof TeyvatConvertedDamageSource
+                || source instanceof com.linweiyun.genshin.core.system.compat.CompatConvertedDamageSource;
         float adjustedDamage = damage;
         if (!isAlreadyConverted && !isTeyvatMonsterOrBoss && attacker != null) {
             adjustedDamage = damage * 2.5f;
@@ -65,6 +69,12 @@ public class PlayerHurtInterceptor {
     }
 
     private static GenshinElement elementFromSource(DamageSource source) {
+        // 换算伤害源自己带着元素类型，直接用它，别再按伤害类型猜
+        GenshinElement converted =
+                com.linweiyun.genshin.core.system.compat.CompatConvertedDamageSource.elementOf(source);
+        if (converted != null) {
+            return converted;
+        }
         if (source.is(DamageTypes.IN_FIRE) || source.is(DamageTypes.CAMPFIRE)
                 || source.is(DamageTypes.ON_FIRE) || source.is(DamageTypes.LAVA)
                 || source.is(DamageTypes.HOT_FLOOR) || source.is(DamageTypes.FIREBALL)

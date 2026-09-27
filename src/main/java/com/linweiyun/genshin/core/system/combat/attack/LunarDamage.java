@@ -44,10 +44,12 @@ final class LunarDamage {
                 ? character : AttackerResolver.resolveCharacter(attacker);
 
         DamageTrace trace = DamageTrace.start("月曜反应");
-        trace.headAttack(spec.getAttackType(), ModElements.ELECTRO.get());
-        trace.head("反应", ElementalReactionType.LUNAR_CHARGED);
-        trace.headEntities(attacker, target,
-                attackerCharacter == null ? null : attackerCharacter.getName());
+        if (DamageTrace.active()) {
+            trace.headAttack(spec.getAttackType(), ModElements.ELECTRO.get());
+            trace.head("反应", ElementalReactionType.LUNAR_CHARGED);
+            trace.headEntities(attacker, target,
+                    attackerCharacter == null ? null : attackerCharacter.getName());
+        }
 
         List<PGCharacter> contributors = spec.getLunarContributors();
         if (contributors != null && !contributors.isEmpty()) {
@@ -83,25 +85,27 @@ final class LunarDamage {
 
         // ── 日志（每个乘区一个【】；0/1 的项也照写，只有基础区里没参与的属性不写） ──
         // 数值行是把数字代进公式（不是填算好的乘区结果），这样才能和公式里的名字一一对应
-        float em = (float) DamageZones.elementalMastery(character);
-        trace.zone("基础区",
-                byHp ? "生命值 × 生命值倍率" : "直伤系数 × 攻击力",
-                byHp ? DamageTrace.fmt(hp) + " × " + DamageTrace.fmt(spec.getHpMultiplier())
-                        : DamageTrace.fmt(atk) + " × " + DamageTrace.fmt(directCoefficient));
-        trace.zone("提升区", "基础区 × (1 + 基础提升) + 基础附加",
-                DamageTrace.fmt(base)
-                        + " × (1 + " + DamageTrace.fmt(spec.getLunarBaseBonus()) + ")"
-                        + " + " + DamageTrace.fmt(spec.getLunarBaseFlat()));
-        trace.zone("倍率区", "倍率", DamageTrace.fmt(multiplier));
-        trace.zone("反应加成区", "1 + 6×元素精通/(元素精通+2000) + 月曜专属加成",
-                "1 + 6×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+2000)"
-                        + " + " + DamageTrace.fmt(DamageZones.LUNAR_SPECIAL_BONUS));
-        trace.zone("抗性区", "1 - 抗性", "1 - " + DamageTrace.fmt(rawResistance));
-        trace.zone("暴击区", "1 + 暴击伤害",
-                critRoll.isCrit() ? "1 + " + DamageTrace.fmt(critRoll.critDamage()) : "1");
-        trace.zone("擢升区", "1", DamageTrace.fmt(DamageZones.elevationZone()));
-        trace.result(damage);
-        trace.log();
+        if (DamageTrace.active()) {
+            float em = (float) DamageZones.elementalMastery(character);
+            trace.zone("基础区",
+                    byHp ? "生命值 × 生命值倍率" : "直伤系数 × 攻击力",
+                    byHp ? DamageTrace.fmt(hp) + " × " + DamageTrace.fmt(spec.getHpMultiplier())
+                            : DamageTrace.fmt(atk) + " × " + DamageTrace.fmt(directCoefficient));
+            trace.zone("提升区", "基础区 × (1 + 基础提升) + 基础附加",
+                    DamageTrace.fmt(base)
+                            + " × (1 + " + DamageTrace.fmt(spec.getLunarBaseBonus()) + ")"
+                            + " + " + DamageTrace.fmt(spec.getLunarBaseFlat()));
+            trace.zone("倍率区", "倍率", DamageTrace.fmt(multiplier));
+            trace.zone("反应加成区", "1 + 6×元素精通/(元素精通+2000) + 月曜专属加成",
+                    "1 + 6×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+2000)"
+                            + " + " + DamageTrace.fmt(DamageZones.LUNAR_SPECIAL_BONUS));
+            trace.zone("抗性区", "1 - 抗性", "1 - " + DamageTrace.fmt(rawResistance));
+            trace.zone("暴击区", "1 + 暴击伤害",
+                    critRoll.isCrit() ? "1 + " + DamageTrace.fmt(critRoll.critDamage()) : "1");
+            trace.zone("擢升区", "1", DamageTrace.fmt(DamageZones.elevationZone()));
+            trace.result(damage);
+            trace.log();
+        }
         return damage;
     }
 
@@ -118,15 +122,18 @@ final class LunarDamage {
         spec.setCrit(combined.crit);
 
         // 每个贡献者一个【】，最后再乘权重汇总
-        for (int i = 0; i < results.size(); i++) {
-            Result result = results.get(i);
-            String name = result.character == null ? "?" : result.character.getName().getString();
-            trace.zone("第" + (i + 1) + "名", name + " 的单人理论伤害", DamageTrace.fmt(result.theoryDamage));
+        if (DamageTrace.active()) {
+            for (int i = 0; i < results.size(); i++) {
+                Result result = results.get(i);
+                String name = result.character == null ? "?" : result.character.getName().getString();
+                trace.zone("第" + (i + 1) + "名", name + " 的单人理论伤害",
+                        DamageTrace.fmt(result.theoryDamage));
+            }
+            trace.zone("合并区", "第1名×1 + 第2名×1/2 + 第3/4名×1/12 + 第5~8名×1/24",
+                    DamageTrace.fmt(combined.totalDamage));
+            trace.result(combined.totalDamage);
+            trace.log();
         }
-        trace.zone("合并区", "第1名×1 + 第2名×1/2 + 第3/4名×1/12 + 第5~8名×1/24",
-                DamageTrace.fmt(combined.totalDamage));
-        trace.result(combined.totalDamage);
-        trace.log();
         return combined.totalDamage;
     }
 

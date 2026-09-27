@@ -8,14 +8,15 @@ import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.about.host.ElementalHost;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
 
 public class ElementalAttachmentInstance extends StatusInstance {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
     private static final String TYPE_ID = "elemental_attachment";
 
     @Persisted(key = "element_id")

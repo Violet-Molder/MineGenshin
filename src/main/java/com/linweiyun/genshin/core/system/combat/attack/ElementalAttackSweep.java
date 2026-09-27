@@ -9,6 +9,8 @@ import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
 import com.linweiyun.genshin.core.system.about.block.BlockElementRules;
 import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -42,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ElementalAttackSweep {
 
-    private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
+    private static final org.slf4j.Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     /** 扫描盒的膨胀（格）—— 让「瞄着水面打」时能把水面那一格的邻居也带上。 */
     private static final double INFLATE = 1.0;

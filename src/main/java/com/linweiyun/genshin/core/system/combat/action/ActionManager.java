@@ -1,22 +1,21 @@
 package com.linweiyun.genshin.core.system.combat.action;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
-import com.linweiyun.genshin.core.system.combat.attack.ElementalAttackSweep;
 
-import com.linweiyun.genshin.config.character.CharacterSystemConfig;
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 public class ActionManager {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     /**
      * key = "C:UUID" / "S:UUID"
@@ -188,12 +187,6 @@ public class ActionManager {
     private boolean request(Player player, PGCharacter character, ActionDefinition def) {
         if (def == null) return false;
 
-        // 动作系统关闭：不排状态机，直接把这次动作的效果结算掉（无前摇、无延迟伤害）
-        if (!CharacterSystemConfig.actionSystem(character.getTextureId())) {
-            fireImmediately(player, character, def);
-            return true;
-        }
-
         if (activeCharacter != null && activeCharacter != character) {
             if (current != null && !current.isFinished()) {
                 current.interrupt(InterruptReason.SWITCH_CHARACTER);
@@ -245,61 +238,6 @@ public class ActionManager {
         ServerActionExecutor.execute(player, def.step, character.getTextureId());
     }
 
-    /**
-     * 「动作系统开关」关闭时的结算方式：不进 {@link ActionState}，当场把这一段的
-     * 伤害全部结算掉，也不占用状态机 —— 按键按下即出结果。
-     *
-     * <p>按 {@code ActionStep.hits} 的条数重复触发（多段攻击照旧打满，
-     * 只是不再分散在时间轴上）；{@code moves}（冲刺位移）属于前后摇表现，这一模式下跳过。
-     */
-    private void fireImmediately(Player player, PGCharacter character, ActionDefinition def) {
-        ActionContext ctx = new ActionContext(player, character, def);
-
-        // 触发钩子照发：换姿态 / 开模式这类「触发即生效」的逻辑跟动作系统开关无关
-        Consumer<ActionContext> castStart = def.getOnCastStart();
-        if (castStart != null) {
-            try {
-                castStart.accept(ctx);
-            } catch (Exception e) {
-                LOGGER.error("[ActionManager] 触发钩子抛异常 kind={}", def.kind, e);
-            }
-        }
-
-        // 过渡期：临时分支（动作系统关闭、当场结算）也要把元素留给范围内的方块。
-        // 与永久分支 ActionState.fireDamagePoint 调的是同一个 helper，逻辑只有一份。
-        //
-        // 这里一次调用覆盖整段动作、不放进下面的 hits 循环：临时分支的所有 hit 都在同一 tick
-        // 结算，站位与朝向一模一样，而附着本身是「同元素同来源刷新量」的幂等操作 ——
-        // 循环 N 次与一次的结果相同，只是白扫 N 遍盒子。（永久分支的 hit 分散在时间轴上，
-        // 那里每个伤害点各附着一次是有意义的，两边语义因此仍然对齐。）
-        //
-        // ⚠️ 本调用随「即时结算」这条临时分支一并删除。
-        try {
-            ElementalAttackSweep.forAction(player, character, def);
-        } catch (Exception e) {
-            LOGGER.error("[ElementalAttackSweep] 临时分支方块附着失败 kind={}", def.kind, e);
-        }
-
-        Consumer<ActionContext> hook = def.getOnActiveStart();
-        if (hook == null) return;
-
-        ActionStep step = def.step;
-        int times = (step == null || step.hits == null || step.hits.isEmpty()) ? 1 : step.hits.size();
-
-        for (int i = 0; i < times; i++) {
-            try {
-                hook.accept(ctx);
-                ctx.tickTotal();
-            } catch (Exception e) {
-                LOGGER.error("[ActionManager] 即时结算回调抛异常 kind={}", def.kind, e);
-                return;
-            }
-        }
-
-        // 位移照常排期：它是表现，不是前后摇
-        scheduleStepMovement(player, character, def);
-    }
-
     public void tick(Player player, PGCharacter character) {
         // ⭐ 只有当前活跃角色的 tick 才驱动状态机；
         //    party 里其他成员的 tick 直接忽略，避免互相打断。
@@ -334,6 +272,22 @@ public class ActionManager {
 
     public void interrupt(InterruptReason reason) {
         if (current == null || current.isFinished()) return;
+
+        // 持续型重击松手（大剑）：执行期 = 整段持续状态，所以它必须能穿过执行期
+        // —— 不强制的话「松手」这个动作会被下面 isProtected 那一条直接丢掉，重击停不下来。
+        //
+        // ⚠️ 只认「正在跑的确实是持续重击」那一段：这条原因是从客户端发过来的，
+        //    两端状态错位时（例如服务端本来就拒绝了这次重击）不能让它去误伤别的动作。
+        if (reason == InterruptReason.CHARGE_RELEASE) {
+            if (!isSustainedChargedAttack(current)) return;
+            current.interrupt(reason);
+            buffered = null;
+            return;
+        }
+
+        // 其余强制打断：这些都是「玩家/规则已经决定这一招到此为止」。
+        //   JUMP 跳跃（能打断准备阶段 / 后摇，执行期挡得住，和客户端那条规则一致）
+        //   SWITCH_CHARACTER 换人 / DEATH 死亡（执行期也照打）
         boolean forced = reason == InterruptReason.SWITCH_CHARACTER
                 || reason == InterruptReason.DEATH
                 || reason == InterruptReason.JUMP;
@@ -350,6 +304,21 @@ public class ActionManager {
             current.interrupt(reason);
             buffered = null;
         }
+    }
+
+    /**
+     * 当前动作是不是<b>持续型重击</b>那一段（大剑）。
+     *
+     * <p>判据是「重击 + 循环动画」—— 循环标记只有持续型招式会打开
+     * （见 {@code ActionStep.loopAnimation}），所以它就是「这是一段可以持续下去的招式」。
+     */
+    private static boolean isSustainedChargedAttack(@Nullable ActionState state) {
+        if (state == null) return false;
+        ActionDefinition def = state.getDefinition();
+        return def != null
+                && def.kind == ActionKind.CHARGED_ATTACK
+                && def.step != null
+                && def.step.loopAnimation;
     }
 
     public boolean isBusy() { return current != null && !current.isFinished(); }
@@ -390,4 +359,5 @@ public class ActionManager {
         lastComboEndTick = Long.MIN_VALUE;
         buffered = null;
     }
+
 }

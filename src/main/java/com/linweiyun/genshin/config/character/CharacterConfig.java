@@ -9,7 +9,6 @@ public class CharacterConfig {
         ShenheConfig.register(builder);
         ColumbinaConfig.register(builder);
         ArlecchinoConfig.register(builder);
-
-        CharacterSystemConfig.register(builder);
+        LinweiyunConfig.register(builder);
     }
 }

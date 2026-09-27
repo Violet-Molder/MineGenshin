@@ -11,7 +11,8 @@ import com.linweiyun.genshin.core.system.about.host.ElementalHost;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public class ElementalReactionManager {
 
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
     // 默认优先级顺序表只有一份，在 ReactionPriorityCalculator 里。
 
     public static boolean canElementReact(GenshinElement attackerElement,
@@ -87,8 +88,13 @@ public class ElementalReactionManager {
             }
             if (host.level() != null && host.blockPos() != null) {
                 DamageIndicatorFactory.reactionAtBlock(host.level(), host.blockPos(), reactionType);
-            } else if (host.entity() != null) {
-                DamageIndicatorFactory.reaction(host.entity(), reactionType);
+                return;
+            }
+            // 角色宿主没有实体，但会给出「角色在世界上对应谁」（出战角色的拥有者）——
+            // 环境附着触发的蒸发 / 冻结就是靠这一条才有字可出。
+            var anchor = host.indicatorAnchor();
+            if (anchor != null) {
+                DamageIndicatorFactory.reaction(anchor, reactionType);
             }
         });
     }

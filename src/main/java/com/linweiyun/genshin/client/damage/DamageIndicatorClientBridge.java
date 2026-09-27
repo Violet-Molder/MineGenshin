@@ -25,9 +25,10 @@ public final class DamageIndicatorClientBridge implements DamageIndicatorSink.Im
                 data.italic(),
                 data.baseScale(),
                 data.startScale(),
-                data.durationMs()
+                data.durationMs(),
+                data.mergeKey()
         );
-        DamageIndicatorManager.add(indicator);
+        DamageIndicatorManager.upsert(indicator, data.merge());
         DamageIndicatorRenderer.onIndicatorAdded(indicator);
     }
 }

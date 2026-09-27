@@ -48,7 +48,7 @@ skill-progress-bar {
 }
 #current_character_hp {
     width: 30%;
-    bottom: 40;
+    bottom: 24;
     align-self: center;
     position: absolute;
     layout-direction: ltr;
@@ -56,8 +56,14 @@ skill-progress-bar {
     justify-content: center;
 }
 #character-level {
-    right: 130;
-    top: 2;
+    /* 原来它是 #current-content 竖排流里的普通子节点：X 由「居中 + 相对偏移 right:130（往左挪 130）」
+       决定，Y 却会被同一列里的技能图标顶上去。这里改成绝对定位，只把 X 原样复刻过来。
+       Label 的盒子宽度是 0（文字直接从盒子左边缘开始画），所以「中线往左 130」== left:50% + margin-left:-130。 */
+    position: absolute;
+    left: 50%;
+    margin-left: -130;
+    /* 长血条是 bottom:24、高 6（24~30，中线 27）；9 高的文字放 25 => 25~34，整体比血条略高一点 */
+    bottom: 24;
 }
 #character-attribute {
     bottom: 150;

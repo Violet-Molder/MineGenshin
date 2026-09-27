@@ -6,7 +6,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.asset.GenshinAssets;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.sounds.SoundManager;
@@ -93,7 +94,7 @@ import java.util.Map;
 @EventBusSubscriber(modid = Minegenshin.MOD_ID, value = Dist.CLIENT)
 public final class CharacterSounds {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
     private static final Gson GSON = new Gson();
 
     private CharacterSounds() {

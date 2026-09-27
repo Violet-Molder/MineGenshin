@@ -1,13 +1,12 @@
 package com.linweiyun.genshin.client.combat.action;
 
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
-import com.linweiyun.genshin.core.system.combat.action.data.Hit;
 
 import com.linweiyun.genshin.core.character.CharacterHelper;
 
 import com.linweiyun.genshin.client.combat.AttackApproach;
 import com.linweiyun.genshin.client.combat.BurstDive;
-import com.linweiyun.genshin.config.character.CharacterSystemConfig;
+import com.linweiyun.genshin.client.camera.ThirdPersonCamera;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -18,14 +17,15 @@ import com.linweiyun.genshin.core.system.combat.action.ActionContext;
 import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
 import com.linweiyun.genshin.core.system.combat.action.ActionSet;
+import com.linweiyun.genshin.core.system.combat.action.InterruptReason;
 import com.linweiyun.genshin.core.system.combat.action.data.Engagement;
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import com.linweiyun.genshin.client.combat.state.AnimationAvailability;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import com.linweiyun.genshin.core.system.combat.targeting.TargetPolicy;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
@@ -70,7 +70,7 @@ import java.util.function.Consumer;
  */
 public final class ResourceDrivenActionHandler implements CharacterActionHandler {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     public static final ResourceDrivenActionHandler INSTANCE = new ResourceDrivenActionHandler();
 
@@ -92,8 +92,8 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
 
         ActionSet set = character.getActionSet(player);
         if (set == null || set.getNormalComboSize() == 0) {
-            // 还没配动作数据的角色：至少在按键那一帧给个反馈（有关闭模型时就是摆臂）
-            scheduleFallbackSwing(player, null);
+            // 还没配动作数据的角色：这一下什么都不做（所有角色都走模型 + 完整动作系统，
+            // 没有「退回摆臂」那一档了）
             return;
         }
 
@@ -121,6 +121,20 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
             }
             ActionServer.performNormalAttackToServer(stageIndex, target);
         });
+    }
+
+    /**
+     * 大剑（持续型重击）按下左键<b>不</b>立刻出普攻。
+     *
+     * <p>否则按住左键会先打掉一段普攻、再进重击状态（见 {@code ClaymoreSkill} 的类注释）。
+     * 延后的那一下由 {@code ActionStateMachine.releaseAttack} 在「这次按住没进重击状态」
+     * 时补上 —— 单击依旧是普攻，按住就只有重击。
+     * 单手剑 / 长柄（触发型重击）保持按下即出普攻，不受影响。
+     */
+    @Override
+    public boolean deferNormalAttackOnPress(Player player) {
+        PGCharacter character = currentCharacter(player);
+        return character != null && character.isSustainedChargedAttack();
     }
 
     @Override
@@ -209,11 +223,65 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
 
         if (!ActionCastGuard.canCast(player, character, ActionKind.CHARGED_ATTACK, 0)) return;
 
-        engageAndPlay(player, def, ActionStateMachine.PRIO_ATTACK, null,
-                ActionServer::performChargedAttackToServer);
+        if (character.isSustainedChargedAttack()) {
+            // 大剑：这一招不是「放一次」，而是「进一个状态」—— 见 ClaymoreSkill 的类注释
+            beginSustainedChargedAttack(player, def);
+        } else {
+            engageAndPlay(player, def, ActionStateMachine.PRIO_ATTACK, null,
+                    ActionServer::performChargedAttackToServer);
+        }
 
         // 一次按住只触发一次重击
         ActionStateMachine.chargedAttackTriggered = true;
+    }
+
+    /**
+     * 左键松开 —— <b>持续型重击的第二个出口</b>（另一个是到达最高持续时间，由状态机自己到时复位）。
+     *
+     * <p>触发型重击不需要这一步：它触发一次就自己打完了。持续型的执行期铺满整段
+     * （不然走位就能把它取消掉），服务端那边的普通打断会被执行期直接丢掉，
+     * 所以松手得显式发一条 {@link InterruptReason#CHARGE_RELEASE} 过去收招，
+     * 否则服务端会继续把剩下的伤害点打完。
+     */
+    @Override
+    public void releaseAttack(Player player, int chargeTicks) {
+        // 只有当「此刻确实还在持续重击状态里」才收招：
+        // 普通的一下点击松手、或者重击早就到时/被打断了，都不能在这里去动状态机。
+        if (!ActionStateMachine.currentStateLoops()) return;
+        if (!(player instanceof LocalPlayer)) return;
+
+        ActionStateMachine.resetToDefault();
+        ThirdPersonCamera.setFollowBody(false);
+        ActionServer.interruptActionToServer(InterruptReason.CHARGE_RELEASE.ordinal());
+    }
+
+
+    private static void beginSustainedChargedAttack(Player player, ActionDefinition def) {
+        ActionStep step = def.step;
+        int totalTicks = Math.max(1, step.duration);
+
+        ActionStateMachine.setCurrentAttackRange(step.effectiveAttackRange());
+
+        fireLocalTalentHook(player, def);
+        ActionSoundScheduler.scheduleActionSounds(player, step);
+
+        if (!AnimationAvailability.existsFor(player, def.animationName())) {
+            LOGGER.warn("[MineGenshin] 角色 '{}' 没有持续重击动画 '{}'：照常进状态与结算，"
+                            + "只是视觉上停在上一帧（补一个循环动画即可）",
+                    CharacterHelper.getActiveCharacterId(player), def.animationName());
+        }
+
+        // 进状态：总时长 = 最高持续时间，执行期铺满整段（挨打也打不断），定身 0（可以边走边转）。
+        // loop = true 顺带把「这是持续型」这条信息挂到状态机上：动画循环播、视角跟随跟着它挂/摘，
+        // 并且让常态输入打断（走位/跳/蹲）对这一段整段失效 —— 见 ActionStateMachine.interruptOnNormalInput。
+        ActionStateMachine.changeState(def.animationName(), ActionStateMachine.PRIO_ATTACK,
+                totalTicks, step.protectDuration, 0, 0, true);
+
+        // 视角跟随：申鹤（以及以后所有大剑）重击持续期间镜头跟着角色；
+        // 状态一结束（松手/到时/被打断/切角色）会自动落回 —— 见 ThirdPersonCamera.tick
+        ThirdPersonCamera.setFollowBody(true);
+
+        ActionServer.performChargedAttackToServer(CombatTargeting.current(player));
     }
 
     // ==================== 索敌 → 转向/突进 → 发服务端 ====================
@@ -264,9 +332,7 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
 
         if (player instanceof LocalPlayer localPlayer && target != null) {
             // 目标在攻击距离外 → 先贴上去：起手动作冻在那一帧，到位再解冻接着播
-            // （关掉动作系统时不突进 —— 那一档的承诺是「按下立刻响应、没有延迟伤害」，
-            //   而突进会把服务端请求推到到位那一刻）
-            boolean wantsDash = engagement.wantsDash() && ActionStateMachine.actionSystemEnabled()
+            boolean wantsDash = engagement.wantsDash()
                     && AttackApproach.needsDash(localPlayer, target, attackRange);
 
             if (wantsDash && step.dashStartDelay > 0) {
@@ -366,7 +432,6 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
                                             @Nullable LivingEntity target) {
         ActionStateMachine.resumeFromApproach(timing.totalTicks(),
                 timing.lockFrames(), timing.movementLock());
-        scheduleFallbackSwing(player, step);
         ActionSoundScheduler.scheduleActionSounds(player, step);
         if (serverCall != null) {
             serverCall.accept(target);
@@ -438,7 +503,6 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
         }
 
         if (feedbackNow) {
-            scheduleFallbackSwing(player, step);
             ActionSoundScheduler.scheduleActionSounds(player, step);
         }
 
@@ -490,26 +554,6 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
         }
         // moveVector.x 是左正右负（与 xxa 一致）
         return move.x > 0 ? "left" : "right";
-    }
-
-    /**
-     * 没有专属模型的角色不做动画表现，但保留攻击延迟：
-     * 在「实际造成伤害」的那一帧播一次摆臂。
-     */
-    private static void scheduleFallbackSwing(Player player, @Nullable ActionStep step) {
-        if (CharacterSystemConfig.customModel(CharacterHelper.getActiveCharacterId(player))) {
-            return;
-        }
-
-        int delay = 0;
-        if (ActionStateMachine.actionSystemEnabled() && step != null) {
-            List<Hit> hits = step.hits;
-            if (hits != null && !hits.isEmpty()) {
-                delay = Math.max(0, hits.getFirst().delay);
-            }
-        }
-
-        ActionStateMachine.queueClientWork(delay, () -> player.swing(InteractionHand.MAIN_HAND));
     }
 
     /**

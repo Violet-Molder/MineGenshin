@@ -4,6 +4,7 @@ import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatEntityStats;
 import com.linweiyun.genshin.core.system.about.block.ChunkBlockElements;
 import com.linweiyun.genshin.core.system.shield.ShieldState;
+import com.linweiyun.genshin.core.system.poise.PoiseState;
 import com.mojang.serialization.Codec;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -36,6 +37,23 @@ public class AttachmentRegistration {
                                     FriendlyByteBuf::writeBoolean,
                                     FriendlyByteBuf::readBoolean
                             ))
+                            .copyOnDeath()
+                            .build()
+            );
+
+    /**
+     * 「这个玩家从原神模式里退出来过」。
+     *
+     * <p>非原神模式下要把当前角色的属性折算到玩家身上，但折算只能在
+     * 「原神模式 → 非原神模式」这一个切换点上建立一次 —— 否则刚进世界的玩家会被直接改成
+     * 「原版上限 + 角色上限 × 0.7」的血量。切回原神模式时这条记录清掉。
+     *
+     * <p>纯服务端记账，不需要 sync。
+     */
+    public static final Supplier<AttachmentType<Boolean>> COMPAT_LINK_ATTACHMENT =
+            ATTACHMENTS.register("player_compat_link",
+                    () -> AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL.fieldOf("compat_link"))
                             .copyOnDeath()
                             .build()
             );
@@ -96,6 +114,23 @@ public class AttachmentRegistration {
     );
 
     /**
+     * 实体身上的韧性状态（攒了多少削韧、破没破、驻留还剩多久）。
+     *
+     * <p>和 {@link #SHIELD} 同一套写法、同一个道理：韧性的「量 / 破韧标记 / 驻留计时」
+     * 这几项不是属性（{@code ModAttributes.POISE} 那个属性表达的是<b>档位</b>），
+     * 所以放附件。默认真造新实例，免得一个实体改韧性把别人也改了。
+     *
+     * <p>{@code sync} 是必须的 —— 客户端血条下面那条削韧条读的就是它。
+     */
+    public static final Supplier<AttachmentType<PoiseState>> POISE = ATTACHMENTS.register(
+            "poise",
+            () -> AttachmentType.builder(PoiseState::new)
+                    .serialize(PoiseState.CODEC.fieldOf("poise"))
+                    .sync(PoiseState.STREAM_CODEC)
+                    .build()
+    );
+
+    /**
      * 玩家当前动作动画状态（参考2 的 {@code anime_state}）。
      *
      * <p>{@code serialize} + {@code sync} 两个调用就够了：服务端 setData 后调一次
@@ -107,6 +142,27 @@ public class AttachmentRegistration {
                     () -> AttachmentType.builder(AnimationState::new)
                             .serialize(AnimationState.CODEC.fieldOf("animation_state"))
                             .sync(AnimationState.STREAM_CODEC)
+                            .build()
+            );
+
+    /**
+     * 玩家当前的<b>身体朝向</b>（{@code yBodyRot}，度）。
+     *
+     * <p>原版客户端只同步视线角，本模组「视角独立 / 视角跟随」改的是身体角，
+     * 所以这份值必须自己同步，否则别人看到的是「身体被视线拖着走」的另一个版本
+     * （详见 {@code BodyYawSync} 类注释）。
+     *
+     * <p>{@code sync} 是必须的；{@code NaN} 表示「还没收到过」，渲染时退回原版插值。
+     */
+    public static final Supplier<AttachmentType<Float>> BODY_YAW_ATTACHMENT =
+            ATTACHMENTS.register(
+                    "body_yaw",
+                    () -> AttachmentType.builder(() -> Float.NaN)
+                            .serialize(Codec.FLOAT.fieldOf("body_yaw"))
+                            .sync(StreamCodec.of(
+                                    FriendlyByteBuf::writeFloat,
+                                    FriendlyByteBuf::readFloat
+                            ))
                             .build()
             );
 

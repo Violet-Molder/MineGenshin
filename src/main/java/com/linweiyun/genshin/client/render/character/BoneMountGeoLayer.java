@@ -2,6 +2,12 @@ package com.linweiyun.genshin.client.render.character;
 
 import com.linweiyun.genshin.core.character.CharacterHelper;
 
+import com.linweiyun.genshin.client.render.optimize.RenderOptimize;
+import com.linweiyun.genshin.client.render.optimize.geo.CompiledBone;
+import com.linweiyun.genshin.client.render.optimize.geo.CompiledGeoModel;
+import com.linweiyun.genshin.client.render.optimize.geo.GeoCompileCache;
+import com.linweiyun.genshin.client.render.optimize.walk.BoneWalker;
+
 import com.geckolib.animatable.GeoAnimatable;
 import com.geckolib.animation.state.BoneSnapshot;
 import com.geckolib.cache.model.BakedGeoModel;
@@ -16,7 +22,8 @@ import com.geckolib.renderer.layer.GeoRenderLayer;
 import com.google.common.reflect.TypeToken;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.math.Axis;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
@@ -61,8 +68,9 @@ import java.util.function.BiConsumer;
  *       {@code GeoItem}（特殊物品模型 {@code geckolib:geckolib}），提交后由 GeckoLib 自己的
  *       {@code GeckolibItemSpecialRenderer} 画出 geo 模型；普通物品模型也照样工作。</li>
  *   <li><b>源模型里的一根骨骼</b>：拿到源模型的 {@link BakedGeoModel} 后，把除目标骨骼
- *       （及其祖先链和子树）以外的骨骼全部 {@code skipRender + skipChildrenRender}，
- *       再整模型渲染一次 —— 等效于「只把那根骨骼抠出来」。</li>
+ *       以外的骨骼全部跳过，只把那根骨骼（及其祖先链的位移、以及它的子树）画出来 ——
+ *       等效于「只把那根骨骼抠出来」。优化路径沿预编译骨骼树直走（见
+ *       {@link #renderIsolatedBone}），不被接管的模型才回退到「全树隐藏 + 整模型渲染」。</li>
  * </ul>
  *
  * <h2>校验原则：画不出来就干脆别挂</h2>
@@ -89,7 +97,7 @@ import java.util.function.BiConsumer;
 public final class BoneMountGeoLayer<T extends GeoAnimatable, O, R extends GeoRenderState>
         extends GeoRenderLayer<T, O, R> {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
 
     /** 每个渲染趟要用的数据：已解析好的挂点 + 各自要画的东西。 */
     private static final DataTicket<List<ResolvedMount>> MOUNTS =
@@ -317,7 +325,7 @@ public final class BoneMountGeoLayer<T extends GeoAnimatable, O, R extends GeoRe
                             getRenderer(), renderPassInfo.renderState(), local,
                             renderPassInfo.cameraState(), true);
 
-                    renderIsolatedBone(source, sourceBone, sourceInfo, buffer,
+                    renderIsolatedBone(source, sourceBone, local, sourceInfo, buffer,
                             renderPassInfo.packedLight(), OverlayTexture.NO_OVERLAY, 0xFFFFFFFF);
                 });
     }
@@ -334,13 +342,53 @@ public final class BoneMountGeoLayer<T extends GeoAnimatable, O, R extends GeoRe
     }
 
     /**
-     * 只渲染 {@code wantedBone} 这一支：全模型先隐藏，再把目标骨骼的祖先链打开、
-     * 目标骨骼自身打开（子树跟着它一起出来）。渲染完把动过的骨骼恢复原状。
+     * 只渲染 {@code wantedBone} 这一支。
+     *
+     * <h2>优化路径：沿预编译骨骼树直走</h2>
+     * 目标骨骼拿到的矩阵是「模型根位姿 · 根到目标每一级的 {@code prepMatrixForBone}」，
+     * 这一点在「全树隐藏 + 只开这一支」和「只走这一支」两条路上完全相同（隐藏只影响几何写不写，
+     * 不影响祖先链的位姿累乘）。所以优化路径可以直接沿
+     * {@link CompiledBone#pathFromRoot()} 把祖先链摆完，再让 {@link BoneWalker} 写这一支的几何：
+     * <b>不建任何 {@code BoneSnapshot}、不做全树递归、不碰共享的 baked model</b>。
+     *
+     * <h2>兜底路径：全树隐藏</h2>
+     * 源模型不被预编译接管（含非 {@code CuboidGeoBone} 的自定义骨骼），或者优化总开关被关掉时，
+     * 回退到原来的做法：全模型先隐藏，再把目标骨骼的祖先链与它自己打开。
      *
      * <p>GL5 没有 {@code GeoBone.setHidden}，骨骼显隐是渲染趟内的
-     * {@code frameSnapshot}；这里自己建、自己清，不会污染共享的 baked model。
+     * {@code frameSnapshot}；兜底路径自己建、自己清，不会污染共享的 baked model。
+     * 优化路径根本不碰 {@code frameSnapshot}，所以连这个风险都没有。</p>
+     *
+     * @param poseStack  已经摆好「源模型根位姿」的栈（调用方负责它的生命周期）
+     * @param sourceInfo 传给骨骼位置监听的渲染趟信息
      */
     private static <SR extends GeoRenderState> void renderIsolatedBone(
+            BakedGeoModel model, String wantedBone, PoseStack poseStack,
+            RenderPassInfo<SR> sourceInfo, VertexConsumer buffer,
+            int packedLight, int packedOverlay, int color) {
+
+        final int flags = RenderOptimize.characterFlags();
+        if (flags != 0) {
+            final CompiledGeoModel compiled = GeoCompileCache.get(model);
+            final CompiledBone target = compiled == null ? null : compiled.bone(wantedBone);
+
+            if (target != null) {
+                BoneWalker.renderBoneSubtree(target, poseStack, sourceInfo, buffer,
+                        packedLight, packedOverlay, color, flags);
+                return;
+            }
+        }
+
+        renderIsolatedBoneLegacy(model, wantedBone, sourceInfo, buffer, packedLight, packedOverlay, color);
+    }
+
+    /**
+     * 兜底实现：全模型隐藏 + 只把目标骨骼这一支打开，然后整模型渲染一次。
+     *
+     * <p>它同时是「优化关掉时的同场景对照档」—— 把 {@code render-optimize.character-geometry}
+     * 关掉，挂点渲染就完全回到这条路上。</p>
+     */
+    private static <SR extends GeoRenderState> void renderIsolatedBoneLegacy(
             BakedGeoModel model, String wantedBone, RenderPassInfo<SR> sourceInfo,
             VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
 

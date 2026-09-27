@@ -5,13 +5,14 @@ import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
 public interface ICharacterEffect {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     /**
      * 把<b>参数化效果</b>自己的构造参数写进效果实例的 {@code data} 标签。

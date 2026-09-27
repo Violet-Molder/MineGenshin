@@ -3,11 +3,6 @@ package com.linweiyun.genshin.content.items.weapon;
 import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.content.items.TeyvatItem;
 import com.linweiyun.genshin.content.items.component.WeaponStatsComponent;
-import com.linweiyun.genshin.content.items.weapon.bow.Bow;
-import com.linweiyun.genshin.content.items.weapon.catalyst.Catalyst;
-import com.linweiyun.genshin.content.items.weapon.claymore.Claymore;
-import com.linweiyun.genshin.content.items.weapon.polearm.Polearm;
-import com.linweiyun.genshin.content.items.weapon.sword.Sword;
 import com.linweiyun.genshin.content.stat.TeyvatItemStat;
 import com.linweiyun.genshin.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.element.GenshinElement;
@@ -186,13 +181,17 @@ public class WeaponItem extends TeyvatItem {
         return uid;
     }
 
+    /** 武器类型那一位数字：六种武器各占一档（认类只问 {@code WeaponPoiseTable}，不自己 instanceof）。 */
     private int getWeaponTypeDigit() {
-        if (this instanceof Polearm) return 1;
-        if (this instanceof Sword) return 2;
-        if (this instanceof Claymore) return 3;
-        if (this instanceof Bow) return 4;
-        if (this instanceof Catalyst) return 5;
-        return 0;
+        return switch (com.linweiyun.genshin.core.system.poise.WeaponPoiseTable.weaponOfClass(getClass())) {
+            case POLEARM -> 1;
+            case SWORD -> 2;
+            case CLAYMORE -> 3;
+            case BOW -> 4;
+            case CATALYST -> 5;
+            case FIST -> 6;
+            case UNKNOWN -> 0;
+        };
     }
 
     @Override

@@ -13,7 +13,8 @@ import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
 
@@ -33,7 +34,7 @@ import org.slf4j.Logger;
  * TODO: 冻结藏冰/藏水逻辑 —— 冻结反应发生后还能残留额外的冰或水
  */
 public class FreezeReaction extends ElementalReaction {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     /**
      * 冻结反应的生成物倍率

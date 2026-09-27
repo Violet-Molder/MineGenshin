@@ -14,6 +14,7 @@ import com.linweiyun.genshin.core.system.about.host.EntityHost;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
 import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionManager;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
@@ -31,7 +32,8 @@ import com.linweiyun.genshin.content.entities.area.StellarVortexEntity;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.VodyanitsaTalent;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.content.entities.ModEntities;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -42,7 +44,7 @@ import org.slf4j.Logger;
 import java.util.*;
 
 public class SwirlReaction extends ElementalReaction {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     public static final float WEAK_SWIRL_SPREAD = 2.2f;
     public static final float STRONG_SWIRL_SPREAD = 3.4f;
@@ -50,7 +52,13 @@ public class SwirlReaction extends ElementalReaction {
     private static final int SWIRL_COOLDOWN_TICKS = 20;
     private static final double SWIRL_RADIUS = 5.0;
 
-    private static final Map<UUID, Long> lastSwirlTick = new HashMap<>();
+    /**
+     * 同一目标两次扩散的间隔记录。
+     *
+     * <p>键是实体 UUID、只 put 不 remove 的静态表会随刷怪一直涨（内存泄漏），
+     * 所以用有界 LRU：淘汰效果等价于那条冷却记录自然过期。</p>
+     */
+    private static final Map<UUID, Long> lastSwirlTick = BoundedLruMap.create();
 
     private static final String PYRO_ID = ModElements.PYRO.getId().toString();
     private static final String HYDRO_ID = ModElements.HYDRO.getId().toString();
@@ -235,7 +243,10 @@ public class SwirlReaction extends ElementalReaction {
     private void applySwirlDamage(ReactionContext ctx, GenshinElement spreadElement, LivingEntity target) {
         ModDamageSpec spec = ModDamageSpec.transformative(reactionType, spreadElement, AttackType.SWIRL);
         ModDamageSource source = ModDamageSource.from(spec, ctx.attackerEntity());
-        target.hurt(source, 0f);
+        // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
+        if (target.level() instanceof ServerLevel serverLevel) {
+            target.hurtServer(serverLevel, source, 0f);
+        }
         DamageIndicatorFactory.reaction(target, reactionType);
     }
 
@@ -253,7 +264,7 @@ public class SwirlReaction extends ElementalReaction {
                 e -> e != target && e.isAlive() && target.distanceToSqr(e) <= rSq)) {
 
             ModDamageSource dmgSource = ModDamageSource.from(dmgSpec, ctx.attackerEntity());
-            nearby.hurt(dmgSource, 0f);
+            nearby.hurtServer(level, dmgSource, 0f);
             DamageIndicatorFactory.reaction(nearby, reactionType);
 
             StatusContainer nearbyContainer = nearby.getData(AttachmentRegistration.CONTAINER);
@@ -280,7 +291,8 @@ public class SwirlReaction extends ElementalReaction {
         return new AttachmentProfile(quantity, 1.0f, v, t);
     }
 
-    private static final Map<UUID, Long> stellarSwirlCooldown = new HashMap<>();
+    /** 同上：有界 LRU，避免静态表随实体 UUID 无限增长。 */
+    private static final Map<UUID, Long> stellarSwirlCooldown = BoundedLruMap.create();
     private static final int STELLAR_SWIRL_COOLDOWN_TICKS = 4;
 
     private void handleStellarSwirl(ReactionContext ctx, ServerLevel level, GenshinElement spreadElement,

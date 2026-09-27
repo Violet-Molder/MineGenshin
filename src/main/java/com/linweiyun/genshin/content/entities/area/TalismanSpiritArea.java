@@ -20,7 +20,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,7 +31,7 @@ import java.util.UUID;
 
 public class TalismanSpiritArea extends AreaEntity {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     // ========== 领域常量配置 ==========
 

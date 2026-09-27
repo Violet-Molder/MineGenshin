@@ -3,7 +3,8 @@ package com.linweiyun.genshin.content.skill_node;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.LockedTargetData;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Monster;
@@ -37,7 +38,7 @@ public class TargetSeeker {
         HOSTILE_ONLY
     }
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     private static final double TUNNEL_HALF_SIZE = 2.5;
     private static final double PRIORITY_THRESHOLD = 0.5;

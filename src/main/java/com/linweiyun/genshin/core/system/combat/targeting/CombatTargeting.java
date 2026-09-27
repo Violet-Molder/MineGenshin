@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.targeting;
 
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -56,7 +57,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class CombatTargeting {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     // ==================== 迟滞参数（想调手感就改这里） ====================
 

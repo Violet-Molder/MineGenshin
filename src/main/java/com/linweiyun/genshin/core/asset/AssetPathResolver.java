@@ -31,11 +31,12 @@ import java.util.Set;
  * 不缓存任何东西 —— 资源重载后结果必须立刻变。
  *
  * <h2>整包</h2>
- * geo 模型 / 动画不再以单个文件存在，全在 {@code .minegenshin} 整包里
+ * geo 模型 / 动画 / 对象目录里的贴图都不再以单个文件存在，全在 {@code .minegenshin} 整包里
  * （见 {@link GeoPackSource}）。所以存在性判断除了问资源管理器，还要问一次包内索引，
  * 否则「包里明明有模型」会被判成 MISSING（拿不到整包读取器时包内索引恒为空，
- * 结果就是这些模型被判成 MISSING，这是预期行为）。包外的资源（贴图、音效、原版入口文件）
- * 不受影响，照旧只看资源管理器。
+ * 结果就是这些模型被判成 MISSING，这是预期行为）。包外的资源
+ * （音效、{@code gui/} 与 {@code icon/} 那类共用界面贴图、原版入口文件）不受影响，
+ * 照旧只看资源管理器。
  */
 public final class AssetPathResolver {
 
@@ -151,8 +152,10 @@ public final class AssetPathResolver {
     /**
      * 取一个 Optional 形式的资源；给需要读文件内容的调用方用。
      *
-     * <p>只看磁盘：整包里的条目没有对应的 {@link Resource}，要读它们的内容请走
-     * {@code GeoPackSource.entries(manager)}（见 {@link com.linweiyun.genshin.core.asset.pack.GeoJsonReader}）。
+     * <p>贴图可以直接用：{@link com.linweiyun.genshin.core.asset.pack.GeoPackResources}
+     * 已经把整包里的贴图条目接到了资源管理器上，这里拿到的就是包内那份。
+     * geo 模型 / 动画没有逐文件的 {@link Resource}（它们只由缓存扫描按条目字节读，
+     * 见 {@link com.linweiyun.genshin.core.asset.pack.GeoJsonReader}）。
      */
     public static Optional<Resource> resource(@Nullable ResourceManager resourceManager, @Nullable Identifier location) {
         if (resourceManager == null || location == null) {

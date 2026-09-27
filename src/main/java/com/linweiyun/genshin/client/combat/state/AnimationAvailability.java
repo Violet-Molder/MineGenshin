@@ -3,6 +3,7 @@ package com.linweiyun.genshin.client.combat.state;
 import com.linweiyun.genshin.core.character.CharacterHelper;
 
 import com.geckolib.cache.animation.BakedAnimations;
+import com.linweiyun.genshin.client.render.geo.AssetFallback;
 import com.linweiyun.genshin.client.render.geo.GenshinGeoCache;
 import com.linweiyun.genshin.core.asset.GenshinAssets;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
@@ -91,10 +92,15 @@ public final class AnimationAvailability {
             return null;
         }
 
-        // 动画可能分散在多个文件里（主文件 + 第一人称 + 动作包），全部收集
-        List<Identifier> files = data.allAnimationPaths().stream()
-                .map(GenshinAssets::fromAnimationPath)
-                .toList();
+        // 主动画文件先按「自己的目录 → 共用的 character/default/」定下来 ——
+        // 与渲染时读的是同一条判据（见 AssetFallback），不然会出现
+        // 「名字判定说存在、真正播的时候那个文件却没被读」的错位。
+        // 之后再收额外动画文件（第一人称、动作包……）。
+        List<Identifier> files = new java.util.ArrayList<>(data.allAnimationPaths().size() + 1);
+        files.add(AssetFallback.animation(data.animationIdentifier(), GenshinAssets.defaultAnimation()));
+        for (String extra : data.extraAnimationPaths()) {
+            files.add(GenshinAssets.fromAnimationPath(extra));
+        }
 
         Set<String> names = new java.util.LinkedHashSet<>();
         BakedAnimations[] baked = new BakedAnimations[files.size()];

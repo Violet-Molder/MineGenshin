@@ -3,7 +3,12 @@ package com.linweiyun.genshin.core.system.combat.action;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 import com.linweiyun.genshin.core.system.combat.action.data.Hit;
 import com.linweiyun.genshin.core.system.combat.attack.ElementalAttackSweep;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.system.poise.HitPoise;
+import com.linweiyun.genshin.core.system.poise.HitImpact;
+import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
+import com.linweiyun.genshin.core.system.performance.HotPathLog;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import lombok.Getter;
 import org.slf4j.Logger;
 
@@ -33,7 +38,7 @@ import java.util.function.Consumer;
  * 也就是「触发即生效」的那些逻辑该待的地方。
  */
 public class ActionState {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     @Getter private final ActionDefinition definition;
     @Getter private final ActionContext context;
@@ -108,7 +113,7 @@ public class ActionState {
         if (firesWithoutHits) {
             if (tickCount == 0 && !hitsFired.get(0)) {
                 hitsFired.set(0);
-                fireDamagePoint();
+                fireDamagePoint(-1);
             }
             return;
         }
@@ -116,7 +121,7 @@ public class ActionState {
         for (int i = 0; i < hitDelays.length; i++) {
             if (!hitsFired.get(i) && tickCount >= hitDelays[i]) {
                 hitsFired.set(i);
-                fireDamagePoint();
+                fireDamagePoint(i);
             }
         }
     }
@@ -132,18 +137,49 @@ public class ActionState {
      * <p>{@code ElementalAttackSweep} 内部自带门禁（仅服务端 + 仅原神模式 + 必须有元素），
      * 所以客户端这一份状态机跑过去不会有任何副作用。
      */
-    private void fireDamagePoint() {
+    private void fireDamagePoint(int hitIndex) {
         try {
             int attached = ElementalAttackSweep.forAction(context.player, context.character, definition);
             if (attached > 0) {
-                LOGGER.info("[ElementalAttackSweep] kind={} 附着方块数={} tick={}",
-                        definition.kind, attached, tickCount);
+                // 多段招式的每一段命中都会走这里：高频攻击时节流（见 HotPathLog）
+                if (HotPathLog.allow(LOGGER, "elemental-attack-sweep", "元素战技扫方块")) {
+                    LOGGER.info("[ElementalAttackSweep] kind={} 附着方块数={} tick={}",
+                            definition.kind, attached, tickCount);
+                }
             }
         } catch (Exception e) {
             LOGGER.error("[ElementalAttackSweep] 方块附着抛异常 kind={} tick={}",
                     definition.kind, tickCount, e);
         }
-        fire(definition.getOnActiveStart());
+
+        // 这一下是哪个伤害点：把 Hit.poise 挂出来，技能里新建的 ModDamageSpec 会自动读走它
+        // （见 HitPoise）。成对 push/restore，异常也复原，不会串到下一下。
+        float previousPoise = HitPoise.push(hitPoiseCoefficient(hitIndex));
+        ImpactLevel previousImpact = HitImpact.push(hitImpact(hitIndex));
+        try {
+            fire(definition.getOnActiveStart());
+        } finally {
+            HitPoise.restore(previousPoise);
+            HitImpact.restore(previousImpact);
+        }
+    }
+
+    /** 第 {@code hitIndex} 个伤害点的削韧系数；越界或没有 hits 就是基准 1.0。 */
+    private float hitPoiseCoefficient(int hitIndex) {
+        ActionStep step = definition.step;
+        if (step == null || step.hits == null || hitIndex < 0 || hitIndex >= step.hits.size()) {
+            return (float) Hit.DEFAULT_POISE;
+        }
+        return (float) step.hits.get(hitIndex).poise;
+    }
+
+    /** 第 {@code hitIndex} 个伤害点的冲击类型；越界或没有 hits 就是默认微颤。 */
+    private ImpactLevel hitImpact(int hitIndex) {
+        ActionStep step = definition.step;
+        if (step == null || step.hits == null || hitIndex < 0 || hitIndex >= step.hits.size()) {
+            return Hit.DEFAULT_IMPACT;
+        }
+        return step.hits.get(hitIndex).impact;
     }
 
     private void finish() {

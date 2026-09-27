@@ -12,15 +12,17 @@ import java.util.Map;
  * 角色渲染定义：模型/动画/贴图<b>相对路径</b> + 常态动画映射 + 骨骼挂点。
  *
  * <h2>目录约定</h2>
- * 三个字段都是相对 {@code assets/minegenshin/} 的路径。默认组合是
- * <b>模型贴图共用、动画独立</b>：
+ * 三个字段都是相对 {@code assets/minegenshin/} 的路径，指向<b>角色自己目录里的位置</b>：
  * <pre>
- * character/default/default.geo.json              ← 所有角色共用
- * character/default/textures/default.png          ← 所有角色共用
- * character/vesna/vesna.animation.json            ← 每个角色自己的
+ * character/&lt;角色id&gt;/&lt;角色id&gt;.geo.json          模型
+ * character/&lt;角色id&gt;/textures/&lt;角色id&gt;.png       贴图
+ * character/&lt;角色id&gt;/&lt;角色id&gt;.animation.json     动画
  * </pre>
- * 用 {@link #character(String, Map, float, CharacterBoneMount...)} 就是这套默认值；
- * 某个角色要做专属模型时，用显式路径构造。
+ * 这三个位置里<b>没有的项由读的那一侧回落 {@code character/default/}</b>
+ * （三项各自独立，见 {@code AssetFallback}）—— 所以这里写的永远是
+ * 「这个角色自己的目录」，而不是「实际会读到的那一份」。
+ * 用 {@link #character(String, Map, float, CharacterBoneMount...)} 就是这套标准位置；
+ * 要整套换目录仍然用显式路径构造。
  *
  * <p>想换目录不要改这里 —— 用 {@link com.linweiyun.genshin.core.asset.GeoPathOverrides} 注册规则。
  *
@@ -37,30 +39,27 @@ public final class CharacterRenderData {
     private final Map<String, String> animMapping;
     private final float bodyScale;
     private final List<CharacterBoneMount> boneMounts;
+    private final List<String> translucentBones;
+    /** 这套模型的作者名（署名用）；null = 不署名。 */
+    private final String modelAuthor;
+    /** 作者的页面（点击署名时打开）；null = 只有名字、不可点。 */
+    private final String modelAuthorUrl;
 
     /**
-     * 最省事的写法：<b>共用模型 + 共用贴图 + 本角色独立动画</b>。
+     * 标准写法：三项都指向<b>角色自己的目录</b>，缺的那几项由读的一侧回落
+     * {@code character/default/}。
      *
      * <pre>
-     * character/default/default.geo.json
-     * character/default/default.png
-     * character/&lt;角色id&gt;/&lt;角色id&gt;.animation.json
+     * character/&lt;角色id&gt;/&lt;角色id&gt;.geo.json        模型
+     * character/&lt;角色id&gt;/textures/&lt;角色id&gt;.png     贴图
+     * character/&lt;角色id&gt;/&lt;角色id&gt;.animation.json   动画
      * </pre>
+     *
+     * <p>所以「还没画自己的模型」「只做了模型、贴图以后再补」都不需要改代码：
+     * 文件放进角色目录就自动生效，没放就借共用的那一份。
      */
     public static CharacterRenderData character(String id, Map<String, String> animMapping,
                                                 float bodyScale, CharacterBoneMount... boneMounts) {
-        return new CharacterRenderData(id,
-                GenshinAssets.defaultModelPath(),
-                GenshinAssets.defaultTexturePath(),
-                GenshinAssets.characterAnimationPath(id),
-                animMapping, bodyScale, boneMounts);
-    }
-
-    /**
-     * 这个角色有专属模型：三个文件都在 {@code character/<角色id>/} 下，同名。
-     */
-    public static CharacterRenderData characterWithOwnModel(String id, Map<String, String> animMapping,
-                                                            float bodyScale, CharacterBoneMount... boneMounts) {
         return new CharacterRenderData(id,
                 GenshinAssets.characterModelPath(id),
                 GenshinAssets.characterTexturePath(id),
@@ -98,6 +97,35 @@ public final class CharacterRenderData {
                                String animationPath, List<String> extraAnimationPaths,
                                Map<String, String> animMapping,
                                float bodyScale, CharacterBoneMount... boneMounts) {
+        this(id, modelPath, texturePath, animationPath, extraAnimationPaths, animMapping, bodyScale,
+                List.of(), boneMounts);
+    }
+
+    /**
+     * 最全的构造：额外动画文件 + 半透明骨骼名单。其余构造都汇到这里。
+     *
+     * @param translucentBones 见 {@link #translucentBones()}；空表示不需要半透明管线。
+     */
+    private CharacterRenderData(String id, String modelPath, String texturePath,
+                                String animationPath, List<String> extraAnimationPaths,
+                                Map<String, String> animMapping, float bodyScale,
+                                List<String> translucentBones, CharacterBoneMount... boneMounts) {
+        this(id, modelPath, texturePath, animationPath, extraAnimationPaths, animMapping, bodyScale,
+                translucentBones, boneMounts, null, null);
+    }
+
+    /**
+     * 最全的构造（含作者署名）。所有其它构造最终都汇到这里。
+     *
+     * <p>作者信息单独开两个字段而不是塞进 {@code id} / 路径：它是<b>美术的出处</b>，
+     * 和「模型放在哪、怎么播」无关，页面只在需要署名的地方读它
+     * （见 {@code ShenheConfigUI} 预览下方那一行）。
+     */
+    private CharacterRenderData(String id, String modelPath, String texturePath,
+                                String animationPath, List<String> extraAnimationPaths,
+                                Map<String, String> animMapping, float bodyScale,
+                                List<String> translucentBones, CharacterBoneMount[] boneMounts,
+                                String modelAuthor, String modelAuthorUrl) {
         this.id = id;
         this.modelPath = modelPath;
         this.texturePath = texturePath;
@@ -105,9 +133,16 @@ public final class CharacterRenderData {
         this.extraAnimationPaths = extraAnimationPaths == null ? List.of() : List.copyOf(extraAnimationPaths);
         this.animMapping = animMapping == null ? Collections.emptyMap() : animMapping;
         this.bodyScale = bodyScale;
+        this.translucentBones = translucentBones == null ? List.of() : List.copyOf(translucentBones);
         this.boneMounts = boneMounts == null
                 ? List.of()
                 : java.util.Arrays.stream(boneMounts).filter(m -> m != null && m.isValid()).toList();
+        this.modelAuthor = blankToNull(modelAuthor);
+        this.modelAuthorUrl = blankToNull(modelAuthorUrl);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     public String id() { return id; }
@@ -126,8 +161,8 @@ public final class CharacterRenderData {
         List<String> merged = new java.util.ArrayList<>(extraAnimationPaths);
         merged.add(relativePath);
         return new CharacterRenderData(id, modelPath, texturePath, animationPath, merged,
-                animMapping, bodyScale,
-                boneMounts.toArray(new CharacterBoneMount[0]));
+                animMapping, bodyScale, translucentBones,
+                boneMounts.toArray(new CharacterBoneMount[0]), modelAuthor, modelAuthorUrl);
     }
 
     /** 全部动画文件的相对路径（主 + 额外）。 */
@@ -140,6 +175,44 @@ public final class CharacterRenderData {
 
     /** 骨骼挂点列表；空表示不做骨骼替换。 */
     public List<CharacterBoneMount> boneMounts() { return boneMounts; }
+
+    /**
+     * 要用<b>半透明管线</b>渲染的骨骼名；空表示这个角色没有这种部件。
+     *
+     * <p>给「贴图里带半透明像素」的方块用（YSM 转过来的发光屏幕内屏就是典型）：
+     * GeckoLib 默认走 {@code entityCutout}，α 只当阈值用，半透明像素会被画成实心。
+     * 名单里的骨骼会在主渲染趟被藏掉、再用 {@code entityTranslucent} 重画一遍，
+     * 见 {@code client/render/character/TranslucentBoneGeoLayer}。
+     */
+    public List<String> translucentBones() { return translucentBones; }
+
+    /** 声明要用半透明管线渲染的骨骼；返回 this 方便链式写。 */
+    public CharacterRenderData withTranslucentBones(String... boneNames) {
+        if (boneNames == null || boneNames.length == 0) {
+            return this;
+        }
+        return new CharacterRenderData(id, modelPath, texturePath, animationPath, extraAnimationPaths,
+                animMapping, bodyScale, java.util.Arrays.asList(boneNames),
+                boneMounts.toArray(new CharacterBoneMount[0]), modelAuthor, modelAuthorUrl);
+    }
+
+    /**
+     * 给这套美术署名。返回 this 方便链式写（写在 {@code CharacterRenderData.character(...)} 后面）。
+     *
+     * @param author 作者名，会原样显示在配置页预览下方；null / 空白 = 取消署名
+     * @param url    作者主页；null / 空白 = 只显示名字、点击无效
+     */
+    public CharacterRenderData withModelAuthor(String author, String url) {
+        return new CharacterRenderData(id, modelPath, texturePath, animationPath, extraAnimationPaths,
+                animMapping, bodyScale, translucentBones,
+                boneMounts.toArray(new CharacterBoneMount[0]), author, url);
+    }
+
+    /** 这套模型的作者名；没有署名时 null。 */
+    public String modelAuthor() { return modelAuthor; }
+
+    /** 作者主页；没给（或只有名字）时 null。 */
+    public String modelAuthorUrl() { return modelAuthorUrl; }
 
     /** 模型 id：剥掉 {@code .geo.json} 后缀。 */
     public Identifier modelIdentifier() {

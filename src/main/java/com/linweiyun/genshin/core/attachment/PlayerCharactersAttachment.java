@@ -6,7 +6,8 @@ import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -23,7 +24,7 @@ import java.util.List;
 public class PlayerCharactersAttachment implements IPersistedSerializable {
     public final static Codec<PlayerCharactersAttachment> CODEC = PersistedParser.createCodec(PlayerCharactersAttachment::new);
     public final static StreamCodec<ByteBuf, PlayerCharactersAttachment> STREAM_CODEC = PersistedParser.createStreamCodec(PlayerCharactersAttachment::new);
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     @Persisted(key = "owned_characters")
     private List<PGCharacter> ownedCharacters = new ArrayList<>();

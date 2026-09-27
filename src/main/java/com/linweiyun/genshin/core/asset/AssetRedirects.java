@@ -1,7 +1,8 @@
 package com.linweiyun.genshin.core.asset;
 
 import com.linweiyun.genshin.Minegenshin;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
@@ -49,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public final class AssetRedirects {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
     private static final String NS = Minegenshin.MOD_ID;
 
     /** 原版入口层的根目录；不在其中的前缀一律不碰。 */
@@ -213,7 +214,13 @@ public final class AssetRedirects {
             if (vanillaId.equals(mirrored)) {
                 continue;
             }
-            plan.put(vanillaId, mirrored);
+            // 免打包目录（local/）里的贴图与对象目录里那份<b>指向同一个虚拟入口</b>：
+            // item/x/local/textures/texture.png 与 item/x/textures/texture.png 都映射成
+            // textures/item/x/texture.png，同名时以 local/ 那份为准（与对象目录里的规则一致）。
+            Identifier previous = plan.get(vanillaId);
+            if (previous == null || (ModAssetPaths.isLocalFile(file) && !ModAssetPaths.isLocalFile(previous))) {
+                plan.put(vanillaId, mirrored);
+            }
         }
         return plan;
     }
@@ -226,9 +233,18 @@ public final class AssetRedirects {
         return NON_MODEL_FILES.contains(file);
     }
 
-    /** 去掉布局里的 {@code /textures} 一层：{@code item/x/textures/a.png} → {@code item/x/a.png}。 */
+    /**
+     * 去掉布局里的 {@code /textures} 与 {@code /local} 两层：
+     * {@code item/x/textures/a.png} → {@code item/x/a.png}，
+     * {@code item/x/local/textures/a.png} → {@code item/x/a.png}（两者是同一个虚拟入口）。
+     */
     private static String stripTextureDir(String path) {
-        String marker = "/" + ModAssetPaths.TEXTURE_DIR + "/";
+        return stripLayer(stripLayer(path, ModAssetPaths.TEXTURE_DIR), ModAssetPaths.LOCAL_DIR);
+    }
+
+    /** 去掉路径里的第一段 {@code /<层名>/}。 */
+    private static String stripLayer(String path, String layer) {
+        String marker = "/" + layer + "/";
         int at = path.indexOf(marker);
         return at < 0 ? path : path.substring(0, at) + "/" + path.substring(at + marker.length());
     }

@@ -31,12 +31,15 @@ import org.jetbrains.annotations.Nullable;
  *   ── 任意对象目录内都可以再有：
  *      local/&lt;名字&gt;.geo.json     免打包：明文直读、永不进资源包
  *      local/&lt;名字&gt;.animation.json
+ *      local/textures/&lt;名字&gt;.png 免打包贴图（结构与外层一致：贴图在 textures/ 里）
  * </pre>
  *
  * <h2>两种资源</h2>
  * <ul>
  *   <li><b>打包资源</b>：对象目录下的 {@code .geo.json} / {@code .animation.json}，
- *       构建期被收进 {@code .minegenshin} 资源包，产物里看不到文件名；</li>
+ *       以及对象目录 {@code textures/} 下的 {@code .png}（贴图），构建期被收进
+ *       {@code .minegenshin} 资源包，产物里看不到文件名
+ *       （{@code gui/} 与 {@code icon/} 那类跨对象的共用界面贴图不进包）；</li>
  *   <li><b>免打包资源</b>：对象目录里 {@code local/} 子目录下的同类文件，
  *       明文放在仓库里、明文直读，打包时被跳过（见 {@link #LOCAL_DIR}）。</li>
  * </ul>
@@ -83,9 +86,13 @@ public final class ModAssetPaths {
      * 对象目录内部的<b>免打包</b>子目录名：{@code <类别>/<id>/local/}。
      *
      * <p>放在这里的 {@code .geo.json} / {@code .animation.json} 与被打包的那些<b>同样是资源</b>：
-     * 照样能被扫到、照样能烘培、照样当这个对象的模型 / 动画用，唯一的区别是
+	 * 照样能被扫到、照样能烘培、照样当这个对象的模型 / 动画用，唯一的区别是
      * <b>明文直读、永不进 {@code .minegenshin} 资源包</b>。所以它适合放
      * 「想明文留档 / 临时改着看效果 / 不想进资源包」的模型与动画。
+     *
+     * <p>贴图同理，只是多一层：结构与对象目录一致，即
+     * {@code <对象目录>/local/textures/<文件名>.png}；同一个 sprite / 贴图位置两边都有时，
+     * 以 {@code local/} 里那份为准。
      *
      * <p>三条规则：
      * <ol>
@@ -177,24 +184,32 @@ public final class ModAssetPaths {
      * item/primogem                  → item/primogem
      * item/primogem/textures         → item/primogem
      * character/vesna/local          → character/vesna
+     * character/vesna/local/textures → character/vesna
      * block/x/blockitem/textures     → block/x/blockitem
      * </pre>
      *
      * <p>缓存按「对象目录」索引模型 / 动画 / 贴图三件套；贴图与免打包资源各多了一层
      * 布局目录（{@link #TEXTURE_DIR} / {@link #LOCAL_DIR}），必须靠这个换算归位。
+     * 两层叠着也照样归位：{@code <对象目录>/local/textures} 里的贴图属于那个对象目录。
      */
     @Nullable
     public static String objectDirOf(@Nullable String dir) {
         if (dir == null) {
             return null;
         }
-        for (String layer : new String[]{TEXTURE_DIR, LOCAL_DIR}) {
-            String suffix = "/" + layer;
-            if (dir.endsWith(suffix)) {
-                return dir.substring(0, dir.length() - suffix.length());
+        String result = dir;
+        boolean stripped = true;
+        while (stripped) {
+            stripped = false;
+            for (String layer : new String[]{TEXTURE_DIR, LOCAL_DIR}) {
+                String suffix = "/" + layer;
+                if (result.endsWith(suffix)) {
+                    result = result.substring(0, result.length() - suffix.length());
+                    stripped = true;
+                }
             }
         }
-        return dir;
+        return result;
     }
 
     /** 这个目录是不是某个对象目录里的免打包子目录：{@code <对象目录>/local}。 */

@@ -81,6 +81,22 @@ public interface ElementalHost {
         return null;
     }
 
+    /**
+     * <b>反应飘字的落点</b> —— 默认就是宿主实体本身。
+     *
+     * <p>和 {@link #entity()} 是两件事，故意分开：{@code entity()} 是「元素钩子把效果挂在谁身上」
+     * （{@code GenshinElement#onAttach}、武器被动这类会读写实体的东西），
+     * 而这个方法只回答「这条反应该在哪里出字」。
+     *
+     * <p>角色宿主（{@link CharacterHost}）没有实体也没有坐标，但反应确实发生在出战角色身上、
+     * 玩家人又站在世界里的那个位置，所以它在这里返回角色拥有者，
+     * 让「蒸发 / 冻结」这类飘字有地方落 —— 否则反应照跑、字被丢掉，看起来就像没反应。
+     */
+    @Nullable
+    default LivingEntity indicatorAnchor() {
+        return entity();
+    }
+
     /** 若宿主是方块则返回其所在世界，否则 {@code null}。 */
     @Nullable
     default ServerLevel level() {

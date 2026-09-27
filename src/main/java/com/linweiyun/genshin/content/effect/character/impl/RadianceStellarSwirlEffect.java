@@ -4,7 +4,8 @@ import com.linweiyun.genshin.content.effect.character.CharacterEffectContainer;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectInstance;
 import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
@@ -16,7 +17,7 @@ import org.slf4j.Logger;
  * 一旦发现身上已有星超导就拒绝上场。
  */
 public class RadianceStellarSwirlEffect implements ICharacterEffect {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     public static final int DURATION_TICKS = 160; // 8s = 160 ticks
 

@@ -7,6 +7,7 @@ import com.linweiyun.genshin.core.system.about.ElementalAttachable;
 import com.linweiyun.genshin.core.system.combat.damage.DamageTrace;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.system.poise.ReactionPoiseTable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
@@ -67,6 +68,10 @@ public final class HurtEntityHelper {
                 case QUICKEN -> 0f;
                 default -> 0f;
             };
+            // 反应自带的削韧与冲击（超载 90/击飞、扩散 130…）。
+            // 放在这里是因为这是唯一同时拿得到「反应类型 + 目标 + 伤害来源」的地方；
+            // 这一笔不受「伤害被免疫归零」影响 —— 反应发生了就是发生了。
+            ReactionPoiseTable.apply(target, spec.getTransformativeReactionType(), damageSource);
             return applyElementImmunity(target, spec.getElement(), dealt);
         }
 

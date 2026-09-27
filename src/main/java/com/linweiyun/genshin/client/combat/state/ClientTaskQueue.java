@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.client.combat.state;
 
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public final class ClientTaskQueue {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.COMBAT);
 
     /** 客户端延迟任务队列（1 tick 一步），被打断时整体清空。 */
     private static final List<Task> TASKS = new ArrayList<>();

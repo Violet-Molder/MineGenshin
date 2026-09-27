@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.content.items.artifact.inventory;
 
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -9,7 +10,7 @@ import org.slf4j.Logger;
 
 public class ArtifactSlot extends Slot {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     private final int artifactSlotIndex;
 

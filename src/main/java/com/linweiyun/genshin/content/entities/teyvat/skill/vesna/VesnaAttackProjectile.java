@@ -15,7 +15,8 @@ import com.lowdragmc.lowdraglib2.syncdata.annotation.DescSynced;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.syncdata.storage.FieldManagedStorage;
 import com.lowdragmc.lowdraglib2.syncdata.storage.IManagedStorage;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -30,7 +31,7 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     // ==================== 参数 ====================
     private static final double SEARCH_RADIUS = 10.0;

@@ -15,7 +15,8 @@ import com.lowdragmc.lowdraglib2.syncdata.annotation.DescSynced;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.syncdata.storage.FieldManagedStorage;
 import com.lowdragmc.lowdraglib2.syncdata.storage.IManagedStorage;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
@@ -43,7 +44,7 @@ import java.util.List;
  * 生命周期：悬停 {@link #HOVER_TICKS} tick → 飞行 {@link #FLIGHT_TICKS} tick → 服务端结算伤害并 discard。
  */
 public class VesnaSpiritSwordEntity extends Entity implements ISyncManagedEntity {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
     public static final int HOVER_TICKS = 10;
     public static final int FLIGHT_TICKS = 6;

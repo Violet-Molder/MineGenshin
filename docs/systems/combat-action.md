@@ -27,7 +27,7 @@
 | 侧 | 类 | 职责 |
 |---|---|---|
 | 服务端 | `action/ActionManager`、`action/ServerActionExecutor`、`action/ServerTickScheduler` | 权威的动作推进、位移、伤害与结算 |
-| 服务端 | `action/ActionInterruptHandler` | 监听受伤事件，按 `InterruptReason` 决定是否打断当前动作 |
+| 服务端 | `core/system/control/Controllable#interruptAction` | 动作被打断的统一落点：命中经 `ControlService.onHit` 判断后调它，玩家侧转 `ActionManager.interrupt(InterruptReason.DAMAGE)` |
 | 客户端 | `client/combat/AttackApproach`、`client/combat/BurstDive` | 输入手感与本地表现（突进、落点） |
 | 客户端 | `animation/state/ActionStateMachine`、`PlayerAnimationController` | 客户端动作状态机与动画驱动（**当前仍在公共包，属待整理项**） |
 | 客户端 | `client/combat/action/ResourceDrivenActionHandler`、`CharacterAnimationRegistry` | 由资源数据驱动的动作处理（实现与登记表都在客户端） |

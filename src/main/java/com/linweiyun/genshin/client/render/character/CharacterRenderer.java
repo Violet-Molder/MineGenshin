@@ -4,7 +4,11 @@ import com.geckolib.model.GeoModel;
 import com.geckolib.renderer.GeoObjectRenderer;
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo;
+import com.linweiyun.genshin.client.render.optimize.GeoRenderIntercept;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.entity.player.Player;
+import org.jspecify.annotations.Nullable;
 
 /**
  * 角色模型渲染器。
@@ -37,5 +41,30 @@ public class CharacterRenderer extends GeoObjectRenderer<GenshinReplacedPlayer, 
     public void adjustRenderPose(RenderPassInfo<GeoRenderState> renderPassInfo) {
         // 故意什么都不做：模型以原点为中心，不需要摆件渲染器那半格补偿。
         // （要调模型相对实体的位置就改这里，别去动 adjustRenderPose 的父类默认值）
+    }
+
+    /**
+     * 几何提交 —— 本模组几何优化系统在角色侧的入口。
+     *
+     * <h2>为什么这里只剩两行</h2>
+     * 真正的接管逻辑（GPU 蒙皮 / CPU 优化 / 回退判定）统一放在
+     * {@link GeoRenderIntercept#trySubmit}：同一个入口也被 mixin 挂在
+     * {@code GeoRenderer#submitRenderTasks} 这条接口 default 方法上，于是角色、本模组实体、
+     * 以及其它模组的 GeckoLib 实体走的是<b>同一份代码</b>。这里保留覆写只是为了让角色
+     * 不依赖「mixin 注入是否成功」——两者不会重复接管，因为角色覆写了这个方法，
+     * 接口的 default 实现根本不会被调用。
+     *
+     * <p>{@code false} 只表示「这次什么都没提交」（目前只有 missing model 一种情况），
+     * 此时按 GeckoLib 默认实现的逐句复刻走一遍。不能写 {@code super.submitRenderTasks(...)}：
+     * {@code GeoRenderer} 的默认实现属于接口，而本类的直接父类是 {@code GeoObjectRenderer}
+     * 这个类，Java 不允许它写 {@code GeoRenderer.super.submitRenderTasks(...)}。</p>
+     */
+    @Override
+    public void submitRenderTasks(RenderPassInfo<GeoRenderState> renderPassInfo,
+                                  OrderedSubmitNodeCollector renderTasks,
+                                  @Nullable RenderType renderType) {
+        if (!GeoRenderIntercept.trySubmit(renderPassInfo, renderTasks, renderType)) {
+            GeoRenderIntercept.submitDefault(renderPassInfo, renderTasks, renderType);
+        }
     }
 }

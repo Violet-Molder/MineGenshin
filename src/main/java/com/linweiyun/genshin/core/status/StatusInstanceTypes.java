@@ -2,7 +2,8 @@ package com.linweiyun.genshin.core.status;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 
@@ -26,7 +27,7 @@ import org.slf4j.Logger;
  * </ol>
  */
 public final class StatusInstanceTypes {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     private StatusInstanceTypes() {}
 

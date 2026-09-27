@@ -14,7 +14,8 @@ import com.linweiyun.genshin.core.system.about.block.BlockElementStore;
 import com.linweiyun.genshin.core.system.about.host.BlockHost;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import org.slf4j.Logger;
 /**
  * 融化反应 —— 增幅反应
@@ -27,7 +28,7 @@ import org.slf4j.Logger;
  */
 public class MeltReaction extends ElementalReaction {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
     private static float getDominantMultiplier() { return (float) ReactionConfig.MELT.get(); }
     private static float getSubmissiveMultiplier() { return (float) ReactionConfig.MELT_NEGATIVE.get(); }

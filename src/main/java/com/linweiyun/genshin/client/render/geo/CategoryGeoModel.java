@@ -9,7 +9,8 @@ import com.linweiyun.genshin.client.render.geo.AssetGeoCache.DirFiles;
 import com.linweiyun.genshin.core.asset.AssetCategory;
 import com.linweiyun.genshin.core.asset.AssetSet;
 import com.linweiyun.genshin.core.asset.ModAssetPaths;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,7 +48,7 @@ import org.slf4j.Logger;
  * 四种资源一视同仁，也不注册任何全局规则。
  */
 public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
     private static final Set<String> WARNED = Collections.synchronizedSet(new HashSet<>());
     private final AssetCategory category;
     private final String id;

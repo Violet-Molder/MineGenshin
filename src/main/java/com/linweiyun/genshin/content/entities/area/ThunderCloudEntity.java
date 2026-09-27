@@ -11,7 +11,8 @@ import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.reaction.builtin.ElectroChargedReaction;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
@@ -25,7 +26,7 @@ import org.slf4j.Logger;
 import java.util.*;
 
 public class ThunderCloudEntity extends AreaEntity {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
     private static final int TICK_INTERVAL = 40;
     private static final int DEFAULT_DURATION = 121;
     private static final float CONSUME_PER_ATTACK = 0.4f;

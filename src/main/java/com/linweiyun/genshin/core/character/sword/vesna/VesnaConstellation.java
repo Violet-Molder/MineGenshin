@@ -4,7 +4,8 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.talent.ConstellationBase;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
@@ -34,7 +35,7 @@ import org.slf4j.Logger;
  * 这里只负责「什么时候写、写成什么」。
  */
 public class VesnaConstellation extends ConstellationBase {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     // ==================== 1 命 ====================
 

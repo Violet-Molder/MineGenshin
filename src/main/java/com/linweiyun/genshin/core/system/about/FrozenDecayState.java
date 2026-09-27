@@ -2,7 +2,8 @@ package com.linweiyun.genshin.core.system.about;
 
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import org.slf4j.Logger;
 
 /**
@@ -21,7 +22,7 @@ import org.slf4j.Logger;
  *   → 连续冻结持续时间越来越短
  */
 public class FrozenDecayState implements IPersistedSerializable {
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
     /** 初始/最小衰减率：每秒衰减 0.4 元素量 */
     public static final float MIN_DECAY_RATE = 0.4f;
 

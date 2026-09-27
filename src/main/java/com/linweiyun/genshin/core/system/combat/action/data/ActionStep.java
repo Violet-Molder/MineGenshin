@@ -125,6 +125,20 @@ import java.util.List;
         public boolean moveAllowsVertical = false;
 
         /**
+         * 这一段的动画要不要<b>循环播</b>。
+         *
+         * <p>默认 {@code false}：动作动画播一次、<b>停在最后一帧</b>等状态机接手
+         * （见 {@code PlayerAnimationController.pickAction} —— 用 {@code thenPlayAndHold}
+         * 是为了避免「播完到切走之间那一帧露出原始姿态」）。
+         *
+         * <p>{@code true} 用在这类招式上：<b>状态本身是持续的</b>，动画是一段可以一直转的循环
+         * （大剑的持续重击：按住期间每一圈都该重新转起来，而不是转半圈之后定在那儿）。
+         * 状态什么时候结束由 {@code ActionStateMachine} 的时间轴或玩家的松手决定，
+         * 动画只管一直播下去。
+         */
+        public boolean loopAnimation = false;
+
+        /**
          * 大招「跃起 → 摆姿态 → 锁落点 → 下坠刺击」的可选配置；{@code null} = 普通大招。
          *
          * <h2>为什么位移要单独配</h2>
@@ -261,6 +275,17 @@ import java.util.List;
          */
         public ActionStep withVerticalMove(boolean allowVertical) {
             this.moveAllowsVertical = allowVertical;
+            return this;
+        }
+
+        /**
+         * 便捷写法：这一段的动画循环播（持续型招式用）。
+         *
+         * <p>见 {@link #loopAnimation}：{@code false}（默认）= 播一次停在最后一帧；
+         * {@code true} = 一直循环到状态结束。
+         */
+        public ActionStep withLoopAnimation(boolean loop) {
+            this.loopAnimation = loop;
             return this;
         }
 

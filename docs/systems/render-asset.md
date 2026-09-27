@@ -18,7 +18,7 @@ MineGenshin 不用 GeckoLib 默认目录，而是把资源按"类别 + id"统一
 assets/minegenshin/
 ├── character/<角色id>/            一个角色 = 一个自包含文件夹，内部再按类型分
 │      <id>.animation.json         主动画；<id>_fp.animation.json 等附加动画（模型/动画留对象根）
-│      textures/<id>.png           角色模型贴图（默认共用 character/default/textures/default.png）
+│      textures/<id>.png           角色模型贴图（缺项时共用 character/linweiyun/textures/linweiyun.png）
 │      textures/avatar.png         列表头像
 │      textures/avatar_hud.png     HUD / 圣遗物佩戴者叠加头像
 │      textures/pose_prepare.png   编队立绘（可选中的角色）
@@ -59,6 +59,135 @@ assets/minegenshin/
 这些路径在仓库里由 `.gitignore` 排除，所以提交进仓库的**只有资源包那一个文件**，
 唯一的明文口子是 `local/`。发行形态同样是单文件：模型与动画跟着 jar 一起发，
 玩家把 jar 与依赖 Mod 放进 `mods/` 即可 —— 没有附加文件，也不需要单独下载资源。
+
+### 角色动画的约定
+
+常态动画的名字由 `LocomotionAnims` 决定。名字写错不会崩，但会**静默退回 `idle`**
+（`AnimationAvailability` 拦下来），所以下面这些是硬约定：
+
+| 槽位 | 动画名 | 什么时候播 |
+|---|---|---|
+| 站 / 走 / 跑 / 倒走 | `idle` `walk` `run` `walk_back` | 地面移动 |
+| 蹲 / 蹲走 / 睡 / 爬 | `crouch` `crouch_walk` `sleep` `climb` | 蹲伏、睡觉、爬梯 |
+| 水中 | `water` `water_walk` `water_walk_back` `swim` | 水中待机 / 移动 |
+| 跳 / 下落 | `jump` `jump_down` | 上升 / 下落（状态机按竖直位移自动切） |
+| 落地（可选） | `landing` / `landingLight` | 落地那一瞬播**一次**，要显式接线 |
+
+两个容易做错的地方：
+
+- `jump` 与 `jump_down` 在**上升 / 下落期间是循环播放**的，素材要写成"起跳动作 → 稳定腾空姿态"
+  或"下落姿态 + 轻微浮动"，写成一次性动作会在半空中反复重播。
+- 落地是一次性（`OneShot`，刻数在接线时给）。末帧应当是站直姿势，交回 `idle` 才不跳；
+  默认模型接的是 `withTransitions("landing", 9, null, 0)`（0.45s ≈ 9 刻）。没接这一档的角色，
+  落地直接回 `idle`，行为跟以前一样。
+
+做角色动画时踩过的几条，每一条都是实机可见的：
+
+- **一个人物同时只能用一张贴图**：角色贴图与武器贴图必须合并成一张。本项目的做法是
+  256×128 —— 角色占左 128 一格不动，武器放右 128，**武器骨骼的面 UV 统一 +128**；
+  `texture_width/height` 与 Blockbench 工程的 resolution 一起改成 256×128。
+- **常态动画要把武器藏起来**：对武器骨骼写 `scale = 0`（默认模型的四把是
+  `long` / `sword` / `claymore` / `bow`；另有 `magic` 也用武器贴图，按需一起藏）。
+  不藏的话，空手跑动的手臂会一直保持"拎着东西"的角度。
+- **左右对称的规则不一样**：四肢是"左侧的镜像 + 半周期相移"（左右交替摆），
+  头发是"镜像但**同相**"——发丝跟着身体一起甩，错了半周期会变成左右对扭。
+- **前发不能跟身体一起甩**：前发挂在头发父骨骼下面，只要动画动了父骨骼，前发就会离开
+  头皮、露出头皮。做法是父骨骼**一律不写通道**，把它的旋转摊到四根侧 / 后发骨骼上
+  （`left` `right` `back_left` `back_right`），前发就只跟头走。
+- **来源骨骼的静止角不能忽略**：从别的模型搬动画值时，若那根骨骼自带 `rotation`
+  （静止角），它的动画值是写在那个**旋转过的坐标系**里的，搬到没有静止角的骨骼上意思
+  完全不同（本项目踩到过：两根裙摆骨骼带 ±90° 静止角）。这类骨骼要么别搬，要么按矩阵换算。
+
+### 按武器种类分的飞行动画
+
+一个模型里有**六套飞行姿态**，按"现在拿的是哪一类武器"选一套播：
+
+| 动画名 | 什么时候播 |
+|---|---|
+| `fly` | 基础飞行（空手 / 拳头，也是别的几套缺失时的落点） |
+| `fly_sword` `fly_polearm` `fly_claymore` `fly_catalyst` `fly_bow` | 装备对应武器类型时 |
+
+**约定：六套都写完整姿态，只让"这一类该亮的武器骨骼"有值**（其余武器的骨骼在这条动画里
+保持常态隐藏的写法，即 `scale = 0`）。这样切武器类型时不用去补骨骼隐藏逻辑 ——
+素材自己就决定了观众看到哪把武器。
+
+> 现状：素材已备好（`character/linweiyun/linweiyun.animation.json`），**接线还没做**
+> （按 `WeaponAppearance` 选哪一条）。在接线之前，飞行统一播 `fly`。
+
+### 兜底角色与共用资源目录
+
+本项目只有一套角色模型，它的所有者是**林薇云**，同时她也是**兜底角色**：
+别的角色缺某一项资源时用她那一份。共用目录因此就是她自己的目录：
+
+```
+character/linweiyun/linweiyun.geo.json          共用模型
+character/linweiyun/textures/linweiyun.png      共用贴图
+character/linweiyun/linweiyun.animation.json    共用动画（可选）
+```
+
+**三项各自独立判断**，每个角色的读取顺序都是：
+
+1. 自己的目录 `character/<角色id>/`；
+2. 角色数据里声明的那条路径（与第 1 条不同时才有意义）；
+3. 共用目录 `character/linweiyun/`。
+
+所以「自己的模型 + 共用的贴图」这种组合是正常状态：把文件放进角色自己的目录就自动切换，
+不需要开关或注册。判据与实现在 `AssetFallback`（模型 / 动画问 `GenshinGeoCache`，
+贴图问资源管理器，两者都把整包算在内）。
+
+**配置页与天赋也有兜底**：角色没有自己的 `ICharacterConfigUI` 时用通用配置页
+（`core/character/configui/CharacterConfigUI`，外观区与角色面板都按"当前这个角色"的数据生成），
+没有自己的天赋时 `getTalent()` 给 `TalentBase.DEFAULT`（空实现）。
+
+### 武器角色与武器类型是两件事
+
+写战斗、装备、界面代码时会遇到"这个角色是不是单手剑角色"这类问题。别去写
+`character instanceof SwordCharacter`，也别自己比 `getAllowedWeaponClass()` —— 问角色自己：
+
+| 概念 | 是什么 | 枚举 / 方法 |
+|---|---|---|
+| **武器类型** | **武器**的属性：标准的六种（单手剑 / 大剑 / 长柄 / 法器 / 弓 / 拳头），外加"认不出来" | `WeaponPoiseTable.WeaponClass` |
+| **武器角色** | **角色**的分类，比武器多第七档：六种武器角色 ＋ `ALL_WEAPON`「全武器类」（目前只有林薇云） | `CharacterWeaponClass` |
+
+角色侧的入口全在 `PGCharacter` 上，全武器类角色会把它们接管成"跟当前选中的武器种类走"：
+
+| 方法 | 回答 |
+|---|---|
+| `characterWeaponClass()` / `isAllWeaponCharacter()` | 这个角色属于哪一类武器角色 |
+| `currentWeaponType()` | 现在按哪一类武器算（削韧 / 冲击 / 伤害查表读它） |
+| `isWeaponCharacter(type)` / `isSwordCharacter()` … `isFistCharacter()` | 现在算不算某类武器角色 |
+| `canEquipWeapon(stack)` | 这把武器能不能装到**现在这一格** |
+
+两个容易混淆的点：
+
+- **全武器类角色的"当前类型"不是它的分类**：它的分类永远是 `ALL_WEAPON`，而
+  `currentWeaponType()` 跟着外观里选中的种类变（选大剑 → `CLAYMORE`）。
+  所以"选了大剑就按大剑算削韧/冲击/特性"在数据层就成立。
+- **`canEquipWeapon` 与"能拿什么"不是一回事**：单武器角色两者相同；全武器类角色
+  "六种都能拿"，但**现在这一格**只吃当前选中的那一类（一个类型一个槽，
+  选了大剑就不该把弓塞进大剑那一格）。武器选择列表的筛选项也走它。
+
+### 外观掩码的位布局与"角色专属段往后排"
+
+外观是**一个 int**（存档键 `leg_appearance`），按位段取字段；每个角色用哪几段由它自己的
+外观数据类（`CharacterAppearanceData` 的子类）声明。当前布局：
+
+| 位 | 含义 | 谁在用 |
+|---|---|---|
+| 0–1 / 3–4 | 左 / 右腿袜子（0 裸腿、1 白丝、2 黑丝） | 申鹤 |
+| 2 / 5 | 左 / 右鞋 | 申鹤 |
+| 6 | 猫耳隐藏（1 = 藏） | 申鹤 |
+| 7 | **常态（走 / 跑）是否显示武器**（1 = 显示） | 公共位，所有角色 |
+| 8–10 | 武器种类（0 拳头 / 1 单手剑 / 2 长柄 / 3 大剑 / 4 法器 / 5 弓） | 全武器类角色共用（`AllWeaponAppearanceData`） |
+
+两条硬约定：
+
+- **角色专属段从 bit 8 起往后排**（11 之后继续往后加）。理由：`CharacterAppearanceBones#forMask`
+  是**按掩码全局**套一遍腿部与猫耳规则的，谁踩了 bit 0–6 就等于改了自己的腿 ——
+  这一项第一版把武器种类放在低 3 位，实测选一次武器左腿的袜子与鞋会跟着变。
+  "位段可以按角色复用"只对**数据读法**成立，渲染这张表不是按角色分的。
+- **位数上限 20 位，缓存必须稀疏**：`CharacterAppearanceBones` 的隐藏器缓存用
+  `ConcurrentHashMap` 按需建。按位数开定长数组在 20 位下是一百多万个槽，会在类加载时把内存拖死。
 
 ### 原版入口层由重定向层供料
 
@@ -141,12 +270,12 @@ assets/minegenshin/
 | 位置 | 内容 |
 |---|---|
 | `client/render/character/` | 角色渲染接管：`FirstPersonCharacterRenderer`（第一人称手臂）、`GenshinReplacedPlayer`、`CharacterRenderDispatcher` |
-| `render/entity/` | 实体渲染器（`ElementalOrbRenderer`、`IceBlockProjectileRenderer`、`ThunderCloudRenderer` 等），在 `MinegenshinClient.registerEntityRenderers` 注册 |
+| `client/render/entity/` | 实体渲染器（`ElementalOrbRenderer`、`IceBlockProjectileRenderer`、`ThunderCloudRenderer` 等），在 `MinegenshinClient.registerEntityRenderers` 注册 |
 | `client/damage/` | 伤害飘字：`DamageIndicator`（动画状态）、`DamageIndicatorManager`（活跃列表）、`DamageIndicatorRenderer`（HUD 构建） |
-| `render/gui/hud/` | HUD 层：`DamageIndicatorHudRegistration`、`MGHud`、`MobHealthBarHud`、`VesnaEnergyHud`、`DebugInfoScreen`、`MyModularHudLayer`、`HealthBarTrail` |
-| `render/gui/screens/` | 大界面：角色信息、背包、升格、编队、祈愿、圣遗物装备，`GUIServerHelperGIM` / `GUIClientHelperGIM` 负责打开与数据准备 |
-| `render/gui/components/` | 可复用控件（进度条、图标、状态绑定组件 `state_bind_com/`） |
-| `render/gui/menu/` | 容器菜单（背包、角色信息）与排序 |
+| `client/render/gui/hud/` | HUD 层：`DamageIndicatorHudRegistration`、`MGHud`、`MobHealthBarHud`、`VesnaEnergyHud`、`DebugInfoScreen`、`MyModularHudLayer`、`HealthBarTrail` |
+| `client/render/gui/screen/` | 大界面：角色信息、背包、升格、编队、祈愿、圣遗物装备，`ScreenNavigator` / `GUIClientHelperGIM` 负责打开与数据准备 |
+| `client/render/gui/component/` | 可复用控件（进度条、图标、状态绑定组件；原 `components/` 与 `state_bind_com/` 已合并到本包） |
+| `client/render/gui/menu/` | 背包 UI 与排序（`BackpackUI`、`ArtifactSortMethod`、`LockedResourceHandler`）；容器菜单 `CharacterInfoMenu` 已移到 `core/menu/` |
 
 ### HUD 层的注册方式
 
@@ -154,9 +283,9 @@ assets/minegenshin/
 
 ## 加一个界面 / 一个渲染器
 
-1. 实体渲染器：写渲染器类放 `render/entity/`，在 `MinegenshinClient.registerEntityRenderers` 加一行，资源按 `entity/<id>/` 布局。
+1. 实体渲染器：写渲染器类放 `client/render/entity/`，在 `MinegenshinClient.registerEntityRenderers` 加一行，资源按 `entity/<id>/` 布局。
 2. HUD 层：新建类实现自己的注册监听（参考 `MobHealthBarHud`），或复用 LDLib2 的 ModularUI + LSS。
-3. 大界面：`Screen` 子类放 `render/gui/screens/`，需要容器数据时配 `AbstractContainerMenu`（`render/gui/menu/`）+ 在 `ModMenus` 注册 + 在 `MinegenshinClient.registerMenuScreens` 绑定界面类。
+3. 大界面：`Screen` 子类放 `client/render/gui/screen/`，需要容器数据时配 `AbstractContainerMenu`（容器菜单放 `core/menu/`，如 `CharacterInfoMenu`）+ 在 `ModMenus` 注册 + 在 `MinegenshinClient.registerMenuScreens` 绑定界面类。
 4. 样式：优先用 LSS/样式表，而不是在代码里堆颜色与尺寸。
 
 ## 常见坑
@@ -168,3 +297,4 @@ assets/minegenshin/
 | 界面打开是空的 | 菜单没在 `ModMenus` 注册，或 `registerMenuScreens` 没绑定 |
 | 专用服务器崩溃 | 渲染/界面类被公共侧引用；所有 `client`/`render` 类只能在客户端侧被引用 |
 | 贴图错位/物品图标空白 | 物品图标走 `ItemIcons` 规则，geo 物品的贴图路径与普通物品不同 |
+| 切角色 / 血条归零时崩渲染线程（`Scissor size must be >0, was 0x8`） | 带 `Clip.SCISSOR` 的裁剪层宽度按比例算，LDLib2 会把裁剪框四舍五入到物理像素，比例趋近 0 时取整成 0 宽，而 `RenderPass#enableScissor` 对宽或高 ≤ 0 无条件抛异常。修法是让裁剪层永远不带着 0 宽的框进入绘制：按 `MIN_CLIP_PIXELS` 判「够不够一个物理像素」，判据**实时读 `layer.isDisplayed()`**、不缓存成布尔字段（缓存分不清"还没判过"与"判成不可见"）。`HPProgressBar`、`MobHealthBar`、`MobPoiseBar` 三处同款 |

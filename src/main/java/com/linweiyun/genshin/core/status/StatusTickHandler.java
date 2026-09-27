@@ -3,6 +3,7 @@ package com.linweiyun.genshin.core.status;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.system.about.ColdAura;
+import com.linweiyun.genshin.core.system.poise.PoiseFreezeBreak;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -33,6 +34,10 @@ public class StatusTickHandler {
         boolean frozenWithCold = ColdAura.tick(living, c);
 
         freezeMotion(living, frozenWithCold);
+
+        // 冻结的直接破韧：只在「刚冻上」那一 tick 破一次，冻着的时候把破韧驻留按住。
+        // 放在这里而不是元素系统内部，是因为这是韧性系统的副作用，不是冻结规则本身。
+        PoiseFreezeBreak.onFreezeTick(living, frozenWithCold);
     }
 
     /**

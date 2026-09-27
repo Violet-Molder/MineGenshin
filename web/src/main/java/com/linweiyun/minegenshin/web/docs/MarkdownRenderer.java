@@ -23,6 +23,10 @@ public class MarkdownRenderer {
             Map.entry("port-targeting-to-reference2.patch.md", "/doc/port-targeting-patch"),
             Map.entry("docs/port-targeting-changelog.md", "/doc/port-targeting"),
             Map.entry("port-targeting-changelog.md", "/doc/port-targeting"),
+            Map.entry("docs/systems/performance.md", "/doc/sys-performance"),
+            Map.entry("performance.md", "/doc/sys-performance"),
+            Map.entry("docs/systems/combat-attack.md", "/doc/sys-combat-attack"),
+            Map.entry("combat-attack.md", "/doc/sys-combat-attack"),
             Map.entry("CHARACTER_IMPLEMENTATIONS.md", "/doc/character-implementations"),
             Map.entry("CHARACTER_SYSTEM.md", "/doc/character-system"),
             Map.entry("RENDER_SYSTEM.md", "/doc/character-system"),
@@ -44,7 +48,12 @@ public class MarkdownRenderer {
             sb.append(line).append('\n');
         }
         String md = sb.toString();
-        for (Map.Entry<String, String> entry : LINK_REWRITE.entrySet()) {
+        // 长键先替换：短键是长键的后缀（`docs/x.md` 与 `x.md`），
+        // 先替换短键就会把长键打断，留下 `docs//doc/...` 这种死链。
+        // Map.ofEntries 的迭代顺序不保证，所以这里显式按长度降序排一次。
+        for (Map.Entry<String, String> entry : LINK_REWRITE.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getKey().length(), a.getKey().length()))
+                .toList()) {
             md = md.replace(entry.getKey(), entry.getValue());
         }
         return withHeadingIds(renderer.render(parser.parse(md)));

@@ -3,7 +3,8 @@ package com.linweiyun.genshin.core.character.attachment;
 import com.lowdragmc.lowdraglib2.LDLib2;
 import com.lowdragmc.lowdraglib2.Platform;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
-import com.mojang.logging.LogUtils;
+import com.linweiyun.genshin.core.log.LogGroup;
+import com.linweiyun.genshin.core.log.ModLog;
 import com.mojang.serialization.MapCodec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.HolderLookup;
@@ -31,7 +32,7 @@ import java.util.Map;
  * 依赖方向：附件容器不依赖任何具体附件类，具体附件类通过注册表注入。
  */
 public class CharacterAttachmentContainer implements IPersistedSerializable {
-    private static final Logger LOGGER = LogUtils.getLogger();
+    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
 
     private final Map<String, CharacterAttachment> attachments = new HashMap<>();
 

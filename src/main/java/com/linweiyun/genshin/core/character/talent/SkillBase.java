@@ -47,6 +47,23 @@ public class SkillBase {
 
     public int getChargeTicks() { return 20; }
 
+    /**
+     * 这个角色的重击是不是<b>持续型</b>（按住进入状态、松手/到时结束）。
+     *
+     * <p>默认 {@code false} = 触发型：蓄力到阈值放一招，打完为止。
+     * 大剑那一类走 {@code ClaymoreSkill} 的实现，返回 {@code true}；
+     * 客户端 {@code ResourceDrivenActionHandler.tickCharge} 据此分两条路走。
+     */
+    public boolean isSustainedChargedAttack() { return false; }
+
+    /**
+     * 持续型重击的最高持续时间（刻）；不是持续型时返回 0。
+     *
+     * <p>客户端拿它当持续状态的时长（到时自动结束），服务端拿它当动作总时长。
+     * 见 {@link #isSustainedChargedAttack()}。
+     */
+    public int getChargedAttackMaxTicks() { return 0; }
+
     // ==================== 回调（子类覆盖实现具体伤害/效果逻辑） ====================
 
     public void attack(Player player, PGCharacter character, int comboStage) {}
@@ -105,7 +122,9 @@ public class SkillBase {
         if (actionData != null) {
             ComboData combo = actionData.combo();
             if (combo != null) {
-                int steps = Math.min(maxCombo, combo.maxCombo());
+                // 段数 0 = 「不排连段、只出一下」：按一下仍然先触发一次普攻
+                //（林薇云的单手剑形态就是这个口径），所以这里保底 1 段。
+                int steps = Math.max(1, Math.min(maxCombo, combo.maxCombo()));
                 for (int stage = 1; stage <= steps; stage++) {
                     ActionStep step = combo.getStep(stage);
                     if (step != null) {
