@@ -14,12 +14,23 @@ public final class DefaultCharacterAnimations implements CharacterAnimations {
 
     public static final DefaultCharacterAnimations INSTANCE = new DefaultCharacterAnimations();
 
+    /**
+     * 常态动画。
+     *
+     * <p><b>飞行三态必须接</b>：{@code PlayerAnimationController} 的飞行分支要求
+     * {@code loco.fly() != null}，没接就会掉进「空中」分支 —— 而那里按竖直速度在
+     * {@code jump} / {@code jump_down} 之间切，表现就是<b>飞着上升时不停播跳跃动画</b>。
+     * 共用模型（{@code character/default/default.animation.json}）里本来就有 {@code fly}，
+     * 所以三条都用它；确实没有这条动画的角色会被 {@code AnimationAvailability} 退到 idle。
+     */
+    private static final LocomotionAnims LOCOMOTION = LocomotionAnims.DEFAULT.withFlight("fly", "fly", "fly");
+
     private DefaultCharacterAnimations() {
     }
 
     @Override
     public LocomotionAnims locomotion() {
-        return LocomotionAnims.DEFAULT;
+        return LOCOMOTION;
     }
 
     /** 空集合：不知道哪些是动作动画，一律按常态处理。 */

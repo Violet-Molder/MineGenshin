@@ -3,6 +3,8 @@ package com.linweiyun.genshin.client.combat.action;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActions;
 import com.linweiyun.genshin.core.system.combat.animation.config.DefaultCharacterAnimations;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.Vodyanitsa;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.Linweiyun;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.LinweiyunAnimations;
 import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheAnimations;
 import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheResources;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
@@ -33,6 +35,12 @@ public final class CharacterAnimationRegistry {
         // 所以走自己的 ShenheAnimations —— 动作编排仍然给通用的 ResourceDrivenActionHandler。
         CharacterActions.register(ShenheResources.ID, ResourceDrivenActionHandler.INSTANCE,
                 ShenheAnimations.INSTANCE);
+
+        // 林薇云：全武器角色。必须在这里登记 —— 否则她的普攻 / 战技 / 爆发全部静默失效
+        // （见 registerPlaceholder 的注释），常态也会退回兜底配置（那套以前没接飞行三态，
+        // 飞着上升会一直播 jump）。她自己的 LinweiyunAnimations 把飞行接上了。
+        CharacterActions.register(Linweiyun.ID, ResourceDrivenActionHandler.INSTANCE,
+                LinweiyunAnimations.INSTANCE);
 
         registerPlaceholder("arlecchino");
         registerPlaceholder("columbina");
