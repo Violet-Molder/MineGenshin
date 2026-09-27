@@ -62,6 +62,7 @@ public class Minegenshin {
         modContainer.registerConfig(ModConfig.Type.COMMON, GenshinConfig.PERFORMANCE_SPEC, "minegenshin/performance.toml");
         modContainer.registerConfig(ModConfig.Type.COMMON, GenshinConfig.COMPATIBILITY_SPEC, "minegenshin/compatibility.toml");
         modContainer.registerConfig(ModConfig.Type.COMMON, GenshinConfig.POISE_SPEC, "minegenshin/poise.toml");
+        modContainer.registerConfig(ModConfig.Type.COMMON, GenshinConfig.GAMEPLAY_SPEC, "minegenshin/gameplay.toml");
 
 
         ModElements.register(modEventBus);

@@ -6,6 +6,7 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.action.ActionManager;
 import com.linweiyun.genshin.core.system.combat.action.InterruptReason;
 import com.linweiyun.genshin.core.system.combat.attack.BurstLanding;
+import com.linweiyun.genshin.core.system.combat.attack.PlungeState;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacket;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;
@@ -147,11 +148,36 @@ public final class ActionServer {
         }
     }
 
-    public static void triggerCharacterDodge() {
-        RPCPacketDistributor.rpcToServer("characterDodgeRPCPacket");
-    }
+   public static void triggerCharacterDodge() {
+      RPCPacketDistributor.rpcToServer("characterDodgeRPCPacket");
+   }
 
-    // ==================== 工具 ====================
+   /**
+    * <b>下落攻击开始</b>：客户端在「坠落中按下普攻」的那一刻发过来。
+    *
+    * <p>落地结算不在这个包里 —— 服务端自己盯 {@code onGround}（见
+    * {@code CharacterTickHandler#tickPlungeAttack}）：下坠几刻到不了地是物理说了算，
+    * 让客户端报「我落地了」只会多一条能被伪造的包。
+    */
+   @RPCPacket("characterPlungingAttackRPCPacket")
+   public static void characterPlungingAttackRPCPacket(RPCSender sender) {
+      if (!sender.isServer()) {
+         ServerPlayer sp = sender.asPlayer();
+         if (sp == null) return;
+         if (!Boolean.TRUE.equals(sp.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT))) return;
+         PlayerCharactersAttachment attachment =
+                 sp.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+         PGCharacter character = attachment.getCurrentCharacter();
+         if (character == null || character.getData().getCurrentHP() <= 0.0) return;
+         PlungeState.begin(sp, character.getCharacterUUID());
+      }
+   }
+
+   public static void performPlungingAttackToServer() {
+      RPCPacketDistributor.rpcToServer("characterPlungingAttackRPCPacket");
+   }
+
+   // ==================== 工具 ====================
 
     /** 没有目标时传 -1（{@code level().getEntity(-1)} 拿到 null）。 */
     private static int entityId(@Nullable Entity target) {

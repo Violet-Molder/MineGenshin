@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.animation.config;
 
+import com.geckolib.animation.RawAnimation;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -16,6 +18,31 @@ public interface CharacterAnimations {
 
     /** 常态动画集合。 */
     LocomotionAnims locomotion();
+
+    /**
+     * 常态动画集合，<b>按玩家现状挑</b>；默认就是 {@link #locomotion()}。
+     *
+     * <p>给人形按「当前形态」换片段的角色用：林薇云有六种武器形态，飞行时该播
+     * {@code fly_sword / fly_idle_polearm / fly_claymore / fly_catalyst / fly_bow}（拳头用通用 {@code fly}），
+     * 静止的 {@link #locomotion()} 表达不了这件事 —— 它拿不到玩家。
+     */
+    default LocomotionAnims locomotionFor(Player player) {
+        return locomotion();
+    }
+
+    /**
+     * <b>水平飞行</b>（既不上升也不下降）时用哪条飞行片段；默认就是 {@link LocomotionAnims#fly()}。
+     *
+     * <p>给「飞行分好几档」的角色用：林薇云长柄形态有站着悬停 / 往前飞 / 疾跑冲刺三条，
+     * 而 {@link LocomotionAnims} 只有 fly / flyUp / flyDown 三格，表达不了「水平这一档内部还分几种」。
+     *
+     * <p>返回的名字查不到动画时，调用方会退回 idle（见 {@code PlayerAnimationController}）。
+     *
+     * @param moving 这一帧是不是在水平移动（本地玩家看输入，别的玩家看位移）
+     */
+    default RawAnimation flyVariant(Player player, LocomotionAnims loco, boolean moving) {
+        return loco.fly();
+    }
 
     /**
      * 「特殊动画」名单（普攻 / 战技 / 闪避 / 大招）。

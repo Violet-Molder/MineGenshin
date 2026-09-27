@@ -3,6 +3,7 @@
 package com.linweiyun.genshin.core.character.allweapon.linweiyun;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.character.claymore.ClaymoreSkill;
 import net.minecraft.world.entity.player.Player;
 
@@ -14,6 +15,18 @@ import net.minecraft.world.entity.player.Player;
  * 抽在 {@link LinweiyunSkillLogic} 里，这里只转发。
  */
 public class LinweiyunClaymoreSkill extends ClaymoreSkill {
+
+   /** 起飞前摇：大剑形态那一档。 */
+   @Override
+   public int flyStartTicks() {
+      return LinweiyunSkillLogic.flyStartTicks(WeaponAppearance.CLAYMORE);
+   }
+
+   /** 起飞前摇动画：{@code fly_start_claymore}。 */
+   @Override
+   public String flyStartAnimation() {
+      return "fly_start_claymore";
+   }
 
    @Override
    public int getMaxCombo() {

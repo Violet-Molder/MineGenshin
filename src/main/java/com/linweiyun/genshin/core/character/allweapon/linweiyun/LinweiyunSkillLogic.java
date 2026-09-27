@@ -10,6 +10,7 @@ import com.linweiyun.genshin.content.skill_node.SkillHelper;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.log.LogGroup;
 import com.linweiyun.genshin.core.log.ModLog;
@@ -28,6 +29,7 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 林薇云的技能<b>逻辑</b> —— 数值、顺序、条件全部照抄申鹤的 {@code ShenheSkill}，
@@ -52,6 +54,35 @@ final class LinweiyunSkillLogic {
     /** 战技点按前冲的距离（格）与持续刻数 —— 照抄申鹤。 */
     private static final float SKILL_DASH_DISTANCE = 10f;
     private static final int SKILL_DASH_TICKS = 10;
+
+    /**
+     * <b>二连跳起飞前摇的刻数</b> —— 六种武器形态各一档。
+     *
+     * <p>用户口径：「这个时间每个角色不一样，林薇云有六种，也就是每种武器一样」。
+     * 具体数值还没给，所以六档先<b>同值占位</b>；拿到正式数值只改这一张表。
+     *
+     * <p>表里的数就是「二连跳之后到真正起飞之间播多少刻动画」，前摇期间移动会被打断
+     * （见 {@code client.combat.GenshinFlightController}）。
+     */
+    /** 六档同值的那份占位（等用户给逐形态数值）。 */
+    public static final int DEFAULT_FLY_START_TICKS = 8;
+
+    private static final Map<WeaponAppearance, Integer> FLY_START_TICKS = Map.of(
+            WeaponAppearance.FIST, DEFAULT_FLY_START_TICKS,
+            WeaponAppearance.SWORD, DEFAULT_FLY_START_TICKS,
+            // 长柄：前摇动画 `fly_start_polearm` 是用户自己做的上扫帚那一段，素材长 3.125 秒，
+            // 所以这一档取 63 刻（62.5 刻，往上取整）——必须 ≥ 素材长度，
+            // 不然动画没播完就被飞行动画接走了。
+            // 其余五档还是占位，等各自的起手动做出好了再逐个改。
+            WeaponAppearance.POLEARM, 63,
+            WeaponAppearance.CLAYMORE, DEFAULT_FLY_START_TICKS,
+            WeaponAppearance.CATALYST, DEFAULT_FLY_START_TICKS,
+            WeaponAppearance.BOW, DEFAULT_FLY_START_TICKS);
+
+    /** 这个形态的起飞前摇多少刻。 */
+    static int flyStartTicks(WeaponAppearance form) {
+        return FLY_START_TICKS.getOrDefault(form, DEFAULT_FLY_START_TICKS);
+    }
 
     /**
      * 普攻段数 —— 照抄申鹤的 <b>3</b> 段。

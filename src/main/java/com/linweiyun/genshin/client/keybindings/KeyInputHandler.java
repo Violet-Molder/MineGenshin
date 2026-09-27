@@ -3,11 +3,14 @@
 package com.linweiyun.genshin.client.keybindings;
 
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
+import com.linweiyun.genshin.client.combat.PlungeAttack;
+import com.linweiyun.genshin.client.combat.GenshinFlightController;
 import com.linweiyun.genshin.client.render.gui.screen.ScreenNavigator;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
+import com.linweiyun.genshin.core.system.combat.flight.GenshinFlight;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -37,52 +40,60 @@ public class KeyInputHandler {
       if (player != null) {
          if (TeyvatWorldInvasion.isClientInvaded()) {
             boolean isInGenshinMode = isInGenshinMode(player);
+            // 下落攻击期间「什么键都不接」（用户口径）：切角色 / 切原神模式 / 开界面一律无效化。
+            // 只拦动作、不拦边沿检测 —— wasXxxDown 照常更新，所以松手之后也不会补触发一下。
+            boolean plunging = PlungeAttack.isActive();
             PlayerCharactersAttachment charactersAttachment = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
             PGCharacter character = charactersAttachment == null ? null : charactersAttachment.getCurrentCharacter();
             boolean isWishDown = ((KeyMapping)KeyMappingRegistry.WISH_KEY.get()).isDown();
-            if (isWishDown && !wasWishKeyDown) {
+            if (isWishDown && !wasWishKeyDown && !plunging) {
                NetworkManager.wishEventToServer();
             }
 
             wasWishKeyDown = isWishDown;
             boolean isGDown = ((KeyMapping)KeyMappingRegistry.G_KEY.get()).isDown();
-            if (isGDown && !wasGKeyDown) {
+            if (isGDown && !wasGKeyDown && !plunging) {
                NetworkManager.setGenshinModeToServer(!isInGenshinMode);
             }
 
             wasGKeyDown = isGDown;
             boolean isVDown = ((KeyMapping)KeyMappingRegistry.V_KEY.get()).isDown();
-            if (isVDown && !wasVKeyDown && isInGenshinMode) {
+            // 切角色：下落攻击 / 飞行（含起飞前摇）期间一律无效化。
+            // 判据和服务端那条一样（GenshinFlight.isFlying）—— 只拦客户端不改本地索引，服务端却拒的话两边会不同步
+            boolean lockSwitching = plunging
+                    || GenshinFlightController.isWindingUp()
+                    || GenshinFlight.isFlying(player);
+            if (isVDown && !wasVKeyDown && isInGenshinMode && !lockSwitching) {
                switchToNextAvailableCharacter(player, charactersAttachment);
             }
 
             wasVKeyDown = isVDown;
             boolean isODown = ((KeyMapping)KeyMappingRegistry.O_KEY.get()).isDown();
-            if (isODown && !wasOKeyDown) {
+            if (isODown && !wasOKeyDown && !plunging) {
                ScreenNavigator.openCharacterPartyScreen(player);
             }
 
             wasOKeyDown = isODown;
             boolean isCharInfoDown = ((KeyMapping)KeyMappingRegistry.CHARACTER_INFO_SCREEN_KEY.get()).isDown();
-            if (isCharInfoDown && !wasCharInfoKeyDown) {
+            if (isCharInfoDown && !wasCharInfoKeyDown && !plunging) {
                ScreenNavigator.openArtifactEquipScreen(player, -1);
             }
 
             wasCharInfoKeyDown = isCharInfoDown;
             boolean isArtifactDown = ((KeyMapping)KeyMappingRegistry.ARTIFACT_EQUIP_SCREEN_KEY.get()).isDown();
-            if (isArtifactDown && !wasArtifactKeyDown) {
+            if (isArtifactDown && !wasArtifactKeyDown && !plunging) {
                ScreenNavigator.openBackpackScreen(player);
             }
 
             wasArtifactKeyDown = isArtifactDown;
             boolean isArtifact2Down = ((KeyMapping)KeyMappingRegistry.ARTIFACT_EQUIP_SCREEN_KEY_2.get()).isDown();
-            if (isArtifact2Down && !wasArtifactKey2Down) {
+            if (isArtifact2Down && !wasArtifactKey2Down && !plunging) {
                ScreenNavigator.openAscensionScreen(player);
             }
 
             wasArtifactKey2Down = isArtifact2Down;
             boolean isConfigDown = ((KeyMapping)KeyMappingRegistry.CONFIG_SCREEN_KEY.get()).isDown();
-            if (isConfigDown && !wasConfigKeyDown) {
+            if (isConfigDown && !wasConfigKeyDown && !plunging) {
                ScreenNavigator.openCharacterConfigScreen(player);
             }
 

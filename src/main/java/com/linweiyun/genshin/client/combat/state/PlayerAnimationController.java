@@ -12,6 +12,7 @@ import com.geckolib.animation.state.AnimationTest;
 import com.linweiyun.genshin.core.character.CharacterHelper;
 import com.linweiyun.genshin.core.log.LogGroup;
 import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActions;
 import com.linweiyun.genshin.core.system.combat.animation.animatable.IPlayerAnimatableProxy;
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
@@ -37,6 +38,8 @@ public final class PlayerAnimationController {
    private static final Map<Player, String> LAST_CHARACTER_ID = new WeakHashMap<>();
    private static final Map<Player, String> LOG_LAST_ANIMATION = new WeakHashMap<>();
    private static final Map<Player, String> LOG_LAST_STATE = new WeakHashMap<>();
+   /** 本地玩家上一次广播出去的飞行片段名（变了才发包，不刷屏）。 */
+   private static final Map<Player, String> LAST_SENT_FLIGHT_CLIP = new WeakHashMap<>();
    private static int lastEmptyFrameTick = Integer.MIN_VALUE;
 
    private PlayerAnimationController() {
@@ -76,7 +79,7 @@ public final class PlayerAnimationController {
          return RawAnimation.begin().thenLoop(animationName);
       }
 
-      RawAnimation idle = CharacterActions.animationsFor(player).locomotion().idle();
+      RawAnimation idle = CharacterActions.animationsFor(player).locomotionFor(player).idle();
       String idleName = targetName(idle);
       return idleName != null && AnimationAvailability.existsFor(player, idleName) ? idle : null;
    }
@@ -112,7 +115,7 @@ public final class PlayerAnimationController {
 
       RawAnimation target = hasActionState
          ? pickAction(player, targetAnim, isLocalPlayer && ActionStateMachine.currentStateLoops())
-         : pickLocomotion(player, animations.locomotion(), isMoving, movedX, movedY, movedZ);
+         : pickLocomotion(player, animations.locomotionFor(player), isMoving, movedX, movedY, movedZ);
       logAnimationFlow(player, target, targetAnim, hasActionState);
       if (hasActionState) {
          suspendLocomotionTransient(player);
@@ -129,12 +132,12 @@ public final class PlayerAnimationController {
       boolean isTargetSpecial = animations.specialAnims().contains(targetName(target));
       String currentPlayingAnim = currentAnimationName(controller);
       boolean isCurrentlySpecial = animations.specialAnims().contains(currentPlayingAnim);
-      if (previousWasOneShot(animations, currentPlayingAnim)) {
+      if (previousWasOneShot(animations, player, currentPlayingAnim)) {
          controller.reset();
       }
 
       boolean nothingPlaying = controller.getCurrentAnimationPoint() == null || controller.getCurrentTimelineTime() < 0.0;
-      if (!isTargetSpecial && !nothingPlaying && !previousWasOneShot(animations, currentPlayingAnim) && (!isCurrentlySpecial || hasActionState)) {
+      if (!isTargetSpecial && !nothingPlaying && !previousWasOneShot(animations, player, currentPlayingAnim) && (!isCurrentlySpecial || hasActionState)) {
          controller.setTransitionTicks(animations.exitTransitionTicks());
       } else {
          controller.setTransitionTicks(0);
@@ -143,12 +146,12 @@ public final class PlayerAnimationController {
       return state.setAndContinue(target);
    }
 
-   private static boolean previousWasOneShot(CharacterAnimations animations, @Nullable String previousName) {
+   private static boolean previousWasOneShot(CharacterAnimations animations, Player player, @Nullable String previousName) {
       if (previousName == null) {
          return false;
       }
 
-      LocomotionAnims loco = animations.locomotion();
+      LocomotionAnims loco = animations.locomotionFor(player);
 
       for (LocomotionAnims.OneShot oneShot : new LocomotionAnims.OneShot[]{loco.landing(), loco.landingLight(), loco.runStop()}) {
          if (oneShot != null && previousName.equals(targetName(oneShot.animation()))) {
@@ -264,12 +267,33 @@ public final class PlayerAnimationController {
             transientState.oneShot = null;
             transientState.wasRunning = false;
             transientState.fallSpeed = 0.0;
-            if (movedY > 0.02) {
-               return loco.flyUp() != null ? loco.flyUp() : loco.fly();
-            } else if (movedY < -0.02) {
-               return loco.flyDown() != null ? loco.flyDown() : loco.fly();
+            // 别的玩家：用他**广播过来的**飞行片段，不再自己按速度猜 ——
+            // 他松手的那一刻，我们这边看到的速度还在衰减，猜出来会晚一拍（用户报的延迟）。
+            RawAnimation broadcast = broadcastFlightClip(player, loco);
+            if (broadcast != null) {
+               return broadcast;
+            }
+            // 本地玩家：**直接看按键**。飞行时松开空格后人还会带着惯性继续往上飘，
+            // 拿竖直速度判断的话要等速度掉到阈值以下才切回水平 —— 用户报的「停下来
+            // 还要等近一秒才恢复」就是这个。按键是瞬时状态，松手立刻切。
+            // 别的玩家看不到输入，只能按位移判断（阈值 0.008，比原来的 0.02 灵敏些）。
+            boolean ascending;
+            boolean descending;
+            if (player instanceof LocalPlayer localPlayer) {
+               ascending = localPlayer.input.keyPresses.jump();
+               descending = localPlayer.input.keyPresses.shift();
             } else {
-               return loco.fly();
+               ascending = movedY > 0.008;
+               descending = movedY < -0.008;
+            }
+
+            if (ascending) {
+               return announceFlightClip(player, loco.flyUp() != null ? loco.flyUp() : loco.fly());
+            } else if (descending) {
+               return announceFlightClip(player, loco.flyDown() != null ? loco.flyDown() : loco.fly());
+            } else {
+               // 水平这一档还能细分（例如林薇云长柄：悬停 / 往前飞 / 疾跑冲刺）
+               return announceFlightClip(player, CharacterActions.animationsFor(player).flyVariant(player, loco, isMoving));
             }
          } else {
             if (!player.onGround()) {
@@ -339,6 +363,42 @@ public final class PlayerAnimationController {
 
    private static boolean isFlying(Player player) {
       return player.isFallFlying() ? true : player instanceof LocalPlayer && player.getAbilities().flying;
+   }
+
+   /**
+    * 本地玩家选了哪条飞行片段，就顺着现成的动画状态包广播出去（变了才发）。
+    *
+    * <p>这一条是用户 2026-09-27 点的：「不是有广播动画状态的包吗」—— 飞行升降本来是
+    * 各客户端自己按速度猜的，猜不准也猜得晚；现在改成**谁在飞谁说了算**，
+    * 别人照收发的片段播。
+    */
+   private static RawAnimation announceFlightClip(Player player, @Nullable RawAnimation picked) {
+      if (player instanceof LocalPlayer && picked != null) {
+         String name = targetName(picked);
+         if (name != null && !name.equals(LAST_SENT_FLIGHT_CLIP.get(player))) {
+            LAST_SENT_FLIGHT_CLIP.put(player, name);
+            NetworkManager.sendAnimationStateToServer(name, 0);
+         }
+      }
+      return picked;
+   }
+
+   /** 远端玩家广播来的飞行片段（正好是这一档的 fly / flyUp / flyDown 就用它，循环播）。 */
+   @Nullable
+   private static RawAnimation broadcastFlightClip(Player player, LocomotionAnims loco) {
+      if (player instanceof LocalPlayer) {
+         return null;
+      }
+      String state = AnimationStateSync.stateOf(player);
+      if (state == null || state.isEmpty()) {
+         return null;
+      }
+      for (RawAnimation candidate : new RawAnimation[]{loco.fly(), loco.flyUp(), loco.flyDown()}) {
+         if (candidate != null && state.equals(targetName(candidate))) {
+            return RawAnimation.begin().thenLoop(state);
+         }
+      }
+      return null;
    }
 
    private static boolean holdingOneShot(PlayerAnimationController.LocoTransient state, LocomotionAnims loco, boolean isMoving, Player player) {

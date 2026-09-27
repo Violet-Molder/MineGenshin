@@ -319,6 +319,11 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
    }
 
    public boolean canCast(Player player, ActionKind kind, int skillTime) {
+      // 招式自己的门禁先问一次（基类那条「飞行中不能放技能 / 大招」就在里面）
+      SkillBase current = this.getSkill();
+      if (current != null && !current.canCast(player, kind)) {
+         return false;
+      }
       return switch (kind) {
          case ELEMENTAL_SKILL_TAP, ELEMENTAL_SKILL_HOLD -> this.canUseElementalSkill(player, skillTime);
          case ELEMENTAL_BURST -> this.canUseElementalBurst(player);
@@ -403,6 +408,43 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       if (current != null) {
          current.chargeAttack(player, this);
       }
+   }
+
+   /**
+    * 下落攻击的<b>落地结算</b>——由服务端的落地检测调一次。
+    *
+    * <p>用哪个技能、怎么打，全在 {@link SkillBase#plungingAttack}（大部分角色就是基类那份）；
+    * 这里只负责转发，和 {@link #performNormalAttack} / {@link #performChargedAttack} 同一套路子。
+    */
+   public void performPlungingAttack(Player player) {
+      SkillBase current = this.getSkill();
+      if (current != null) {
+         current.plungingAttack(player, this);
+      }
+   }
+
+   /** 下落攻击播放的动画名（没接技能时用基类默认名）。 */
+   public String getPlungingAnimation() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingAnimation() : SkillBase.DEFAULT_PLUNGING_ANIM;
+   }
+
+   /** 下落攻击的加速下坠速度（格 / 刻，<b>正数 = 向下</b>）。 */
+   public double getPlungingFallSpeed() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingFallSpeed() : SkillBase.DEFAULT_PLUNGING_FALL_SPEED;
+   }
+
+   /** 二连跳之后、起飞之前那段前摇的刻数。 */
+   public int getFlyStartTicks() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.flyStartTicks() : SkillBase.DEFAULT_FLY_START_TICKS;
+   }
+
+   /** 起飞前摇播的动画名。 */
+   public String getFlyStartAnimation() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.flyStartAnimation() : SkillBase.DEFAULT_FLY_START_ANIM;
    }
 
    public int getChargedAttackChargeTicks() {

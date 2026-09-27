@@ -4,6 +4,7 @@ package com.linweiyun.genshin.client.combat.state;
 
 import com.linweiyun.genshin.client.combat.AttackApproach;
 import com.linweiyun.genshin.client.combat.BurstDive;
+import com.linweiyun.genshin.client.combat.PlungeAttack;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -106,6 +107,7 @@ public final class ActionStateMachine {
       CombatTargeting.tick(player);
       AttackApproach.tick(player);
       BurstDive.tick(player);
+      PlungeAttack.tick(player);
    }
 
    private static void tickHeldButtons(LocalPlayer player) {
@@ -218,6 +220,8 @@ public final class ActionStateMachine {
 
    @SubscribeEvent
    public static void onClientPlayerRespawn(Clone event) {
+      // 复活 / 重登时把下落攻击状态一起收掉，否则新身体永远「不许动」
+      PlungeAttack.cancel();
       resetToDefault();
    }
 
@@ -237,6 +241,11 @@ public final class ActionStateMachine {
       isAttackButtonDown = true;
       attackHoldTimer = 0;
       chargedAttackTriggered = false;
+      // 坠落中按下普攻 = 下落攻击：不走普攻，也不走大剑那套「按住先蓄力」
+      if (PlungeAttack.tryBegin(player)) {
+         deferredNormalAttack = false;
+         return;
+      }
       deferredNormalAttack = handlerFor(player).deferNormalAttackOnPress(player);
       if (!deferredNormalAttack) {
          tryAttack(player);

@@ -14,6 +14,7 @@ public final class DocCatalog {
             new Doc("sys-attachment-sync", "附件与数据同步", "docs/systems/attachment-sync.md", "系统详解"),
             new Doc("sys-combat-attack", "战斗 · 攻击与伤害管线", "docs/systems/combat-attack.md", "系统详解"),
             new Doc("sys-combat-action", "战斗 · 动作与动画", "docs/systems/combat-action.md", "系统详解"),
+            new Doc("sys-flight", "飞行与下落攻击", "docs/systems/flight.md", "系统详解"),
             new Doc("sys-element-reaction", "元素附着与元素反应", "docs/systems/element-reaction.md", "系统详解"),
             new Doc("sys-element-host", "元素载体：可附着宿主", "docs/systems/element-host.md", "系统详解"),
             new Doc("sys-attribute-effect", "属性与角色效果", "docs/systems/attribute-effect.md", "系统详解"),

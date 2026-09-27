@@ -76,7 +76,26 @@ public abstract class CharacterAppearanceData {
          bones.put(bone, show && bone.equals(shown));
       }
 
+      // 放飞骨骼（飞行时武器脱离手的那几根）常态一律藏着 —— 亮起来由飞行分支负责
+      for (String flightBone : this.flightBones().values()) {
+         bones.put(flightBone, false);
+      }
+
       return bones;
+   }
+
+   /**
+    * <b>放飞骨骼</b>：常态骨骼名 → 飞行时用来挂同一把武器的另一根骨骼名（默认没有）。
+    *
+    * <p>用来解决「近战武器挂在手上、但飞行时武器要和手分离」这件事：模型里再复制一根
+    * 挂在身体（而不是手）上的骨骼，飞行时把手骨藏掉、把放飞骨骼亮起来 —— 于是武器的位姿
+    * 不再被手臂的动画拖着走。挂点、显隐切换见
+    * {@code LinweiyunResources} 与 {@code CharacterAppearanceOptionBones}。
+    *
+    * <p>键值都是<b>模型骨骼名</b>，所以是按模型给的口径（默认空 = 这个角色的武器一直挂在手上）。
+    */
+   public Map<String, String> flightBones() {
+      return Map.of();
    }
 
    public enum OptionKind {

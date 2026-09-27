@@ -9,6 +9,7 @@ const FALLBACK_MENU = [
   { slug: "sys-attachment-sync", title: "附件与数据同步", group: "系统详解", href: "/doc/sys-attachment-sync" },
   { slug: "sys-combat-attack", title: "战斗 · 攻击与伤害管线", group: "系统详解", href: "/doc/sys-combat-attack" },
   { slug: "sys-combat-action", title: "战斗 · 动作与动画", group: "系统详解", href: "/doc/sys-combat-action" },
+  { slug: "sys-flight", title: "飞行与下落攻击", group: "系统详解", href: "/doc/sys-flight" },
   { slug: "sys-element-reaction", title: "元素附着与元素反应", group: "系统详解", href: "/doc/sys-element-reaction" },
   { slug: "sys-element-host", title: "元素载体：可附着宿主", group: "系统详解", href: "/doc/sys-element-host" },
   { slug: "sys-attribute-effect", title: "属性与角色效果", group: "系统详解", href: "/doc/sys-attribute-effect" },

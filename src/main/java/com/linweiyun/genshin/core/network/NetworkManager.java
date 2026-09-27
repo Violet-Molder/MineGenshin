@@ -23,6 +23,8 @@ import com.linweiyun.genshin.core.menu.CharacterInfoMenu;
 import com.linweiyun.genshin.core.system.combat.action.ActionManager;
 import com.linweiyun.genshin.core.system.combat.action.InterruptReason;
 import com.linweiyun.genshin.core.system.combat.animation.server.ServerAnimationTicker;
+import com.linweiyun.genshin.core.system.combat.attack.PlungeState;
+import com.linweiyun.genshin.core.system.combat.flight.GenshinFlight;
 import com.linweiyun.genshin.core.system.compat.PlayerStatBridge;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
 import com.linweiyun.genshin.core.system.wish.WishSystem;
@@ -131,6 +133,10 @@ public class NetworkManager {
          ClientHandler.genshinModeClientHandler(isGenshinMode);
       } else {
          ServerPlayer player = Objects.requireNonNull(sender.asPlayer());
+         // 下落攻击期间不接受模式切换（客户端那边也拦了，这里是服务端的权威那一份）
+         if (PlungeState.isPlunging(player)) {
+            return;
+         }
          if (isGenshinMode && !hasAlivePartyCharacter(player)) {
             player.sendSystemMessage(Component.translatable("message.minegenshin.no_alive_character"));
             setGenshinModeToPlayer(player, false);
@@ -270,6 +276,10 @@ public class NetworkManager {
          ClientHandler.characterSelectionClientHandler(index);
       } else {
          ServerPlayer player = Objects.requireNonNull(sender.asPlayer());
+         // 下落攻击 / 自由飞行期间不接受切换角色（同上）
+         if (PlungeState.isPlunging(player) || GenshinFlight.isFlying(player)) {
+            return;
+         }
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
          ActionManager.get(player).interrupt(InterruptReason.SWITCH_CHARACTER);
          attachment.setCurrentCharacterIndex(index);

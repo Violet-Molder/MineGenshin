@@ -6,6 +6,7 @@ import com.linweiyun.genshin.content.items.weapon.WeaponItem;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.log.LogGroup;
 import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.core.system.combat.attack.PlungeState;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -142,6 +143,15 @@ public class ActionManager {
 
    private boolean request(Player player, PGCharacter character, ActionDefinition def) {
       if (def == null) {
+         return false;
+      }
+
+      // 下落攻击期间一切照常动作都拦掉（攻击 / 重击 / 战技 / 大招 / 闪避都走这里）。
+      // 客户端那边由状态机优先级 + 输入拦截挡住，这里是服务端那一份权威 ——
+      // 包被伪造也得弹回来。落地那一下不走 ActionManager（见 CharacterTickHandler）。
+      if (PlungeState.isPlunging(player)) {
+         LOGGER.info("[ActionManager] [{}] 下落攻击中，拒绝动作 kind={}",
+                 player.level().isClientSide() ? "CLIENT" : "SERVER", def.kind);
          return false;
       }
 

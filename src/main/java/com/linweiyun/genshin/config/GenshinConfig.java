@@ -20,6 +20,7 @@ public class GenshinConfig {
     public static final ModConfigSpec.Builder PERFORMANCE_BUILDER = new ModConfigSpec.Builder();
     public static final ModConfigSpec.Builder COMPATIBILITY_BUILDER = new ModConfigSpec.Builder();
     public static final ModConfigSpec.Builder POISE_BUILDER = new ModConfigSpec.Builder();
+    public static final ModConfigSpec.Builder GAMEPLAY_BUILDER = new ModConfigSpec.Builder();
     public static final ModConfigSpec CHARACTER_SPEC;
     public static final ModConfigSpec WORLD_TEXT_COLOR_SPEC;
     public static final ModConfigSpec ENTITY_SPEC;
@@ -29,6 +30,7 @@ public class GenshinConfig {
     public static final ModConfigSpec PERFORMANCE_SPEC;
     public static final ModConfigSpec COMPATIBILITY_SPEC;
     public static final ModConfigSpec POISE_SPEC;
+    public static final ModConfigSpec GAMEPLAY_SPEC;
 
     static {
         CharacterConfig.register(CHARACTER_BUILDER);
@@ -40,6 +42,7 @@ public class GenshinConfig {
         PerformanceConfig.register(PERFORMANCE_BUILDER);
         CompatConfig.register(COMPATIBILITY_BUILDER);
         PoiseConfig.register(POISE_BUILDER);
+        GameplayConfig.register(GAMEPLAY_BUILDER);
 
         CHARACTER_SPEC = CHARACTER_BUILDER.build();
         WORLD_TEXT_COLOR_SPEC = WORLD_TEXT_COLOR_BUILDER.build();
@@ -50,5 +53,6 @@ public class GenshinConfig {
         PERFORMANCE_SPEC = PERFORMANCE_BUILDER.build();
         COMPATIBILITY_SPEC = COMPATIBILITY_BUILDER.build();
         POISE_SPEC = POISE_BUILDER.build();
+        GAMEPLAY_SPEC = GAMEPLAY_BUILDER.build();
     }
 }

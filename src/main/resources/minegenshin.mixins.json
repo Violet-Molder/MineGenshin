@@ -21,6 +21,8 @@
     "MobServerAiStepMixin",
     "MultiPackResourceManagerBundleMixin",
     "PlayerAttackInterceptor",
+    "PlayerFallDamageMixin",
+    "PlayerGlideSuppressMixin",
     "PlayerHurtInterceptor",
     "RavagerActionMixin"
   ],

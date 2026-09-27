@@ -7,6 +7,8 @@ import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Locale;
+
 /**
  * 林薇云的<b>普通形态技能</b>（拳 / 剑 / 长柄 / 法器 / 弓 —— 大剑形态见
  * {@link LinweiyunClaymoreSkill}）。
@@ -24,6 +26,23 @@ public class LinweiyunSkill extends SkillBase {
    /** 当前形态（拳 / 剑 / 长柄 / 法器 / 弓）。 */
    public WeaponAppearance form() {
       return this.form;
+   }
+
+   /** 起飞前摇：六种形态各一档（数值表在 {@link LinweiyunSkillLogic}）。 */
+   @Override
+   public int flyStartTicks() {
+      return LinweiyunSkillLogic.flyStartTicks(this.form);
+   }
+
+   /**
+    * 起飞前摇的动画：<b>按形态各一条</b>（{@code fly_start_sword} / {@code fly_start_polearm} …）。
+    *
+    * <p>没做素材的形态会查不到动画，{@code AnimationAvailability} 会拦住切换 ——
+    * 状态与前摇计时照常走，只是视觉上停在上一帧。
+    */
+   @Override
+   public String flyStartAnimation() {
+      return "fly_start_" + this.form.name().toLowerCase(Locale.ROOT);
    }
 
    @Override

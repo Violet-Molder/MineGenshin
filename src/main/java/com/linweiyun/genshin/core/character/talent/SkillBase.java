@@ -3,6 +3,9 @@
 package com.linweiyun.genshin.core.character.talent;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.genshin.core.element.ModElements;
+import com.linweiyun.genshin.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
 import com.linweiyun.genshin.core.system.combat.action.ActionSet;
@@ -12,9 +15,46 @@ import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.ComboData;
 import com.linweiyun.genshin.core.system.combat.action.data.DodgeData;
 import com.linweiyun.genshin.core.system.combat.action.data.SkillData;
+import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.system.combat.flight.GenshinFlight;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 
+import java.util.List;
+
+/**
+ * 一个角色的招式基类 —— 普攻 / 重击 / <b>下落攻击</b> / 战技 / 爆发 / 闪避都在这里，
+ * 需要改某个招式的角色就覆盖对应方法。
+ */
 public class SkillBase {
+   /**
+    * 下落攻击的默认动画名。
+    *
+    * <p>角色动画文件里没有这个名字时 {@code AnimationAvailability} 会拦住切换 ——
+    * 状态与伤害照常走，只是视觉上停在上一帧。林薇云现在还没做下落攻击动画，
+    * 等她那份素材进仓库后按这个名字（或覆盖 {@link #plungingAnimation()}）接上即可。
+    */
+   public static final String DEFAULT_PLUNGING_ANIM = "attack_plunge";
+
+   /** 下落攻击落地的冲击半径（格）——「基类方法，大部分角色都是这样」。 */
+   public static final double DEFAULT_PLUNGING_RADIUS = 3.0;
+
+   /** 下落攻击落地的基准倍率（占位：100% 攻击力）。逐角色的正式数值来了再覆盖。 */
+   public static final float DEFAULT_PLUNGING_MULTIPLIER = 1.0f;
+
+   /** 下落攻击的加速下坠速度（格 / 刻，<b>正数 = 向下</b>，和玩家那套 Y 轴符号相反）。 */
+   public static final double DEFAULT_PLUNGING_FALL_SPEED = 1.5;
+
+   /** 起飞前摇的默认动画名（二连跳之后的「展开 / 蓄势」那一段）。 */
+   public static final String DEFAULT_FLY_START_ANIM = "fly_start";
+
+   /** 起飞前摇的默认刻数 —— 每个角色（林薇云是每个武器形态）不一样，覆盖 {@link #flyStartTicks()}。 */
+   public static final int DEFAULT_FLY_START_TICKS = 8;
+
    public int getMaxCombo() {
       return 1;
    }
@@ -37,6 +77,77 @@ public class SkillBase {
    public void chargeAttack(Player player, PGCharacter character) {
    }
 
+   /**
+    * <b>下落攻击</b> —— 「坠落中按普攻」触发的那个状态，落地时结算这一下。
+    *
+    * <p>和 {@link #attack} / {@link #chargeAttack} 是同一个位置的东西：<b>招式本体</b>。
+    * 基类的实现就是「大部分角色都长这样」的那一份 —— 落地时对身周
+    * {@link #DEFAULT_PLUNGING_RADIUS} 格内的敌人打一发 {@link AttackType#PLUNGING_ATTACK}；
+    * 有自己花样的角色覆盖它即可。
+    *
+    * <p><b>只跑服务端</b>：伤害结算一律在服务端，客户端那一份（加速下坠、动作状态、
+    * 锁输入）在 {@code client.combat.PlungeAttack} 里，两边由 RPC 对齐。
+    *
+    * <p>「加速下坠」和「摔落伤害减免」不在这里 —— 前者是客户端每刻的物理，
+    * 后者走 {@code FallDamage} 那条曲线（下落攻击把免伤区间抬到 38 格）。
+    */
+   public void plungingAttack(Player player, PGCharacter character) {
+      if (player.level().isClientSide() || character == null) {
+         return;
+      }
+
+      float multiplier = this.plungingDamageMultiplier(character);
+      if (multiplier <= 0f) {
+         return;
+      }
+
+      double radius = this.plungingImpactRadius();
+      AABB impactBox = new AABB(
+            player.getX() - radius, player.getY() - 1.0, player.getZ() - radius,
+            player.getX() + radius, player.getY() + 2.0, player.getZ() + radius);
+      List<LivingEntity> targets = player.level().getEntitiesOfClass(LivingEntity.class, impactBox,
+            e -> e != player && e.isAlive());
+
+      GenshinElement element = this.plungingElement(character);
+      for (LivingEntity target : targets) {
+         ModDamageSpec spec = ModDamageSpec.builder(AttackType.PLUNGING_ATTACK, element)
+               .multiplier(multiplier)
+               .elementAmount(AttachmentType.WEAK.getInitialAmount())
+               .attackerCharacter(character)
+               .build();
+         ModDamageSource source = ModDamageSource.from(spec, player);
+         if (target.level() instanceof ServerLevel serverLevel) {
+            target.hurtServer(serverLevel, source, 0f);
+         }
+      }
+   }
+
+   /** 下落攻击落地的倍率（占位 100% 攻击力）。**/
+   protected float plungingDamageMultiplier(PGCharacter character) {
+      return DEFAULT_PLUNGING_MULTIPLIER;
+   }
+
+   /** 下落攻击落地的冲击半径（格）。 */
+   protected double plungingImpactRadius() {
+      return DEFAULT_PLUNGING_RADIUS;
+   }
+
+   /** 下落攻击用哪个元素结算：默认跟着角色自己的元素走，没有元素就按物理算。 */
+   protected GenshinElement plungingElement(PGCharacter character) {
+      GenshinElement elemental = character.getElemental();
+      return elemental == null ? ModElements.FYSIKOS.get() : elemental;
+   }
+
+   /** 下落攻击播放哪条动画（角色可以用自己的名字覆盖）。 */
+   public String plungingAnimation() {
+      return DEFAULT_PLUNGING_ANIM;
+   }
+
+   /** 下落攻击的加速下坠速度（格 / 刻，正数 = 向下）。 */
+   public double plungingFallSpeed() {
+      return DEFAULT_PLUNGING_FALL_SPEED;
+   }
+
    public void elementalSkill(Player player, PGCharacter character, int skillTime) {
    }
 
@@ -44,6 +155,36 @@ public class SkillBase {
    }
 
    public void dodge(Player player, PGCharacter character) {
+   }
+
+   /**
+    * <b>这一招现在放得出来吗</b>（招式自己的门禁，和冷却 / 能量是两回事）。
+    *
+    * <p>基类只管一条规则：<b>自由飞行期间不能放技能和大招</b>（普攻、闪避、下落攻击照常）。
+    * 之所以写在这里、而不是去拦按键：<b>部分角色的部分技能本来就允许在空中 / 飞行中放</b>，
+    * 那种角色覆盖这个方法、把自己允许的那几种放行即可 —— 拦按键就把所有人都一起拦死了。
+    *
+    * <p>被 {@code PGCharacter#canCast} 与客户端的 {@code ActionCastGuard} 共用，
+    * 两端同一条规则（客户端连动画都不会播）。
+    */
+   public boolean canCast(Player player, ActionKind kind) {
+      if (!GenshinFlight.isFlying(player)) {
+         return true;
+      }
+      return switch (kind) {
+         case ELEMENTAL_SKILL_TAP, ELEMENTAL_SKILL_HOLD, ELEMENTAL_BURST -> false;
+         default -> true;
+      };
+   }
+
+   /** 二连跳之后、真正起飞之前那段前摇的刻数（每个角色不同；林薇云是每个武器形态一档）。 */
+   public int flyStartTicks() {
+      return DEFAULT_FLY_START_TICKS;
+   }
+
+   /** 起飞前摇播哪条动画。 */
+   public String flyStartAnimation() {
+      return DEFAULT_FLY_START_ANIM;
    }
 
    public void onCastStart(Player player, PGCharacter character, ActionKind kind) {

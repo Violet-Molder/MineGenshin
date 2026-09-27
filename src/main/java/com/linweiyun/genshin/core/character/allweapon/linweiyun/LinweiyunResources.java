@@ -16,11 +16,12 @@ public final class LinweiyunResources {
     * 渲染数据 —— 模型 / 贴图 / 动画都走共用目录，另外给五把武器各挂一个<b>骨骼替换点</b>：
     *
     * <pre>
-    * sword    ← 剑槽位（slotFor(SWORD)）里的物品
-    * bow      ← 弓槽位里的物品
-    * long     ← 长柄槽位里的物品
-    * claymore ← 大剑槽位里的物品
-    * magic    ← 法器槽位里的物品
+   * sword    ← 剑槽位（slotFor(SWORD)）里的物品
+   * bow      ← 弓槽位里的物品
+   * long     ← 长柄槽位里的物品
+   * polearm_fly ← 同上，但挂在身上（Waist）—— 飞行时武器脱离手、当扫帚用的那一根
+   * claymore ← 大剑槽位里的物品
+   * magic    ← 法器槽位里的物品
     * </pre>
     *
     * <p>语义就是用户要的「替换」：槽位里有武器 → 隐藏这根骨骼自带的几何体、把**装备的那把武器**
@@ -39,6 +40,11 @@ public final class LinweiyunResources {
             CharacterBoneMount.of("bow", BoneMountSource.ofSlot(
                     AllWeaponArtifactInventory.slotFor(WeaponAppearance.BOW))),
             CharacterBoneMount.of("long", BoneMountSource.ofSlot(
+                    AllWeaponArtifactInventory.slotFor(WeaponAppearance.POLEARM))),
+            // 长柄的第二根：飞行时用（同槽位、挂在 Waist 上的 `polearm_fly`）。
+            // 常态藏、飞行时亮 —— 见 AllWeaponAppearanceData#flightBones 与
+            // CharacterAppearanceOptionBones 的飞行分支。
+            CharacterBoneMount.of("polearm_fly", BoneMountSource.ofSlot(
                     AllWeaponArtifactInventory.slotFor(WeaponAppearance.POLEARM))),
             CharacterBoneMount.of("claymore", BoneMountSource.ofSlot(
                     AllWeaponArtifactInventory.slotFor(WeaponAppearance.CLAYMORE))),

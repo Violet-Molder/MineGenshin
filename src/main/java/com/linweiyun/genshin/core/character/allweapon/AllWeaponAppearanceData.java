@@ -5,6 +5,8 @@ package com.linweiyun.genshin.core.character.allweapon;
 import com.linweiyun.genshin.core.character.appearance.CharacterAppearanceData;
 import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
 
+import java.util.Map;
+
 public final class AllWeaponAppearanceData extends CharacterAppearanceData {
    public static final AllWeaponAppearanceData INSTANCE = new AllWeaponAppearanceData();
    private static final int WEAPON_BITS = 7;
@@ -78,5 +80,20 @@ public final class AllWeaponAppearanceData extends CharacterAppearanceData {
    @Override
    public int weaponSlotOffset(int mask) {
       return this.weapon(mask).ordinal();
+   }
+
+   /**
+    * 长柄的放飞骨骼：{@code long}（挂在右手上）→ {@code polearm_fly}（挂在 Waist 上，几何是它的复制）。
+    *
+    * <p>用户口径：「近战武器是挂在右手上的，但是飞行期间武器是和手分离的」——
+    * 长柄飞行就是骑着武器当扫帚，手臂一动不能把它拖走，所以复制一根挂在身上的。
+    * 其它形态暂时没有放飞骨骼（武器照旧跟手）。
+    *
+    * <p>⚠️ 骨骼名是<b>模型</b>里的名字（用户 2026-09-27 在他的工程里起的名，长柄飞行素材
+    * 用的就是 {@code polearm_fly}）；以后有第二个全武器类角色用别的模型，需要把这层挪到角色身上。
+    */
+   @Override
+   public Map<String, String> flightBones() {
+      return Map.of("long", "polearm_fly");
    }
 }
