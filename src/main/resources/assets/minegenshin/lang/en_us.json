@@ -891,6 +891,7 @@
   "gui.minegenshin.character_equip.page.constellation": "Constellation",
   "gui.minegenshin.character_equip.page.talent": "Talents",
   "gui.minegenshin.character_equip.page.profile": "Profile",
+  "gui.minegenshin.character_equip.page.appearance": "Appearance",
   "gui.minegenshin.character_equip.level_format": "Lv.%s / %s",
   "gui.minegenshin.character_equip.exp": "EXP %s / %s",
   "gui.minegenshin.character_equip.exp_max": "EXP MAX",

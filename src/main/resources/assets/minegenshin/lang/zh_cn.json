@@ -845,6 +845,7 @@
   "gui.minegenshin.character_equip.page.constellation": "命之座",
   "gui.minegenshin.character_equip.page.talent": "天赋",
   "gui.minegenshin.character_equip.page.profile": "资料",
+  "gui.minegenshin.character_equip.page.appearance": "外观",
   "gui.minegenshin.character_equip.level_format": "Lv.%s / %s",
   "gui.minegenshin.character_equip.exp": "经验 %s / %s",
   "gui.minegenshin.character_equip.exp_max": "经验 已满",

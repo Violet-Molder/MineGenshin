@@ -248,23 +248,14 @@
   background: group(#4512263C, border(1, #7A6FD8F5));
 }
 
-/* ---------------- 最下面那块「外观」（U 页） ----------------
-   内容直接复用 K 页的外观盒：里面的结构就是 #cc-appearance + #cc-appearance-scroller +
-   .cc-* 那些行（样式来自 character_config.lss，U 页把那份样式表也挂上了）。
-   这里只做两件事：给这块槽位一个确定高度（main 是 flex:1，会自己吃满剩下的），
-   再把 K 页那个 48% 的高度改成「占满槽位」—— 不改它自己的背景 / 边距。
-
-   ⚠️ 这里沿用了本页既有盒子的写法（group(底色, border(1, 描边))，见 #ce-stage / #ce-panel）：
-   元素都在父级的 padding 里面，不会顶到裁剪边界，不存在「被裁掉外框」那个问题。 */
-#ce-appearance {
-  width: 100%;
-  height: 26%;
-  display: flex;
-  flex-direction: column;
-}
-
-#ce-appearance #cc-appearance {
-  height: 100%;
+/* ---------------- 「外观」页（左侧页签里的一个） ----------------
+   内容是 K 页那个外观盒原样搬过来的：#cc-appearance + #cc-appearance-scroller + .cc-* 那些行
+   （样式来自 character_config.lss，U 页把那份样式表也挂上了）。
+   这里只覆盖高度：K 页里它占右侧栏的 48%，装备页的面板里让它再高一点。
+   ⚠️ 用后代选择器限定在 #ce-panel 里，免得影响别处。 */
+#ce-panel #cc-appearance {
+  height: 80%;
+  min-height: 0;
 }
 
 /* ---------------- 通用行 / 文字 ---------------- */
