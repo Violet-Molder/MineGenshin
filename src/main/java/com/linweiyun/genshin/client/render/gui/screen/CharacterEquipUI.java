@@ -30,6 +30,8 @@ import com.linweiyun.genshin.core.attachment.Backpack;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.PGCharacterData;
+import com.linweiyun.genshin.core.character.ICharacterConfigUI;
+import com.linweiyun.genshin.core.character.configui.CharacterConfigPage;
 import com.linweiyun.genshin.core.character.talent.TalentUpgradeCost;
 import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.network.NetworkManager;
@@ -122,6 +124,8 @@ public final class CharacterEquipUI {
 
    public static ModularUI createModularUI(Player player) {
       Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(STYLESHEET);
+      // 最下面那块「外观」直接复用 K 页的外观盒（#cc-appearance 及其 cc-* 行），所以连配置页的样式表一起挂上。
+      Stylesheet configStylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(CharacterConfigPage.STYLESHEET);
       UIElement root = new UIElement().setId("ce-root");
       root.layout(l -> {
          l.widthPercent(100.0F);
@@ -165,7 +169,9 @@ public final class CharacterEquipUI {
          st.main = new UIElement().setId("ce-main");
          st.stage = buildStage(st);
          st.main.addChildren(new UIElement[]{st.menu, st.stage, st.panel});
-         body.addChildren(new UIElement[]{topbar, titleLine, st.main, st.viewOnlyNote, st.sub});
+         // 外观槽位放在 main 下面 = 这一页的最下面（main 是 flex:1，会自己吃满剩余高度）
+         st.appearance = new UIElement().setId("ce-appearance");
+         body.addChildren(new UIElement[]{topbar, titleLine, st.main, st.appearance, st.viewOnlyNote, st.sub});
          window.addChild(body);
          root.addChild(window);
          fillMenu(st);
@@ -188,7 +194,7 @@ public final class CharacterEquipUI {
             }
          });
          OPEN_STATE = st;
-         return ModularUI.of(UI.of(root, new Stylesheet[]{stylesheet}), player);
+          return ModularUI.of(UI.of(root, new Stylesheet[]{stylesheet, configStylesheet}), player);
       } else {
          root.addChild(new Label().setText(Component.translatable("gui.minegenshin.artifact_equip.no_character")));
          return ModularUI.of(UI.of(root, new Stylesheet[]{stylesheet}), player);
@@ -543,6 +549,10 @@ public final class CharacterEquipUI {
          boolean sub = st.subPage != CharacterEquipUI.SubPage.NONE;
          st.main.layout(l -> l.display(sub ? TaffyDisplay.NONE : TaffyDisplay.FLEX));
          st.sub.layout(l -> l.display(sub ? TaffyDisplay.FLEX : TaffyDisplay.NONE));
+         if (st.appearance != null) {
+            // 进子页面（选武器 / 选圣遗物 / 升级）时把外观也收起来，和 main 一致
+            st.appearance.layout(l -> l.display(sub ? TaffyDisplay.NONE : TaffyDisplay.FLEX));
+         }
          if (sub) {
             st.sub.clearAllChildren();
             switch (st.subPage) {
@@ -586,9 +596,30 @@ public final class CharacterEquipUI {
             st.panel.addChild(st.bottomRight);
             fillPreviewCredit(st);
             fillHint(st);
+            fillAppearanceSection(st);
             refreshOrbs(st);
          }
       }
+   }
+
+   /**
+    * 最下面那块「外观」—— 跟 K 页右侧那块同源：标题 + 这个角色可调的装扮项
+    * （申鹤是腿 / 鞋 / 袜 / 猫耳，林薇云是武器形态 + 显示武器……）。
+    *
+    * <p>内容由角色自己的配置页给（{@link ICharacterConfigUI#buildAppearanceSection}），
+    * 所以两个界面天然一致；换角色、换页都会重建，不会串到上一个角色身上。
+    */
+   private static void fillAppearanceSection(CharacterEquipUI.State st) {
+      if (st.appearance == null) {
+         return;
+      }
+      st.appearance.clearAllChildren();
+      PGCharacter character = viewed(st);
+      ICharacterConfigUI configUI = character == null ? null : character.getConfigUI();
+      if (configUI == null) {
+         return;
+      }
+      st.appearance.addChild(configUI.buildAppearanceSection(st.player, character, new int[]{character.getAppearance()}));
    }
 
    private static void fillHint(CharacterEquipUI.State st) {
@@ -2547,6 +2578,9 @@ public final class CharacterEquipUI {
       UIElement bottomRight;
       @Nullable
       UIElement sub;
+      /** 最下面那块「外观」（内容和 K 页同一份，由角色自己的配置页给）。 */
+      @Nullable
+      UIElement appearance;
       @Nullable
       UIElement orbLayer;
       @Nullable

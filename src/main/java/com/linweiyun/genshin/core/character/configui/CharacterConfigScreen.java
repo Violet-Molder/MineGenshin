@@ -71,11 +71,24 @@ public abstract class CharacterConfigScreen implements ICharacterConfigUI {
       return content;
    }
 
-   private UIElement buildAppearance(Player player, PGCharacter character, int[] previewMask) {
+   /**
+    * 「外观」那一块 —— K 页右侧用它，U 键装备页最下面也用它（见 {@link ICharacterConfigUI}）。
+    *
+    * <p>盒子与滚动区由 {@code CharacterConfigPage.buildAppearanceBox} 给
+    * （样式挂在 {@code #cc-appearance} / {@code #cc-appearance-scroller} 上），
+    * <b>具体有哪些装扮项由角色自己的配置页子类在 {@link #fillAppearance} 里决定</b>。
+    */
+   @Override
+   public UIElement buildAppearanceSection(Player player, PGCharacter character, int[] previewMask) {
       UIElement box = new UIElement();
       UIElement rows = CharacterConfigPage.buildAppearanceBox(box, this.appearanceTitleKey());
       this.fillAppearance(rows, player, character, previewMask);
       return box;
+   }
+
+   /** K 页右侧的外观块就是 {@link #buildAppearanceSection}。 */
+   private UIElement buildAppearance(Player player, PGCharacter character, int[] previewMask) {
+      return this.buildAppearanceSection(player, character, previewMask);
    }
 
    private UIElement buildInfoPane(Player player, PGCharacter character) {
