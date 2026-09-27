@@ -46,12 +46,24 @@ public final class AllWeaponAppearanceData extends CharacterAppearanceData {
 
    @Override
    public int optionValue(int mask, int index) {
-      return index == 0 ? this.weapon(mask).ordinal() : super.optionValue(mask, index);
+      // 她是两项：0 = 武器形态（存在 bit 8~10），1 = 显示武器（基类约定存在 bit 7）。
+      // ⚠️ index 1 必须显式转给基类的 showWeapon —— 基类的 optionValue/withOptionValue 只认
+      // 「index 0 = 显示武器」，直接落回 super 的话这一档永远读写不到，开关点了等于没点
+      // （表现就是「勾了常态显示武器，武器还是不出现」）。
+      return switch (index) {
+         case 0 -> this.weapon(mask).ordinal();
+         case 1 -> super.showWeapon(mask) ? 1 : 0;
+         default -> super.optionValue(mask, index);
+      };
    }
 
    @Override
    public int withOptionValue(int mask, int index, int value) {
-      return index == 0 ? this.withWeapon(mask, WeaponAppearance.byOrdinal(value)) : super.withOptionValue(mask, index, value);
+      return switch (index) {
+         case 0 -> this.withWeapon(mask, WeaponAppearance.byOrdinal(value));
+         case 1 -> super.withShowWeapon(mask, value != 0);
+         default -> super.withOptionValue(mask, index, value);
+      };
    }
 
    public WeaponAppearance weapon(int mask) {

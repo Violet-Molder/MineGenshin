@@ -360,27 +360,9 @@ public final class CharacterRenderDispatcher {
          });
          GenshinReplacedPlayer animatable = ANIMATABLES.computeIfAbsent(player, k -> new GenshinReplacedPlayer());
          animatable.setPlayerEntity(player);
-         logRenderPassOncePerFrame(charId);
          return new CharacterRenderDispatcher.RenderTarget(model, renderer, animatable);
       } else {
          return null;
-      }
-   }
-
-   private static void logRenderPassOncePerFrame(String charId) {
-      if (ANIM_LOGGER.isInfoEnabled()) {
-         int frame = renderFrameCounter;
-         String path = callerPath();
-         if (!"世界".equals(path)) {
-            String key = frame + "|" + path;
-            if (RENDER_PASS_LOGGED.put(key, 1) == null) {
-               if (RENDER_PASS_LOGGED.size() > 64) {
-                  RENDER_PASS_LOGGED.clear();
-               }
-
-               ANIM_LOGGER.info("渲染趟 {} 角色={} frame={}", new Object[]{path, charId, frame});
-            }
-         }
       }
    }
 
