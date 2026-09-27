@@ -3,9 +3,6 @@
 package com.linweiyun.genshin.core.system.registry.register;
 
 import com.linweiyun.genshin.Minegenshin;
-import com.linweiyun.genshin.config.character.LinweiyunTalentConfig;
-import com.linweiyun.genshin.config.character.ShenheTalentConfig;
-import com.linweiyun.genshin.config.character.TalentConfigs;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.allweapon.linweiyun.Linweiyun;
 import com.linweiyun.genshin.core.character.attachment.CharacterAttachment;
@@ -41,17 +38,6 @@ public class ModCharacters {
    public static final DeferredHolder<PGCharacter, Vesna> VESNA = register("vesna", 115001, Vesna::new);
    public static final DeferredHolder<PGCharacter, Vodyanitsa> VODYANITSA = register("vodyanitsa", 145002, Vodyanitsa::new);
     public static final DeferredHolder<PGCharacter, Linweiyun> LINWEIYUN = register("linweiyun", 135004, Linweiyun::new);
-
-    /**
-     * 配置页的「技能倍率」页签靠这个查到各角色的倍率表（见 {@code TalentConfigs}）。
-     *
-     * <p>放在静态块里、也放在角色注册之后：{@code SOURCE} 只是把静态方法包了一层，
-     * 真正读配置值发生在页面打开时，所以这里早一点晚一点都不会踩「spec 还没 build」。
-     */
-    static {
-        TalentConfigs.register("shenhe", ShenheTalentConfig.SOURCE);
-        TalentConfigs.register("linweiyun", LinweiyunTalentConfig.SOURCE);
-    }
 
     private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(String name, int uuid, Supplier<T> factory) {
       DeferredHolder<PGCharacter, T> holder = CHARACTERS.register(name, factory);

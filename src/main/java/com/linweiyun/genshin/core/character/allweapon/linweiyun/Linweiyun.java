@@ -41,7 +41,8 @@ public class Linweiyun extends AllWeaponCharacter {
             LinweiyunAttributeConfig::getAllDef
          )
       );
-      this.configUI = CharacterConfigUI.INSTANCE;
+      // 她自己的配置页（装扮项走 AllWeaponAppearanceData，倍率表走 LinweiyunTalentConfig）
+      this.configUI = LinweiyunConfigUI.INSTANCE;
       CharacterRenderRepository.register(LinweiyunResources.RENDER_DATA);
    }
 

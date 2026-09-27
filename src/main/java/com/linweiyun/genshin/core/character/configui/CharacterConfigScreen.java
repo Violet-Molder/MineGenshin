@@ -156,7 +156,30 @@ public abstract class CharacterConfigScreen implements ICharacterConfigUI {
    }
 
    protected List<CharacterConfigScreen.InfoPage> infoPages(Player player, PGCharacter character) {
-      return List.of(new CharacterConfigScreen.InfoPage(null, CharacterConfigPage.buildStatsScroller(character)));
+      UIElement stats = CharacterConfigPage.buildStatsScroller(character);
+      TalentConfigSource talents = this.talentConfig();
+
+      // 没声明倍率表（或没有 OP 权限）时只有属性页；声明了就多一个「技能倍率」页签。
+      // 顺带一提：op 判断和申鹤那边一致，普通玩家看不到倍率页。
+      if (talents == null || !hasCheatPermission(player)) {
+         return List.of(new CharacterConfigScreen.InfoPage(null, stats));
+      }
+
+      return List.of(
+              new CharacterConfigScreen.InfoPage("gui.minegenshin.character_config.tab.stats", stats),
+              new CharacterConfigScreen.InfoPage("gui.minegenshin.character_config.tab.talent", this.buildTalentScroller(talents))
+      );
+   }
+
+   /**
+    * 本角色「技能倍率」页签要显示哪张倍率表 —— <b>由角色自己的配置页子类声明</b>
+    * （每个角色可调的装扮与技能值都不一样，见各角色包下的 {@code *ConfigUI}）。
+    *
+    * <p>返回 {@code null}（默认）表示这个角色不出倍率页，只显示属性页。
+    */
+   @Nullable
+   protected TalentConfigSource talentConfig() {
+      return null;
    }
 
    /**

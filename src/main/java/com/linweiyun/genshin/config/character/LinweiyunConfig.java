@@ -10,6 +10,8 @@ public class LinweiyunConfig {
       LinweiyunAttributeConfig.register(builder);
       // 技能倍率表（照抄申鹤那份，key 带 lwy- 前缀）—— 配置页的「技能倍率」页签读它
       LinweiyunTalentConfig.register(builder);
+      // 让服务端同步包（按 key 查表）能找到这张表
+      TalentConfigs.register(LinweiyunTalentConfig.SOURCE);
       builder.pop();
    }
 }

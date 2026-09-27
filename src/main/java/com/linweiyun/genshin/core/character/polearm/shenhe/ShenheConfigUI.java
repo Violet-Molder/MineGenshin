@@ -5,6 +5,7 @@ package com.linweiyun.genshin.core.character.polearm.shenhe;
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
 import com.linweiyun.genshin.config.character.ShenheTalentConfig;
+import com.linweiyun.genshin.config.character.TalentConfigSource;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.appearance.ShenheAppearanceData;
 import com.linweiyun.genshin.core.character.appearance.SockType;
@@ -126,74 +127,16 @@ public class ShenheConfigUI extends CharacterConfigScreen {
       return row;
    }
 
+   /**
+    * 申鹤要显示在「技能倍率」页签里的那张表 —— 面板骨架、页签、输入框全在基类
+    * （{@link CharacterConfigScreen#buildTalentScroller}），子类只声明用哪张。
+    */
    @Override
-   protected List<CharacterConfigScreen.InfoPage> infoPages(Player player, PGCharacter character) {
-      UIElement stats = CharacterConfigPage.buildStatsScroller(character);
-      return !hasCheatPermission(player)
-         ? List.of(new CharacterConfigScreen.InfoPage(null, stats))
-         : List.of(
-            new CharacterConfigScreen.InfoPage("gui.minegenshin.character_config.tab.stats", stats),
-            new CharacterConfigScreen.InfoPage("gui.minegenshin.character_config.tab.talent", this.buildTalentScroller())
-         );
-   }
-
-   private UIElement buildTalentScroller() {
-      ScrollerView scroller = CharacterConfigPage.newScroller("cc-talent-scroller");
-      UIElement list = new UIElement().setId("cc-talent-list");
-
-      for (String group : ShenheTalentConfig.groups()) {
-         Label groupLabel = new Label();
-         groupLabel.addClass("cc-group-title");
-         groupLabel.setText(Component.translatable(groupKey(group)));
-         groupLabel.layout(l -> l.height(12.0F));
-         list.addChild(groupLabel);
-
-         for (String key : ShenheTalentConfig.keysOf(group)) {
-            list.addChild(this.buildTalentRow(key));
-         }
-      }
-
-      scroller.addScrollViewChild(list);
-      return scroller;
-   }
-
-   private UIElement buildTalentRow(String key) {
-      UIElement row = new UIElement();
-      row.addClass("cc-talent-row");
-      Label name = new Label();
-      name.addClass("cc-talent-name");
-      name.setText(Component.translatable(talentKey(key)));
-      name.layout(l -> l.height(11.0F));
-      TextField field = new TextField();
-      field.addClass("cc-talent-field");
-      field.layout(l -> l.height(12.0F));
-      field.setOverflowVisible(true);
-      field.setNumbersOnlyDouble(0.0, 100.0);
-      Double value = ShenheTalentConfig.getByKey(key);
-      field.setText(value == null ? "0" : trimNumber(value), false);
-      field.setTextResponder(text -> {
-         try {
-            double parsed = Double.parseDouble(text.trim());
-            ShenheTalentConfig.setByKey(key, parsed);
-            NetworkManager.setTalentMultiplierToServer(key, parsed);
-         } catch (NumberFormatException var4x) {
-         }
-      });
-      row.addChildren(new UIElement[]{name, new UIElement().addClass("cc-talent-spacer"), field});
-      return row;
+   protected TalentConfigSource talentConfig() {
+      return ShenheTalentConfig.SOURCE;
    }
 
    private static String sockKey(SockType sock) {
       return "gui.minegenshin.character_config.sock." + (sock == null ? "bare" : sock.name().toLowerCase(Locale.ROOT));
    }
-
-   private static String groupKey(String group) {
-      return "gui.minegenshin.character_config.group." + group;
-   }
-
-   private static String talentKey(String key) {
-      return "gui.minegenshin.character_config.talent." + key;
-   }
-
-   // 倍率的文本化（trimNumber）已上移到 CharacterConfigScreen —— 通用配置页也用它，所以删掉了这里的私有副本。
 }
