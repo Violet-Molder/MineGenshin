@@ -19,11 +19,11 @@ import net.minecraft.resources.Identifier;
 
 public class Linweiyun extends AllWeaponCharacter {
    public static final String ID = "linweiyun";
-   public static final int UID = 135004;
+   public static final int UID = 105001;
 
    public Linweiyun() {
       super(
-         135004,
+              UID,
          5,
          Component.translatable("character.name.linweiyun"),
          ModElements.ANEMO.getId().toString(),

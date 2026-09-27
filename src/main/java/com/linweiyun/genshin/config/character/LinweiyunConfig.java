@@ -8,6 +8,8 @@ public class LinweiyunConfig {
    public static void register(Builder builder) {
       builder.push("linweiyun");
       LinweiyunAttributeConfig.register(builder);
+      // 技能倍率表（照抄申鹤那份，key 带 lwy- 前缀）—— 配置页的「技能倍率」页签读它
+      LinweiyunTalentConfig.register(builder);
       builder.pop();
    }
 }

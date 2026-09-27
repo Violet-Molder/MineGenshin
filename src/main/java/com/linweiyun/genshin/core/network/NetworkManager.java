@@ -3,7 +3,7 @@
 package com.linweiyun.genshin.core.network;
 
 import com.linweiyun.genshin.config.GenshinConfig;
-import com.linweiyun.genshin.config.character.ShenheTalentConfig;
+import com.linweiyun.genshin.config.character.TalentConfigs;
 import com.linweiyun.genshin.content.items.artifact.ArtifactItem;
 import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
 import com.linweiyun.genshin.content.items.component.ArtifactStatsComponent;
@@ -231,7 +231,9 @@ public class NetworkManager {
    @RPCPacket("talentMultiplierRPCPacket")
    public static void talentMultiplierRPCPacket(RPCSender sender, String key, double value) {
       if (!sender.isServer()) {
-         if (!ShenheTalentConfig.setByKey(key, value)) {
+         // 按 key 全局查表：各角色的倍率 key 自带前缀（申鹤 nab1… / 林薇云 lwy-nab1…），
+         // 所以这里不需要知道是哪个角色（见 TalentConfigs#setByKeyGlobal）。
+         if (!TalentConfigs.setByKeyGlobal(key, value)) {
             LOGGER.warn("[NetworkManager] 忽略未知的倍率 key: {}", key);
          } else {
             GenshinConfig.CHARACTER_SPEC.save();

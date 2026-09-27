@@ -195,7 +195,5 @@ public class ShenheConfigUI extends CharacterConfigScreen {
       return "gui.minegenshin.character_config.talent." + key;
    }
 
-   private static String trimNumber(double value) {
-      return value == Math.rint(value) ? String.valueOf((long)value) : String.valueOf(Math.round(value * 1000000.0) / 1000000.0);
-   }
+   // 倍率的文本化（trimNumber）已上移到 CharacterConfigScreen —— 通用配置页也用它，所以删掉了这里的私有副本。
 }
