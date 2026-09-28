@@ -13,12 +13,20 @@ public final class SiteTemplate {
                 <html lang="zh-CN">
                 <head>
                 <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+                <meta name="color-scheme" content="light dark">
+                <meta name="theme-color" content="#3b6ea5" media="(prefers-color-scheme: light)">
+                <meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+                <meta name="description" content="MineGenshin 开发文档：%s">
                 <title>%s · MineGenshin</title>
                 <link rel="stylesheet" href="/assets/docs.css">
                 </head>
                 <body data-page="%s">
-                <button id="menu-toggle">目录</button>
+                <header id="mobilebar">
+                  <button id="menu-toggle" type="button" aria-label="打开目录" aria-controls="sidebar" aria-expanded="false">☰ 目录</button>
+                  <span class="bartitle">%s</span>
+                </header>
+                <div id="nav-overlay" hidden></div>
                 <div class="layout">
                   <aside id="sidebar"></aside>
                   <main id="content">
@@ -28,7 +36,7 @@ public final class SiteTemplate {
                 <script src="/assets/docs.js"></script>
                 </body>
                 </html>
-                """.formatted(title, pageId, body);
+                """.formatted(title, title, pageId, title, body);
     }
 
     public static String index(List<DocCatalog.Doc> docs) {

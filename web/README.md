@@ -67,3 +67,32 @@ SITE_DOCS_ROOT=/path/to/repo java -jar minegenshin-web.jar
 | `MineGenshin Web (gradle bootRun)` | Gradle 型：对 `web` 执行 `bootRun`，不依赖模块导入，只要 IDEA 认识这个 Gradle 构建即可 |
 
 两种方式都默认 8081 端口；若 IDEA 把仓库根识别成项目、而 `web` 是独立构建，优先用 Gradle 型配置。
+
+### 两个 Gradle JVM 怎么共存（重要）
+
+主项目要 **JBR 25**（根目录 `gradle.properties` 的 `org.gradle.java.home`），web 要 **JDK 21**：
+web 的 wrapper 是 **Gradle 8.14**，而 Gradle 8.14 官方支持的运行 JVM 最高到 **Java 24**，
+拿 JBR 25 去跑它，IDEA 会直接报
+`Incompatible Gradle JVM：您的构建当前配置为使用不兼容的 Java 25.0.4 和 Gradle 8.14` 并拒绝同步。
+
+两者本来就是**两个独立构建**（各有自己的 `settings.gradle` 与 wrapper，Gradle 只读"本次构建根目录"
+那一层的 `gradle.properties`），所以完全可以各用各的 JVM：
+
+| 谁 | Gradle 版本 | 用哪个 JVM | 在哪里设 |
+|---|---|---|---|
+| 仓库根（Mod） | 9.2.1 | JBR 25 | 根 `gradle.properties` 的 `org.gradle.java.home`，IDEA 里对应 `jbr-25` |
+| `web/`（文档站） | 8.14 | JDK 21 | `web/gradle.properties` 已钉死（命令行/CI 直接生效） |
+
+**IDEA 里必须再手动对齐一次**，因为 IDEA 的 "Gradle JVM" 设置优先级高于 `gradle.properties`：
+
+1. Gradle 工具窗口 → `+`（Link Gradle Project）→ 选 `web/settings.gradle`；
+2. 该项目的 **Gradle JVM 选 JDK 21**（本机 SDK 名 `liberica-21`，路径 `E:\Java\JDK21`）；
+3. `Settings → Build, Execution, Deployment → Build Tools → Gradle` 里能同时看到两个项目：
+   根项目 = `jbr-25`，`web` = `liberica-21`；改完点 Gradle 面板的 **Reload**。
+
+> 旧版 IDEA 若没有"按项目设 Gradle JVM"的入口，就把 `web` 用**独立窗口**打开
+> （`File → Open → web/settings.gradle → Open as Project`），在那个窗口里设 JDK 21；
+> 主项目窗口继续用 JBR 25，两边互不影响。
+>
+> 不要把 web 的 wrapper 升到 Gradle 9 —— Spring Boot 3.4.5 的 Gradle 插件不支持 Gradle 9，
+> 要升就得先把 Spring Boot 升到 3.5+。

@@ -27,6 +27,13 @@ public class MarkdownRenderer {
             Map.entry("performance.md", "/doc/sys-performance"),
             Map.entry("docs/systems/combat-attack.md", "/doc/sys-combat-attack"),
             Map.entry("combat-attack.md", "/doc/sys-combat-attack"),
+            Map.entry("docs/systems/character.md", "/doc/sys-character"),
+            Map.entry("docs/systems/render-asset.md", "/doc/sys-render-asset"),
+            Map.entry("render-asset.md", "/doc/sys-render-asset"),
+            Map.entry("docs/rendering-photon2-reference.md", "/doc/rendering-photon2-reference"),
+            Map.entry("rendering-photon2-reference.md", "/doc/rendering-photon2-reference"),
+            Map.entry("docs/rendering-and-photon2.md", "/doc/rendering-photon2"),
+            Map.entry("rendering-and-photon2.md", "/doc/rendering-photon2"),
             Map.entry("CHARACTER_IMPLEMENTATIONS.md", "/doc/character-implementations"),
             Map.entry("CHARACTER_SYSTEM.md", "/doc/character-system"),
             Map.entry("RENDER_SYSTEM.md", "/doc/character-system"),
@@ -69,13 +76,32 @@ public class MarkdownRenderer {
     private static String withHeadingIds(String html) {
         var matcher = java.util.regex.Pattern.compile("<(h[1-4])>([\\s\\S]*?)</\\1>").matcher(html);
         StringBuilder out = new StringBuilder();
+        // 同名标题（如多节的「常见坑」）会算出同一个 id，页内跳转与滚动高亮都会串行；
+        // 第二次出现起补 -1 / -2 后缀，与 GitHub 的处理一致。
+        Map<String, Integer> used = new java.util.HashMap<>();
         while (matcher.find()) {
             String inner = matcher.group(2);
-            String plain = inner.replaceAll("<[^>]+>", "");
+            // 先去掉标签、再把 HTML 实体还原成字符，否则标题里的引号会变成 `&quot;`，
+            // slug 之后就会留下 `quot` 这种噪音（`116-...从quot卡quot到...`）。
+            String plain = decodeEntities(inner.replaceAll("<[^>]+>", ""));
+            String base = slug(plain);
+            if (base.isEmpty()) {
+                base = "section";
+            }
+            int seen = used.merge(base, 1, Integer::sum);
+            String id = seen == 1 ? base : base + "-" + (seen - 1);
             matcher.appendReplacement(out,
-                    "<" + matcher.group(1) + " id=\"" + slug(plain) + "\">" + java.util.regex.Matcher.quoteReplacement(inner) + "</" + matcher.group(1) + ">");
+                    "<" + matcher.group(1) + " id=\"" + id + "\">" + java.util.regex.Matcher.quoteReplacement(inner) + "</" + matcher.group(1) + ">");
         }
         matcher.appendTail(out);
         return out.toString();
+    }
+
+    private static String decodeEntities(String text) {
+        return text.replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&amp;", "&");
     }
 }

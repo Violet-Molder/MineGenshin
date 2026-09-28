@@ -15,6 +15,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -145,7 +146,7 @@ public class VodyanitsaSkill extends SkillBase {
 
         // ② 没锁到目标（例如贴脸空挥、目标不在视线里）→ 保留原来的近身判定框
         Vec3 from = player.position();
-        Vec3 to = from.add(player.getLookAngle().scale(2.5f));
+        Vec3 to = from.add(CombatAim.direction(player).scale(2.5f));
         List<LivingEntity> targets = new AreaEntityCollector(level, from, to, 1.0f).execute();
 
         for (LivingEntity target : targets) {
@@ -172,7 +173,7 @@ public class VodyanitsaSkill extends SkillBase {
         }
 
         // 向前方掷出水球：打视线前方 4 格、半径 1.5 格的范围
-        Vec3 center = player.position().add(player.getLookAngle().scale(4.0));
+        Vec3 center = player.position().add(CombatAim.direction(player).scale(4.0));
         List<LivingEntity> targets = new AreaEntityCollector(level,
                 center.add(-1.5, -1.5, -1.5), center.add(1.5, 1.5, 1.5), 1.5f).execute();
 

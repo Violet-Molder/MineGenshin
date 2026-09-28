@@ -87,14 +87,6 @@ public final class CharacterPropBones {
       if (player != null && player == Minecraft.getInstance().player && LOGGER.isInfoEnabled()) {
          int bits = (mount ? 1 : 0) | (fjo ? 2 : 0) | (screen ? 4 : 0) | (tea ? 8 : 0);
          Integer previous = LOG_LAST_VISIBLE.put(player, bits);
-         if (previous == null || previous != bits) {
-            LOGGER.info(
-               "木偶套件 {}{}{}{}（状态={}，刻={}）",
-               new Object[]{
-                  mount ? "[飞行坐骑]" : "", fjo ? "[法吉偶]" : "", screen ? "[屏幕齿轮]" : "", tea ? "[红茶]" : "", AnimationStateSync.stateOf(player), player.tickCount
-               }
-            );
-         }
       }
    }
 

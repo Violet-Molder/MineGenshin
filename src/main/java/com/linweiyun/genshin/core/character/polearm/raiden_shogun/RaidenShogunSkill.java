@@ -27,6 +27,7 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -76,7 +77,7 @@ public class RaidenShogunSkill extends SkillBase {
         );
 
         Vec3 startPos = player.position();
-        Vec3 lookDir = player.getLookAngle();
+        Vec3 lookDir = CombatAim.direction(player);
         Vec3 endPos = startPos.add(lookDir.scale(2.5f));
 
         List<LivingEntity> targets = new AreaEntityCollector(level, startPos, endPos, 1.0f).execute();

@@ -19,6 +19,7 @@ import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
 import com.linweiyun.genshin.core.system.combat.action.ActionSet;
 import com.linweiyun.genshin.core.system.combat.action.InterruptReason;
+import com.linweiyun.genshin.core.system.combat.action.data.ActionBodyFacing;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 import com.linweiyun.genshin.core.system.combat.action.data.Engagement;
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActionHandler;
@@ -63,7 +64,7 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
                   ActionStateMachine.comboStage = isLastStage ? 1 : stage + 1;
                   int stageIndex = stage;
                   engageAndPlay(player, def, 2, null, target -> {
-                     if (isLastStage && def.step.comboEndAnim != null && AnimationAvailability.existsFor(player, def.step.comboEndAnim)) {
+                     if (isLastStage && AnimationAvailability.existsFor(player, def.step.comboEndAnim)) {
                         ActionStateMachine.queueFollowUpState(def.step.comboEndAnim, def.step.comboEndTicks);
                      }
 
@@ -189,7 +190,7 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
       }
 
       ActionStateMachine.changeState(def.animationName(), 2, totalTicks, step.protectDuration, 0, 0, true);
-      ThirdPersonCamera.setFollowBody(true);
+      holdBodyFacing(player, step);
       ActionServer.performChargedAttackToServer(CombatTargeting.current(player));
    }
 
@@ -210,10 +211,12 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
       LivingEntity acquired = CombatTargeting.acquire(player, params);
       LivingEntity target = acquired != null ? acquired : locked;
       CombatTargeting.lock(player, target, params);
+
       if (player instanceof LocalPlayer localPlayer && target != null) {
          boolean wantsDash = engagement.wantsDash() && AttackApproach.needsDash(localPlayer, target, attackRange);
          if (wantsDash && step.dashStartDelay > 0) {
             play(player, def, priority, animationOverride, false);
+            holdBodyFacing(player, step);
             int sequence = ActionStateMachine.actionSequence();
             int delay = step.dashStartDelay;
             ActionStateMachine.queueClientWork(delay, () -> {
@@ -223,6 +226,9 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
                   if (now != null && AttackApproach.needsDash(localPlayer, now, attackRange)) {
                      beginDash(localPlayer, now, engagement, attackRange, player, step, timing, dispatch);
                   } else {
+                     if (now != null) {
+                        AttackApproach.faceTarget(localPlayer, now, engagement);
+                     }
                      strikeAfterApproach(player, step, timing, dispatch, now);
                   }
                }
@@ -232,17 +238,37 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
 
          if (wantsDash) {
             play(player, def, priority, animationOverride, false);
+            holdBodyFacing(player, step);
             beginDash(localPlayer, target, engagement, attackRange, player, step, timing, dispatch);
             return;
          }
 
+         play(player, def, priority, animationOverride, true);
+         holdBodyFacing(player, step);
          AttackApproach.faceTarget(localPlayer, target, engagement);
-         AttackApproach.stepToward(localPlayer, target, attackRange, engagement);
+         if (engagement == null || engagement.approachStep) {
+            AttackApproach.stepToward(localPlayer, target, attackRange, engagement);
+         }
+         if (dispatch != null) {
+            dispatch.accept(target);
+         }
+         return;
       }
 
       play(player, def, priority, animationOverride, true);
+      holdBodyFacing(player, step);
       if (dispatch != null) {
          dispatch.accept(target);
+      }
+   }
+
+   private static void holdBodyFacing(Player player, ActionStep step) {
+      if (!(player instanceof LocalPlayer)) {
+         return;
+      }
+      ActionBodyFacing mode = step.bodyFacing == null ? ActionBodyFacing.TARGET : step.bodyFacing;
+      if (mode.takesOverBodyFacing()) {
+         AttackApproach.holdBodyFacing(mode);
       }
    }
 

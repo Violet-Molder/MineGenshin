@@ -9,6 +9,7 @@ import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.character.configui.CharacterConfigUI;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import com.linweiyun.genshin.core.element.ModElements;
+import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import java.util.List;
@@ -49,6 +50,14 @@ public class Linweiyun extends AllWeaponCharacter {
    @Override
    protected SkillBase createFormSkill(WeaponAppearance form) {
       return form == WeaponAppearance.CLAYMORE ? new LinweiyunClaymoreSkill() : new LinweiyunSkill(form);
+   }
+
+   @Override
+   public CharacterActionData getActionData() {
+      if (currentWeaponForm() == WeaponAppearance.POLEARM) {
+         return LinweiyunResources.POLEARM_ACTION_DATA;
+      }
+      return null;
    }
 
    @Override

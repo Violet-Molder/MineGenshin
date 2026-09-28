@@ -29,7 +29,7 @@ import java.util.Set;
  * 所以由接口新开的那条「按玩家挑」的路子来做。
  *
  * <p>动作（普攻 / 战技 / 爆发）走通用 {@code ResourceDrivenActionHandler}，
- * 所以 {@link #specialAnims()} 先留空 —— 和兜底配置一样「一律按常态处理」。
+ * 动作动画登记在 {@link #SPECIAL_ANIMS} —— 名单里的动画硬切（0 刻过渡）。
  */
 public final class LinweiyunAnimations implements CharacterAnimations {
 
@@ -53,6 +53,12 @@ public final class LinweiyunAnimations implements CharacterAnimations {
    private static final String POLEARM_QUICK = "fly_quckly_polearm";
 
    public static final Map<String, String> STATE_SOUNDS = Map.ofEntries();
+
+   public static final Set<String> SPECIAL_ANIMS = Set.of(
+           "shenhe_attack_1",
+           "shenhe_attack_2",
+           "fly_start_polearm"
+   );
 
    private LinweiyunAnimations() {
    }
@@ -104,10 +110,8 @@ public final class LinweiyunAnimations implements CharacterAnimations {
 
    @Override
    public Set<String> specialAnims() {
-      // 飞行循环**不做硬切**：用户明确说「别硬切，我不是说不让有过渡」。
-      // 反应迟钝的原因在控制器那边（拿竖直速度判断升降，松手后惯性还要飘一会儿），
-      // 已改成按按键判断，见 PlayerAnimationController#pickLocomotionRaw。
-      return Set.of();
+
+      return SPECIAL_ANIMS;
    }
 
     @Override

@@ -760,3 +760,295 @@ public final class ChaseReach {
    现在只有「完全盖住」这一种会被拦下来。
 3. 判据只用**方块**（`Block.COLLIDER`），不涉及实体。
 4. 不改第 1 条的任何参数（`STOP_SLACK` / `VERTICAL_REACH_FACTOR` 都不用动）。
+
+---
+
+# 第 3 条 · 出招期间的身体朝向：无目标不转向
+
+## 3.1 本次改了什么（26.2 这边）
+
+**现象**：视角独立做完之后，走路那套是对的（转鼠标不转身、按 S 正对镜头后退），
+但**一放普攻角色就被强行掰向镜头正前方** —— 哪怕根本没锁到人、刚才明明面朝别处。
+
+**原因**（两条规则撞在一起，不是 bug 是相互作用）：
+
+| 环节 | 事实 |
+|---|---|
+| 动作位移 | `moves` 的冲量是服务端**沿视线方向**给的（`ServerActionExecutor.applyMove` 读 `getLookAngle()`） |
+| 身体朝向 | 「视角独立」下身体跟的是**实际位移方向**（`LivingEntityTickHeadTurnMixin` 按 `getX()-xo` 算角度） |
+
+于是「沿视线冲出去」被位移规则读成「他在往那边走」，身体当场转到镜头正前方。
+另外还有个顺序 bug：目标**在攻击距离内**时 `faceTarget(...)` 排在 `play(...)` 前面，
+而 `play → changeState → AttackApproach.cancel()` 会把刚登记的转向清掉 ——
+表现就是「锁到人了却一点都没转」。
+
+**目标行为**：
+
+```
+出招时索敌到了  → 身体转向索敌目标
+出招时没索敌到  → 身体保持原朝向（一个字段都不改）
+例外            → 招式可以要求「身体跟随镜头」（持续重击：木偶那种）
+```
+
+## 3.2 ① 新增数据枚举：`ActionBodyFacing`
+
+路径：`src/main/java/net/luoshu/imaginarybranch/combat/action/data/ActionBodyFacing.java`
+（26.2 在 `core/system/combat/action/data/`；**纯数据枚举，别放任何客户端引用**）
+
+```java
+public enum ActionBodyFacing {
+    /** 索敌到 → 转向目标；没索敌 → 保持原朝向。出招默认。 */
+    TARGET,
+    /** 例外：身体由鼠标（镜头）驾驶，镜头紧跟着身体。持续重击用。 */
+    CAMERA,
+    /** 不接管，照常态「身体跟随实际位移方向」。 */
+    MOVEMENT;
+
+    public boolean takesOverBodyFacing() {
+        return this != MOVEMENT;
+    }
+}
+```
+
+## 3.3 ② `ActionStep` 加一个字段 + 两个便捷写法
+
+```diff
++        /** 这一段期间身体朝向听谁的；默认 TARGET（索敌到转向目标，没索敌保持）。 */
++        public ActionBodyFacing bodyFacing = ActionBodyFacing.TARGET;
+```
+
+```java
+        public ActionStep withBodyFacing(ActionBodyFacing value) {
+            this.bodyFacing = value == null ? ActionBodyFacing.TARGET : value;
+            return this;
+        }
+
+        public ActionStep withCameraFacing() {
+            return withBodyFacing(ActionBodyFacing.CAMERA);
+        }
+```
+
+## 3.4 ③ `AttackApproach`：登记接管 + 自动过期
+
+```diff
++    /** 本次动作期间身体朝向听谁的；MOVEMENT = 不接管（常态）。 */
++    private static ActionBodyFacing bodyFacing = ActionBodyFacing.MOVEMENT;
++
++    /**
++     * 登记「本次动作期间身体朝向听谁的」—— 必须在 changeState(...) **之后**调，
++     * 否则会被 changeState 内部那次 cancel() 清掉。
++     */
++    public static void holdBodyFacing(@Nullable ActionBodyFacing policy) {
++        ActionBodyFacing next = policy == null ? ActionBodyFacing.MOVEMENT : policy;
++        bodyFacing = next;
++        if (next == ActionBodyFacing.CAMERA) {
++            ThirdPersonCamera.setFollowBody(true);
++        }
++    }
++
++    public static boolean holdsBodyFacing()        { return bodyFacing.takesOverBodyFacing(); }
++    public static ActionBodyFacing bodyFacing()    { return bodyFacing; }
++    public static boolean wantsCameraFacing()      { return bodyFacing == ActionBodyFacing.CAMERA; }
+```
+
+`cancel()` 里收掉（动作结束的唯一出口，**必须放在这里**，调用方不用自己关）：
+
+```diff
+     public static void cancel() {
+         clearDash();
+         facing = false;
+         facingTicksLeft = 0;
++
++        if (bodyFacing == ActionBodyFacing.CAMERA) {
++            ThirdPersonCamera.setFollowBody(false);
++        }
++        bodyFacing = ActionBodyFacing.MOVEMENT;
++
+         ActionStateMachine.setApproachFrozen(false);
+     }
+```
+
+## 3.5 ④ 身体朝向判断加一档 `ACTION`
+
+`ThirdPersonCamera.BodyFacing` 加一个取值，并让 `bodyFacing(entity)` 返回它：
+
+```diff
+     public enum BodyFacing {
+         VANILLA,
+         INDEPENDENT,
+-        FOLLOW
++        FOLLOW,
++        /** 动作接管：朝向由 AttackApproach 说了算（索敌到转向目标，没索敌保持）。 */
++        ACTION
+     }
+```
+
+```diff
+-        return followBody ? BodyFacing.FOLLOW : BodyFacing.INDEPENDENT;
++        if (followBody) {
++            return BodyFacing.FOLLOW;      // CAMERA 那一档既是「接管」也是「跟随」，跟随优先
++        }
++        return AttackApproach.holdsBodyFacing() ? BodyFacing.ACTION : BodyFacing.INDEPENDENT;
+```
+
+两处配套（都不改逻辑，只是别去抢方向盘 / 别拽镜头）：
+
+```diff
+         // ② 跟随只在持续型招式期间有效
+-        if (followBody && !ActionStateMachine.currentStateLoops()) {
++        if (followBody && !ActionStateMachine.currentStateLoops() && !AttackApproach.wantsCameraFacing()) {
+             setFollowBody(false);
+         }
+```
+
+```diff
+             // 自动归位：按着前进/侧移 + 1.5 秒没人为转视角才缓缓归位
+-            if (player.tickCount - lastManualTick < ALIGN_DELAY_TICKS || !shouldAlign(player)) {
++            if (player.tickCount - lastManualTick < ALIGN_DELAY_TICKS || !shouldAlign(player)
++                    || facing == BodyFacing.ACTION) {
+                 alignWeight = 0.0F;
+                 lastYaw = current;
+                 return;
+             }
+```
+
+> 自动归位是**镜头转向身体**，动作接管期间身体可能正转向索敌目标 ——
+> 不跳过的话就成了「一攻击镜头被拽到目标方向」，与「镜头 100% 归玩家」冲突。
+
+## 3.6 ⑤ `tickHeadTurn` 混音：不需要改逻辑
+
+那一档本来就只处理 `INDEPENDENT`：
+
+```java
+if (facing == ThirdPersonCamera.BodyFacing.INDEPENDENT && self.attackAnim <= 0.0F) {
+    ... 身体朝实际位移方向 ...
+}
+// 其余（含新增的 ACTION / FOLLOW）直接落到下面的 ci.cancel()：身体一个字段都不动
+```
+
+**`ACTION` 什么都不做就是它的全部实现** —— 补注释即可，别再加分支。
+
+## 3.7 ⑥ 动作启动处：先起状态、再转向、再登记接管
+
+锚点：26.2 是 `ResourceDrivenActionHandler.engageAndPlay`；
+1.21.1 是你的 `MiyabiComboClient.execute(...)`（**顺序是这条的关键**）。
+
+```java
+// 1) 不是本机玩家 / 没索敌到目标 → 只放动作，一点方向都不改
+if (!(player instanceof LocalPlayer local) || target == null) {
+    play(player, def, priority);            // 或你的 beginStage(...)
+    holdBodyFacing(player, step);
+    dispatch.accept(target);
+    return;
+}
+
+// 2) 要突进：先起状态，再登记接管，最后才 begin（begin 内部会 startFacing）
+if (wantsDash) {
+    play(player, def, priority);
+    holdBodyFacing(player, step);
+    AttackApproach.begin(local, target, engagement, attackRange, () -> { ...到位回调... });
+    return;
+}
+
+// 3) 目标已在攻击距离内：**先 play 再 faceTarget**
+play(player, def, priority);
+holdBodyFacing(player, step);
+AttackApproach.faceTarget(local, target, engagement);   // ← 顺序反了会被 changeState 的 cancel 清掉
+AttackApproach.stepToward(local, target, attackRange, engagement);
+dispatch.accept(target);
+```
+
+`holdBodyFacing` 小工具（客户端才有意义）：
+
+```java
+private static void holdBodyFacing(Player player, ActionStep step) {
+    if (!(player instanceof LocalPlayer)) {
+        return;
+    }
+    ActionBodyFacing mode = step.bodyFacing == null ? ActionBodyFacing.TARGET : step.bodyFacing;
+    if (mode.takesOverBodyFacing()) {
+        AttackApproach.holdBodyFacing(mode);
+    }
+}
+```
+
+**持续重击那条路**（26.2: `beginSustainedChargedAttack`）把原来写死的
+`ThirdPersonCamera.setFollowBody(true)` 换成同一套登记，例外就变成「数据说了算」：
+
+```diff
+     ActionStateMachine.changeState(def.animationName(), 2, totalTicks, step.protectDuration, 0, 0, true);
+-    ThirdPersonCamera.setFollowBody(true);
++    holdBodyFacing(player, step);      // 数据写 CAMERA → 身体跟随镜头
+     ActionServer.performChargedAttackToServer(CombatTargeting.current(player));
+```
+
+## 3.8 ⑦ 把例外写进数据（26.2: `ClaymoreSkill.buildSustainedChargedAttack`）
+
+```diff
+         ).withEngagement(Engagement.melee().withDash(false).withAdhesion(0, 0))
+-         .withLoopAnimation(true);
++         .withLoopAnimation(true)
++         .withCameraFacing();       // 例外：持续重击期间身体跟随镜头
+```
+
+> 一句话：**默认 TARGET（无目标不转向），例外在数据里显式声明。**
+
+## 3.9 怎么验证
+
+| 场景 | 期望 |
+|---|---|
+| 空挥（附近没有怪），角色面朝侧面 | **一点不转**，保持原朝向；位移照旧沿视线冲出去 |
+| 背对怪、视角里没怪 → 空挥 | 不转（索敌没锁到）；动画照播 |
+| 视角里有怪（索敌范围内）→ 普攻/战技/爆发 | 身体**转向那只怪**，镜头一动不动 |
+| 目标已在攻击距离内（不突进） | **照样转过去**（这是修掉的顺序 bug：以前这一档完全不转） |
+| 侧向走位时放普攻 | 身体不再被位置冲量掰到镜头方向 |
+| 木偶 / 大剑**持续重击**（按住左键） | 身体**跟随镜头**（例外照旧），镜头贴着背后；松手立刻落回常态 |
+| 闪避 / 走路 / 跑步 | 与之前完全一致（这两条路没接管） |
+
+## 3.10 注意事项
+
+1. **接管是自动过期的**：`changeState` / `resetToDefault` 都会走 `AttackApproach.cancel()`；
+   所以登记**必须**在起状态之后，否则当场被清。
+2. `ActionBodyFacing` 是**纯数据枚举**，只放 `action/data` 包，别引客户端类
+   （`core`/`content` 侧引用客户端类是项目红线）。
+3. 想保留老行为（身体跟着位移走）的招式，在数据里显式写 `MOVEMENT`。
+4. 没走 `engageAndPlay` 的那几条路（**闪避**、**下落攻击** `PlungeAttack`）不接管，
+   行为与本次改动前一致；哪天想让下落攻击也不转，就在它自己的入口按同样方式登记。
+5. 残影：动作用的 `moves` 冲量一般几十刻内就衰减到走路阈值以下，
+   所以动作结束后身体不会被残余位移再掰一次；真有招式把冲量排到动作末尾，
+   就在那一段上把它标成 `MOVEMENT`（那是「人确实往那边走」）。
+
+## 3.11 ⑧ 位移 / 技能方向统一走「角色朝向」
+
+**这是本条的核心**：不只是身体朝向，**攻击往哪走、打哪，看的都是角色面朝哪，不是镜头**。
+
+新增 `core/system/combat/CombatAim`：
+
+```java
+public static float yaw(Entity entity)          // 服务端读 BODY_YAW_ATTACHMENT；否则 yBodyRot / getYRot
+public static Vec3  direction(Entity entity)    // 朝向 + 视线俯仰（竖直仍归镜头）
+public static Vec3  horizontal(Entity entity)
+```
+
+替换点（原来全都读视线角）：
+
+| 位置 | 原来 | 现在 |
+|---|---|---|
+| `ServerActionExecutor.applyMove` | `getLookAngle()` 的水平投影 | `CombatAim.horizontal(entity)` |
+| `ServerActionExecutor.previewHitTargets` | `source.getLookAngle()` | `CombatAim.direction(source)` |
+| `ElementalAttackSweep.forPlayer` | `player.getLookAngle()` | `CombatAim.direction(player)` |
+| `TargetSeeker.collectLineOfSight` / `isInForwardTunnel` | `source.getLookAngle()` | `CombatAim.direction(source)` |
+| `HorizonEndVec3.execute` | look 的水平投影 | `CombatAim.horizontal(player)` |
+| 角色技能判定框 / AoE 中心：`VesnaSkill`×4、`ShenheSkill`、`RaidenShogunSkill`、`ArlecchinoSkill`、`VodyanitsaSkill`×2、`LinweiyunSkillLogic` | `player.getLookAngle()` | `CombatAim.direction(player)` |
+| `VesnaAttackProjectile` 生成角 / 攻击锁角 | `ownerPlayer.getYRot()` | `CombatAim.yaw(ownerPlayer)` |
+| `ShieldService.grant` 盾朝向 | `entity.getYRot()` | `CombatAim.yaw(entity)` |
+| `BurstDive.desiredLanding` 无目标落点 | `player.getLookAngle()` | `CombatAim.horizontal(player)` |
+
+- **竖直（俯仰）保持视线**：身体没有俯仰角，`moveAllowsVertical` 与技能落点的 Y 还是跟着抬头/低头走。
+- **索敌本身仍按视线**（`CombatTargeting` 的索敌锥、`TargetSeeker.hasVisionOf`）：
+  玩家用镜头瞄人、按下攻击，身体才转向目标。索敌要是也按身体朝向，
+  就会出现「看着敌人却锁不上」。
+- 前提是 `BODY_YAW_ATTACHMENT` 在同步（见 `BodyYawSync`）：没收到过就退回视线角，
+  行为等于改动前 —— 所以这一条**依赖身体朝向的联机同步先落地**。
+
+

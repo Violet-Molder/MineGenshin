@@ -7,6 +7,7 @@ import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.about.AttachmentProfile;
 import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
 import com.linweiyun.genshin.core.system.about.block.BlockElementRules;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
 import com.linweiyun.genshin.core.log.LogGroup;
@@ -108,7 +109,7 @@ public final class ElementalAttackSweep {
             return 0;
         }
         Vec3 origin = player.getEyePosition();
-        Vec3 direction = player.getLookAngle();
+        Vec3 direction = CombatAim.direction(player);
         return sweep(level, player, element, origin, direction, reach, INFLATE);
     }
 

@@ -25,23 +25,11 @@ import java.util.List;
          *   <li><b>后摇</b> {@code [protectDuration, duration)}：效果已经结算完，
          *       可以被移动 / 跳跃 / 下一招取消 —— 连招手感就靠它。</li>
          * </ul>
-         *
-         * <p><b>怎么填</b>：{@code 0}（默认）= 没有执行期保护，整段都能被打断；
-         * {@code = duration} = 整段都是执行期（大招那种绝对霸体）；
-         * 其余情况填「<b>最后一个伤害点之后一点</b>」。
-         * <b>执行期必须盖住所有伤害点</b>，只保护到伤害点之前等于没保护。
          */
         public final int protectDuration;
 
         /**
          * 准备阶段长度（刻）—— 三窗口图见 {@link #protectDuration}。
-         *
-         * <p>{@code 0}（默认）= <b>没有准备阶段，触发即进入执行期</b>：
-         * 「按下去就是位移 + 动画 + 伤害」的招式（翔风剑、突刺）都该是 0，
-         * 因为那种位移本身就是技能在执行，不是前摇。
-         *
-         * <p>只有真正的吟唱 / 读条才写正数：这段时间里被打断 = 施法失败
-         * （要不要退 CD / 能量由角色自己在 {@code canCast} 与触发钩子里决定）。
          */
         public int prepareTicks = 0;
 
@@ -60,50 +48,16 @@ import java.util.List;
 
         /**
          * 这一段的「生效攻击距离」（格）。索敌距离通常大于它，差额就是突进要补的距离。
-         *
-         * <p>为 0 时用 {@link #DEFAULT_MELEE_RANGE}（3 格）。
-         * <b>不会</b>去猜 {@code hits[].forward + scope} —— 那是 AoE 半径不是够得着的距离，
-         * 早期版本拿它算过，结果角色在 8 格外就停下不出手。
          */
         public float attackRange = 0f;
 
         /**
          * 突进时<b>从第几刻开始冻结动画</b>（刻）。默认 {@code 0} = 按下即冻结。
-         *
-         * <h2>为什么需要它</h2>
-         * 大部分近战是「起手摆一下就冲过去」，所以默认 0 刻冻结（停在起手那一帧）。
-         * 但有些招式的前几帧<b>本身就是动作的一部分</b>，必须播出来才冲：
-         *
-         * <pre>
-         * 薇斯娜三阶 E（原神效果）：
-         *     0 ──── N ────────── 冻结 ──── 到位 ──── 继续播
-         *     │  起跳 · 人消失 · 化作细长螺旋   │  朝目标突刺   │  突刺收招
-         * </pre>
-         *
-         * 也就是说这一招的位移发生在「变身」之后，而不是一按下就飞。
-         * 写 {@code N} 之后：前 N 刻动画照常播（人也还在原地/起跳），
-         * 第 N 刻才冻结并开始突进，到位再解冻接着播剩下的。
-         *
-         * <p><b>伤害点怎么对齐</b>：{@code hits[].delay} 一律是
-         * 「从<b>解冻</b>（没有突进时就是从按下）那一刻起算」——
-         * 所以写 delay 时不用管这个值，它就负责把「动作开始」往后推 N 刻。
-         *
-         * <p><b>配执行期</b>：这 N 刻也属于执行期，别让它被人打断 ——
-         * {@code protectDuration} 要盖住「N + 最后一个 delay」。
-         * 见 {@link #protectDuration} 的三窗口图。
          */
         public int dashStartDelay = 0;
 
         /**
          * 这一招的<b>交战形态</b>：远程还是近战、要不要突进、索敌多远。
-         *
-         * <p>默认 {@link Engagement#melee()}（近战普攻的那套）。远程招式写
-         * {@code .ranged()} 或 {@code .withEngagement(Engagement.ranged())}。
-         *
-         * <p><b>为什么不写进 {@link Hit}</b>：一个招式可以有多个 hit（各自 delay/forward/scope），
-         * 而「这一招是不是远程」是<b>整段动作</b>的属性 —— 它决定的是「要不要贴上去、
-         * 索敌多远」，不是某一次伤害结算的属性。写成 hit 的字段会出现「同一招里第一个 hit
-         * 说是远程、第二个说是近战」这种没有意义的组合，所以放在 step 上，整招共用一份。
          */
         public Engagement engagement = Engagement.melee();
 
@@ -111,32 +65,15 @@ import java.util.List;
          * 这一段的 {@code moves} 位移<b>允不允许带 Y 轴</b>。
          *
          * <p>默认 {@code false}：位移只在<b>水平面</b>上给（视线方向投影到水平面再归一化）。
-         *
-         * <h2>为什么默认关掉</h2>
-         * 位移是沿<b>视线方向</b>给的冲量，而视线是有俯仰的：抬头砍一刀 → 人也跟着往上窜
-         * （俗称原地起飞）。绝大多数地面招式不想要这个，而且低头时还会把人往地里按。
-         *
-         * <p>想保留「上挑把人带起来」这种手感，就在那一段上
-         * {@code .withVerticalMove(true)}。
-         *
-         * <p>注意<b>这不影响索敌突进</b>：突进（{@code AttackApproach}）是朝<b>目标位置</b>去的，
-         * 打飞在空中的敌人时它必须能往上走 —— 那是「追目标」，不是「跟你抬头的方向走」。
          */
         public boolean moveAllowsVertical = false;
 
         /**
          * 这一段的动画要不要<b>循环播</b>。
-         *
-         * <p>默认 {@code false}：动作动画播一次、<b>停在最后一帧</b>等状态机接手
-         * （见 {@code PlayerAnimationController.pickAction} —— 用 {@code thenPlayAndHold}
-         * 是为了避免「播完到切走之间那一帧露出原始姿态」）。
-         *
-         * <p>{@code true} 用在这类招式上：<b>状态本身是持续的</b>，动画是一段可以一直转的循环
-         * （大剑的持续重击：按住期间每一圈都该重新转起来，而不是转半圈之后定在那儿）。
-         * 状态什么时候结束由 {@code ActionStateMachine} 的时间轴或玩家的松手决定，
-         * 动画只管一直播下去。
          */
         public boolean loopAnimation = false;
+
+        public ActionBodyFacing bodyFacing = ActionBodyFacing.TARGET;
 
         /**
          * 大招「跃起 → 摆姿态 → 锁落点 → 下坠刺击」的可选配置；{@code null} = 普通大招。
@@ -287,6 +224,15 @@ import java.util.List;
         public ActionStep withLoopAnimation(boolean loop) {
             this.loopAnimation = loop;
             return this;
+        }
+
+        public ActionStep withBodyFacing(ActionBodyFacing value) {
+            this.bodyFacing = value == null ? ActionBodyFacing.TARGET : value;
+            return this;
+        }
+
+        public ActionStep withCameraFacing() {
+            return withBodyFacing(ActionBodyFacing.CAMERA);
         }
 
         /**

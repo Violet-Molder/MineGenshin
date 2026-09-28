@@ -1,7 +1,9 @@
 package com.linweiyun.genshin.client.combat;
+import com.linweiyun.genshin.core.system.combat.action.data.ActionBodyFacing;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 
 import com.linweiyun.genshin.core.system.combat.action.data.Engagement;
+import com.linweiyun.genshin.client.camera.ThirdPersonCamera;
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -194,6 +196,8 @@ public final class AttackApproach {
     /** 连续多少刻「已经够得着」（用于 {@link #ARRIVE_PATIENCE_TICKS} 的兜底开打）。 */
     private static int nearTicks;
 
+    private static ActionBodyFacing bodyFacing = ActionBodyFacing.MOVEMENT;
+
     // 保护性原则用的两个「还没停下来吗」探测器（见 DASH_STALL_PATIENCE_TICKS）
     /** 上一刻玩家所在位置 —— 用来判断「身体到底有没有动」。 */
     @Nullable
@@ -210,6 +214,28 @@ public final class AttackApproach {
     /** 正在突进。 */
     public static boolean isActive() {
         return dashing;
+    }
+
+    // ==================== 身体朝向的接管 ====================
+
+    public static void holdBodyFacing(@Nullable ActionBodyFacing policy) {
+        ActionBodyFacing next = policy == null ? ActionBodyFacing.MOVEMENT : policy;
+        bodyFacing = next;
+        if (next == ActionBodyFacing.CAMERA) {
+            ThirdPersonCamera.setFollowBody(true);
+        }
+    }
+
+    public static boolean holdsBodyFacing() {
+        return bodyFacing.takesOverBodyFacing();
+    }
+
+    public static ActionBodyFacing bodyFacing() {
+        return bodyFacing;
+    }
+
+    public static boolean wantsCameraFacing() {
+        return bodyFacing == ActionBodyFacing.CAMERA;
     }
 
     /** 这次攻击需不需要突进（目标在攻击距离外）。 */
@@ -274,6 +300,9 @@ public final class AttackApproach {
      *
      * <p>转向会在接下来几刻里持续推进，动画照常播，互不等待。
      *
+     * <p><b>必须在起完状态（{@code changeState}）之后调</b>：换状态会走一次
+     * {@link #cancel()}，早于它登记就会被清掉。
+     *
      * @return 有没有开始转向（没目标就返回 false）
      */
     public static boolean faceTarget(LocalPlayer player, @Nullable LivingEntity target,
@@ -298,6 +327,12 @@ public final class AttackApproach {
         clearDash();
         facing = false;
         facingTicksLeft = 0;
+
+        if (bodyFacing == ActionBodyFacing.CAMERA) {
+            ThirdPersonCamera.setFollowBody(false);
+        }
+        bodyFacing = ActionBodyFacing.MOVEMENT;
+
         ActionStateMachine.setApproachFrozen(false);
     }
 

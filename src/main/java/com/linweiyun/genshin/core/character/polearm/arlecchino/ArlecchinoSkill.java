@@ -13,6 +13,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public class ArlecchinoSkill extends SkillBase {
         //    长柄近战按申鹤同款判定框取目标：沿视线面前 2.5 格、半径 1.0
         //    （和她自己的 {@code ArlecchinoResources.ATTACK_RANGE}（框架近战默认 3.0）同一量级）。
         Vec3 startPos = player.position();
-        Vec3 endPos = startPos.add(player.getLookAngle().scale(ATTACK_REACH));
+        Vec3 endPos = startPos.add(CombatAim.direction(player).scale(ATTACK_REACH));
         List<LivingEntity> targets = new AreaEntityCollector(level, startPos, endPos, ATTACK_INFLATE).execute();
 
         for (LivingEntity target : targets) {

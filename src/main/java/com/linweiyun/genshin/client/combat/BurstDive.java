@@ -2,6 +2,7 @@ package com.linweiyun.genshin.client.combat;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 
 import com.linweiyun.genshin.core.network.ActionServer;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep.DiveBurst;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import net.minecraft.client.player.LocalPlayer;
@@ -185,7 +186,7 @@ public final class BurstDive {
         return new Vec3(x, y, z);
     }
 
-    /** 期望落点：锁定目标的位置；没有目标就往视线前方一点。 */
+    /** 期望落点：锁定目标的位置；没有目标就往面朝方向一点。 */
     private static Vec3 desiredLanding(LocalPlayer player) {
         if (targetId != 0) {
             Entity entity = player.level().getEntity(targetId);
@@ -197,7 +198,8 @@ public final class BurstDive {
         if (locked != null) {
             return locked.position();
         }
-        return player.position().add(player.getLookAngle().scale(2.0));
+        Vec3 forward = CombatAim.horizontal(player);
+        return player.position().add(forward.scale(2.0));
     }
 
     /** 从 (x, yStart, z) 往下找地面；找不到返回 NaN。 */

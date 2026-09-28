@@ -66,7 +66,7 @@ public final class CharacterAppearanceOptionBones {
             }
          }
 
-         return updater(bones, normalState || flying || starting);
+         return updater(bones, true);
       } else {
          return null;
       }
@@ -143,12 +143,6 @@ public final class CharacterAppearanceOptionBones {
          // 名单对了但骨骼名对不上（或还有别的东西在压它）时，这一行会立刻暴露。
          if (pendingProbe != null) {
             pendingProbe = null;
-            Map<String, String> actual = new LinkedHashMap<>();
-            bones.keySet().forEach(bone -> snapshots.get(bone).ifPresentOrElse(
-                    snapshot -> actual.put(bone, String.format("%.1f/%s", snapshot.getScaleX(),
-                            snapshot.isHidden() ? "hidden" : "shown")),
-                    () -> actual.put(bone, "骨骼不存在")));
-            LOGGER.info("武器显隐 probe 骨骼实况：{}", actual);
          }
       };
    }

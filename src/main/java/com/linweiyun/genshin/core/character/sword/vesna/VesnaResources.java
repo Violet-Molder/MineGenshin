@@ -51,13 +51,6 @@ public final class VesnaResources {
 
     /**
      * 满命「翔风剑·变移」那一段的时序。
-     *
-     * <p>窗口期内普攻和 E 点按都换成它（见 {@code Vesna.getActionStateKey} 的 {@code "bianyi"}）。
-     * 时间轴：0 刻出手，{@value #BIANYI_HIT_DELAY} 刻结算两段伤害（150% 风 + 200% 灵剑），
-     * 执行期盖住伤害点，8 刻之后是后摇（可以被下一招取消）。
-     *
-     * <p>动画名先写 {@code "skill_bianyi"}；现在没有这个动画也不会崩
-     * （{@code ResourceDrivenActionHandler} 找不到动画名只会 warn + 不切动画，伤害照常）。
      */
     public static final int BIANYI_HIT_DELAY = 6;
 

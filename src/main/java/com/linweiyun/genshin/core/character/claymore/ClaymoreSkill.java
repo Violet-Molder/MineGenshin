@@ -303,7 +303,11 @@ public class ClaymoreSkill extends SkillBase {
                 sounds,
                 0f, 0f, 0, 0
         ).withEngagement(Engagement.melee().withDash(false).withAdhesion(0, 0))
-         .withLoopAnimation(true);
+         .withLoopAnimation(true)
+         // 身体朝向的**例外**：持续重击期间不按「索敌到才转向」来，而是让身体跟着镜头
+         // （玩家靠转鼠标决定这一圈往哪抡；镜头紧跟着身体背后）。
+         // 其余出招一律是默认的 TARGET：索敌到转向目标、没索敌保持原朝向 —— 见 ActionBodyFacing。
+         .withCameraFacing();
 
         // 音效编排照搬（旧的 sounds 列表已经带过来了）
         if (source != null) {

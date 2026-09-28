@@ -189,7 +189,9 @@ public class ActionManager {
 
    private void scheduleStepMovement(Player player, PGCharacter character, ActionDefinition def) {
       if (!player.level().isClientSide() && def.step != null) {
-         if (!CombatTargeting.isLocked(player)) {
+         boolean skipByLock = CombatTargeting.isLocked(player)
+                 && (def.step.engagement == null || def.step.engagement.approachStep);
+         if (!skipByLock) {
             ServerActionExecutor.execute(player, def.step, character.getTextureId());
          }
       }

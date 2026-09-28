@@ -5,6 +5,7 @@ import com.linweiyun.genshin.core.system.combat.action.data.Hit;
 import com.linweiyun.genshin.core.system.combat.action.data.Move;
 import com.linweiyun.genshin.core.log.LogGroup;
 import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -60,35 +61,16 @@ public final class ServerActionExecutor {
     /**
      * 给一次位移冲量。
      *
-     * <p>方向默认取<b>视线在水平面上的投影</b>（并归一化）——
-     * 位移本来是沿视线给的，而视线有俯仰：抬头砍一刀人就往上窜，
-     * 低头又会被按进地里。{@code ActionStep.moveAllowsVertical} 打开时才用完整视线方向。
-     *
-     * <p>注意水平投影要归一化：不然「抬头看天」时水平分量趋近 0，位移就等于没有了。
+     * <p>方向取<b>角色朝向</b>（{@code yBodyRot}，玩家走同步过来的那份）在水平面上的分量；
+     * 竖直方向由 {@code ActionStep.moveAllowsVertical} 决定要不要带视线俯仰。
      */
     private static void applyMove(Entity entity, Move move, boolean allowVertical) {
         if (!entity.isAlive() || entity.isRemoved()) return;
 
-        Vec3 look = entity.getLookAngle();
-        double dirX = look.x;
-        double dirZ = look.z;
-
-        if (!allowVertical) {
-            double horizontal = Math.sqrt(dirX * dirX + dirZ * dirZ);
-            if (horizontal < 1.0E-4) {
-                // 垂直向上/下看：没有水平方向可用，取身体朝向的水平分量
-                double yaw = Math.toRadians(entity.getYRot());
-                dirX = -Math.sin(yaw);
-                dirZ = Math.cos(yaw);
-            } else {
-                dirX /= horizontal;
-                dirZ /= horizontal;
-            }
-        }
-
-        double y = allowVertical ? look.y * move.speed : 0.0;
+        Vec3 forward = CombatAim.horizontal(entity);
+        double y = allowVertical ? entity.getLookAngle().y * move.speed : 0.0;
         entity.setDeltaMovement(entity.getDeltaMovement().add(
-                dirX * move.speed, y, dirZ * move.speed));
+                forward.x * move.speed, y, forward.z * move.speed));
         entity.hurtMarked = true;
     }
 
@@ -103,7 +85,7 @@ public final class ServerActionExecutor {
     public static int previewHitTargets(Entity source, Hit hit) {
         if (!source.isAlive() || source.isRemoved()) return 0;
 
-        Vec3 look = source.getLookAngle();
+        Vec3 look = CombatAim.direction(source);
         Vec3 center = source.position().add(
                 look.x * hit.forward,
                 hit.yOffset + source.getEyeHeight() * 0.5,

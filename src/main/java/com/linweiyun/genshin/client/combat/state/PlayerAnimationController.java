@@ -91,13 +91,6 @@ public final class PlayerAnimationController {
 
       AnimationController<T> controller = state.controller();
       CharacterAnimations animations = CharacterActions.animationsFor(player);
-      if (player == Minecraft.getInstance().player
-         && LOGGER.isInfoEnabled()
-         && player.tickCount != lastEmptyFrameTick
-         && (controller.getTimeline() == null || controller.getCurrentAnimationPoint() == null)) {
-         lastEmptyFrameTick = player.tickCount;
-         LOGGER.info("上一帧没有动画在驱动骨骼（上一帧动画={}，状态={}，刻={}）", new Object[]{currentAnimationName(controller), AnimationStateSync.stateOf(player), player.tickCount});
-      }
 
       resetOnCharacterChange(player, controller);
       boolean isLocalPlayer = player == Minecraft.getInstance().player;
@@ -178,11 +171,6 @@ public final class PlayerAnimationController {
             } else {
                LOG_LAST_ANIMATION.put(player, name);
             }
-
-            LOGGER.info(
-               "动画 {} → {}（状态={}，刻={}，动作状态={}）",
-               new Object[]{previous == null ? "无" : previous, name == null ? "无（这次没有可用动画）" : name, stateName, player.tickCount, hasActionState}
-            );
          }
       }
    }

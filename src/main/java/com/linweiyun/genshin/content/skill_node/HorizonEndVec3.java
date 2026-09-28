@@ -1,5 +1,6 @@
 package com.linweiyun.genshin.content.skill_node;
 
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
@@ -18,11 +19,9 @@ public class HorizonEndVec3 {
     }
 
     public Vec3 execute() {
-        Vec3 look = player.getLookAngle();
-        Vec3 horizontal = new Vec3(look.x, 0, look.z);
+        Vec3 horizontal = CombatAim.horizontal(player);
         if (horizontal.lengthSqr() < 1e-6) {
-            double rad = Math.toRadians(player.getYRot());
-            horizontal = new Vec3(-Math.sin(rad), 0, Math.cos(rad));
+            return Vec3.ZERO;
         }
         return horizontal.normalize().scale(distance);
     }

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="图形学学习笔记：4×4 变换矩阵 — 从 Minecraft 渲染管线的实际代码出发">
+<title>图形学学习笔记 · 4×4 变换矩阵 · MineGenshin</title>
+<link rel="stylesheet" href="/assets/docs.css">
+<style>
+:root {
+  --matrix-bg: #1a1a2e;
+  --x-color: #ff4444;
+  --y-color: #44ff44;
+  --z-color: #4488ff;
+  --t-color: #ffaa44;
+}
+.hero {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  color: #e6eaf0; padding: 40px 32px; border-radius: 12px; margin-bottom: 32px;
+}
+.hero h1 { margin: 0 0 8px; font-size: 2em; color: #fff; }
+.hero .subtitle { color: #9aa4b2; font-size: 1.05em; }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 20px 0; }
+.key-card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; border-top: 3px solid var(--accent); }
+.key-card h3 { margin: 0 0 6px; font-size: 1em; }
+.key-card p { margin: 0; font-size: .9em; color: var(--ink-soft); }
+.matrix-grid {
+  font-family: "JetBrains Mono", Consolas, monospace;
+  background: var(--matrix-bg); color: #e6eaf0;
+  padding: 18px 24px; border-radius: 10px;
+  display: inline-flex; flex-direction: column; gap: 4px;
+  font-size: 1.05em; line-height: 1.7;
+  border: 1px solid rgba(255,255,255,.1); margin: 12px 0;
+}
+.matrix-grid .row { display: flex; }
+.matrix-grid .cell { width: 60px; text-align: center; }
+.axis-x-cell { color: var(--x-color); }
+.axis-y-cell { color: var(--y-color); }
+.axis-z-cell { color: var(--z-color); }
+.trans-cell { color: var(--t-color); }
+.fixed-cell { color: #666; }
+.code-inline { font-family: "JetBrains Mono", Consolas, monospace; font-size: .9em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+.concept-table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+.concept-table th, .concept-table td { padding: 10px 14px; border: 1px solid var(--line); text-align: left; }
+.concept-table th { background: var(--accent-soft); font-weight: 600; }
+.insight { background: var(--ok-bg); border-left: 4px solid var(--ok-line); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+.warning { background: var(--warn-bg); border-left: 4px solid var(--warn-line); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 16px 0; }
+@media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+.two-col > div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; }
+.section-nav { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin: 24px 0; }
+.section-nav ol { margin: 0; padding-left: 1.5em; }
+.section-nav li { margin: 4px 0; }
+#viz-container { position: relative; width: 100%; height: 520px; background: #1a1a2e; border-radius: 12px; overflow: hidden; margin: 24px 0; border: 1px solid rgba(255,255,255,.08); }
+#viz-container canvas { display: block; width: 100% !important; height: 100% !important; }
+.viz-sliders { position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 6; flex-wrap: wrap; justify-content: center; background: rgba(0,0,0,.65); padding: 8px 16px; border-radius: 8px; backdrop-filter: blur(4px); pointer-events: auto; }
+.viz-sliders label { font-size: 11px; color: #aaa; display: flex; align-items: center; gap: 4px; }
+.viz-sliders input[type="range"] { width: 70px; height: 4px; }
+.viz-sliders .val { font-size: 10px; color: #888; min-width: 28px; }
+.viz-legend { position: absolute; top: 10px; left: 10px; z-index: 6; pointer-events: none; font-size: 11px; line-height: 1.6; }
+.viz-legend span { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+.viz-matrix-display { position: absolute; top: 10px; right: 10px; z-index: 6; pointer-events: none; font-size: 12px; line-height: 1.4; background: rgba(0,0,0,.78); backdrop-filter: blur(6px); padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); }
+.vm-row { display: flex; }
+.vm-cell { width: 34px; text-align: center; font-family: "JetBrains Mono", Consolas, monospace; }
+.viz-controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; z-index: 6; pointer-events: auto; }
+.viz-controls button { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); color: #ddd; padding: 4px 12px; border-radius: 5px; cursor: pointer; font-size: 11px; transition: all .2s; }
+.viz-controls button:hover { background: rgba(255,255,255,.25); color: #fff; }
+.viz-info { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 6; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); padding: 3px 12px; border-radius: 5px; font-size: 11px; color: #aaa; pointer-events: none; white-space: nowrap; }
+@media (max-width: 900px) { #viz-container { height: 400px; } .matrix-grid { font-size: .9em; padding: 12px 14px; } .matrix-grid .cell { width: 42px; } }
+</style>
+</head>
+<body data-page="graphics-matrix-notes">
+
+<header id="mobilebar">
+  <button id="menu-toggle" type="button" aria-label="打开目录" aria-controls="sidebar" aria-expanded="false">☰ 目录</button>
+  <span class="bartitle">图形学学习笔记 · 4×4 变换矩阵</span>
+</header>
+<div id="nav-overlay" hidden></div>
+<div class="layout">
+  <aside id="sidebar"></aside>
+  <main id="content">
+
+<div class="hero">
+  <h1>🎯 图形学学习笔记：4×4 变换矩阵</h1>
+  <p class="subtitle">从 Minecraft 渲染管线的实际代码出发，彻底理解变换矩阵的每一部分在做什么。结合交互式 3D 可视化，亲手"摸"到矩阵和空间坐标的对应关系。</p>
+  <p style="color:#7aa9dd;font-size:.9em;margin:12px 0 0;">
+    🔗 关联文档：<a href="/doc/rendering-photon2-reference" style="color:#7aa9dd;text-decoration:underline;">Minecraft 26.2 渲染与 Photon2 完全参考</a>
+    · <a href="/doc/rendering-photon2" style="color:#7aa9dd;text-decoration:underline;">渲染与 Photon2 特效</a>
+  </p>
+</div>
+
+<div class="section-nav">
+  <strong>📖 本章目录</strong>
+  <ol>
+    <li><a href="#sec1">问题的起点：渲染文档里的一行代码</a></li>
+    <li><a href="#sec2">4×4 矩阵的结构：三根轴 + 一个位置</a></li>
+    <li><a href="#sec3">交互式 3D 可视化——亲手"摸"矩阵</a></li>
+    <li><a href="#sec4">为什么每根轴需要三个数字？</a></li>
+    <li><a href="#sec5">平移为什么在单独一列里？</a></li>
+    <li><a href="#sec6">世界坐标 ↔ 相机空间</a></li>
+    <li><a href="#sec7">实战：WeaponAnchorGeoLayer 完整解读</a></li>
+    <li><a href="#sec8">自测与练习</a></li>
+  </ol>
+</div>
+
+<h2 id="sec1">1. 问题的起点：渲染文档里的一行代码</h2>
+
+<p>在 <a href="/doc/rendering-photon2-reference">渲染文档 §1.5</a> 里有这样一段代码：</p>
+
+<pre><code class="language-java">// 提交时拿到的位姿 → 世界坐标（在渲染回调里）
+Matrix4f bonePose = new Matrix4f(info.poseStack().last().pose());
+Vector3f local = bonePose.getTranslation(new Vector3f());   // 相机空间平移
+Vec3 worldPos = new Vec3(camera.x + local.x, camera.y + local.y, camera.z + local.z);</code></pre>
+
+<p>这里引出了三个问题：</p>
+<ul>
+  <li><strong>为什么 <code>poseStack.last().pose()</code> 是一个 4×4 矩阵？</strong></li>
+  <li><strong><code>getTranslation()</code> 从矩阵的哪里取出了平移量？</strong></li>
+  <li><strong>为什么提取出来的平移量是"相机空间"的，要加上 <code>camera</code> 才是世界坐标？</strong></li>
+</ul>
+<p>要回答这些问题，必须先理解一件事：<strong>图形学里的 4×4 矩阵到底存了什么。</strong></p>
+
+<div class="insight">
+  <strong>一句话前置结论：</strong><br>
+  4×4 矩阵的 <strong>左上 3×3 存的是三个基向量（编码旋转+缩放）</strong>，<strong>第 4 列存的是平移量</strong>。
+  最后一行永远是 <code>[0,0,0,1]</code>。矩阵的"列"而不是"行"决定了几何意义。
+</div>
+
+<h2 id="sec2">2. 4×4 矩阵的结构：三根轴 + 一个位置</h2>
+
+<p>一个 4×4 变换矩阵（<code>Matrix4f</code>）在内存中是<b>列主序</b>存储的。写成数学形式：</p>
+
+<div class="matrix-grid">
+  <div style="font-size:.75em;color:#888;margin-bottom:4px;">列 0 = X 轴&nbsp;&nbsp;&nbsp;列 1 = Y 轴&nbsp;&nbsp;&nbsp;列 2 = Z 轴&nbsp;&nbsp;&nbsp;列 3 = 平移</div>
+  <div class="row">
+    <span class="cell axis-x-cell">0.71</span>
+    <span class="cell axis-y-cell">0.00</span>
+    <span class="cell axis-z-cell">0.71</span>
+    <span class="cell trans-cell">2.0</span>
+    <span style="color:#555;margin-left:8px;">← 第 0 行</span>
+  </div>
+  <div class="row">
+    <span class="cell axis-x-cell">0.00</span>
+    <span class="cell axis-y-cell">1.00</span>
+    <span class="cell axis-z-cell">0.00</span>
+    <span class="cell trans-cell">3.5</span>
+    <span style="color:#555;margin-left:8px;">← 第 1 行</span>
+  </div>
+  <div class="row">
+    <span class="cell axis-x-cell">-0.71</span>
+    <span class="cell axis-y-cell">0.00</span>
+    <span class="cell axis-z-cell">0.71</span>
+    <span class="cell trans-cell">-1.0</span>
+    <span style="color:#555;margin-left:8px;">← 第 2 行</span>
+  </div>
+  <div class="row" style="border-top:1px solid #444;padding-top:4px;">
+    <span class="cell fixed-cell">0</span>
+    <span class="cell fixed-cell">0</span>
+    <span class="cell fixed-cell">0</span>
+    <span class="cell fixed-cell" style="color:#ffaa44;">1</span>
+    <span style="color:#555;margin-left:8px;">← 第 3 行（固定 [0,0,0,1]）</span>
+  </div>
+</div>
+
+<div class="card-grid">
+  <div class="key-card" style="border-top-color:var(--x-color);">
+    <h3 style="color:var(--x-color);">第 0 列 = X 轴</h3>
+    <p>新 X 轴在原始 X/Y/Z 三个方向上的分量。这是一个 3D 向量 <code>(m00, m10, m20)</code>。</p>
+  </div>
+  <div class="key-card" style="border-top-color:var(--y-color);">
+    <h3 style="color:var(--y-color);">第 1 列 = Y 轴</h3>
+    <p>新 Y 轴在原始 X/Y/Z 三个方向上的分量。向量 <code>(m01, m11, m21)</code>。</p>
+  </div>
+  <div class="key-card" style="border-top-color:var(--z-color);">
+    <h3 style="color:var(--z-color);">第 2 列 = Z 轴</h3>
+    <p>新 Z 轴在原始 X/Y/Z 三个方向上的分量。向量 <code>(m02, m12, m22)</code>。</p>
+  </div>
+  <div class="key-card" style="border-top-color:var(--t-color);">
+    <h3 style="color:var(--t-color);">第 3 列 = 平移</h3>
+    <p>整个坐标系的新原点位置。向量 <code>(m03, m13, m23)</code>，JOML 里用 <code>getTranslation()</code> 提取。</p>
+  </div>
+</div>
+
+<p>所以 <strong><code>bonePose.getTranslation(new Vector3f())</code></strong> 做的其实就是：从 4×4 矩阵的第 4 列 <code>(m03, m13, m23)</code> 取出这三个值，放到一个 <code>Vector3f</code> 里返回。仅此而已——没有计算，就是直接读内存。</p>
+
+<div class="insight">
+  <strong>关键认识：</strong>矩阵的每一列是一个 4D 向量，但第 4 行（除了第 4 列最后一格是 1）全是 0。
+  所以前三个分量的几何意义分别是 X 轴、Y 轴、Z 轴、平移。这就是为什么叫"4×4 仿射变换矩阵"。
+</div>
+
+<h2 id="sec3">3. 交互式 3D 可视化——亲手"摸"矩阵</h2>
+
+<p>下面这个 3D 场景里：<strong>红/绿/蓝三根箭头就是矩阵的三根轴</strong>，<strong>橙色箭头是平移量</strong>。
+右侧实时显示矩阵的数值。拖动滑块或拖拽视角，亲眼看看轴和数字是怎么同步变化的。</p>
+
+<div class="warning">
+  <strong>操作提示：</strong>鼠标左键拖拽旋转视角 · 滚轮缩放 · 滑块控制旋转/缩放/平移。
+</div>
+
+<div id="viz-container"></div>
+
+<h2 id="sec4">4. 为什么每根轴需要三个数字？</h2>
+
+<p>这是很多人最困惑的点——"X 轴不就只管 X 方向吗？为什么需要三个数字来描述它？"</p>
+<p><strong>核心答案：因为旋转之后，X 轴不再只指向 X 方向了。</strong></p>
+<p>在三维空间里，一根轴本身就是一个 <strong>3D 向量</strong>，有三个分量 <code>(x, y, z)</code>：</p>
+<ul>
+  <li><strong>x 分量：</strong>"这根轴往原始 X 方向走了多少"</li>
+  <li><strong>y 分量：</strong>"这根轴往原始 Y 方向走了多少"</li>
+  <li><strong>z 分量：</strong>"这根轴往原始 Z 方向走了多少"</li>
+</ul>
+
+<p>用白板笔来类比：</p>
+
+<div class="two-col">
+  <div>
+    <h4 style="margin-top:0;">🔄 旋转前</h4>
+    <p>笔尖指向正右方：</p>
+    <pre style="font-size:.85em;"><code>X 轴 = (1.00, 0.00, 0.00)
+  ↑      ↑      ↑
+向右  不上  不向前</code></pre>
+    <p>看起来只有一个分量非零——因为正好和原来的 X 轴重合。</p>
+  </div>
+  <div>
+    <h4 style="margin-top:0;">🔄 绕 Y 轴旋转 45° 后</h4>
+    <p>笔尖指向右前方：</p>
+    <pre style="font-size:.85em;"><code>X 轴 = (0.71, 0.00, 0.71)
+  ↑      ↑      ↑
+向右  不上  向前</code></pre>
+    <p><strong>三个分量全用上了！</strong>这就是常态——只有单位矩阵才看起来只用了一个分量。</p>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>所以不是"每个轴需要三个数字"，而是"每个轴本身就是一个三维向量"。</strong>
+  3 个轴 × 每个轴 3 个分量 = 9 个数字 = 3×3 矩阵。
+</div>
+
+<p>用矩阵乘法的角度来理解：</p>
+<pre><code class="language-java">// 模型上有一个顶点在局部坐标 (1, 0, 0)
+// 矩阵告诉它"往哪个方向走 1 格"：
+newPos = X轴向量 × 1 + Y轴向量 × 0 + Z轴向量 × 0 + 平移
+       = X轴向量 × 1
+       = (0.707, 0.000, 0.707)   ← 旋转后的新 X 轴方向</code></pre>
+
+<h2 id="sec5">5. 平移为什么在单独一列里？</h2>
+
+<p><strong>因为平移是"加法"，而旋转/缩放是"乘法"。</strong>它们本质上是两种不同的操作，在同一个 3×3 里无法同时表达。</p>
+
+<pre><code class="language-java">// 旋转一个点 v = (x, y, z)：
+v' = R · v                    ← 矩阵乘法（3×3 × 3 维 = 3 维）
+
+// 平移一个点 v'：
+v'' = v' + t                  ← 向量加法
+
+// 如果想在一个公式里同时做旋转+平移：
+// v' = R · v + t              ← 这不是矩阵乘法能直接表达的
+
+// 所以引入齐次坐标，加一维 w=1，变成 4 维：
+// | R   t |   | x |
+// | 0 0 0 1 | · | y |  =  R·(x,y,z) + t·1
+//                | z |     ———— 旋转部分 ————
+//                | 1 |       + ——— 平移部分 ———
+//
+// 平移量 t 在矩阵的第 4 列，通过乘以 w=1 被"加"了进去。</code></pre>
+
+<div class="insight">
+  <strong>一句话：平移必须放在第 4 列，是因为平移的本质是加法，而矩阵乘法的左上 3×3 只能做乘法（旋转/缩放）。</strong>
+  齐次坐标的 <code>w=1</code> 就是用来"激活"第 4 列的平移量的。
+</div>
+
+<table class="concept-table">
+  <tr><th>矩阵区域</th><th>存储内容</th><th>操作类型</th><th>提取方法</th></tr>
+  <tr><td><span class="code-inline">m00, m10, m20</span>（第 0 列）</td><td>X 轴向量 <code>(Xx, Xy, Xz)</code></td><td>旋转 + 缩放</td><td>——</td></tr>
+  <tr><td><span class="code-inline">m01, m11, m21</span>（第 1 列）</td><td>Y 轴向量 <code>(Yx, Yy, Yz)</code></td><td>旋转 + 缩放</td><td>——</td></tr>
+  <tr><td><span class="code-inline">m02, m12, m22</span>（第 2 列）</td><td>Z 轴向量 <code>(Zx, Zy, Zz)</code></td><td>旋转 + 缩放</td><td>——</td></tr>
+  <tr><td><span class="code-inline">m03, m13, m23</span>（第 3 列）</td><td>平移向量 <code>(Tx, Ty, Tz)</code></td><td>加法</td><td><span class="code-inline">getTranslation()</span></td></tr>
+</table>
+
+<h2 id="sec6">6. 世界坐标 ↔ 相机空间</h2>
+
+<p>回到最初的问题。为什么 <span class="code-inline">getTranslation()</span> 提取出来的是"相机空间"坐标？</p>
+<p>因为 <strong>Minecraft 26.2 的提交阶段，PoseStack 的原点是相机，不是世界原点</strong>（见<a href="/doc/rendering-photon2-reference#sec15">渲染文档 §1.5</a>）。</p>
+<p>在 <span class="code-inline">LevelRenderer.submitEntities()</span> 内部：</p>
+
+<pre><code class="language-java">// 所有实体的世界坐标在提交给渲染器之前，已被减去相机位置
+this.entityRenderDispatcher.submit(state, cameraState,
+        state.x - camX, state.y - camY, state.z - camZ, poseStack, output);</code></pre>
+
+<p>所以到你的渲染回调时，<code>PoseStack</code> 里已经累积了：</p>
+<pre><code>PoseStack 里的平移 = (实体世界坐标 - 相机坐标) + 骨骼动画偏移</code></pre>
+
+<p><span class="code-inline">getTranslation()</span> 从中提取出来的就是"相对于相机的偏移"。要还原回世界坐标：</p>
+
+<div class="two-col">
+  <div>
+    <h4 style="margin-top:0;">🌍 世界坐标 → 提交</h4>
+    <pre><code class="language-java">Vec3 target = new Vec3(120.5, 64, -330.25);
+Vec3 camera = cameraRenderState.pos;
+
+// 因为 PoseStack 原点 = 相机
+pose.translate(
+    target.x - camera.x,
+    target.y - camera.y,
+    target.z - camera.z
+);</code></pre>
+  </div>
+  <div>
+    <h4 style="margin-top:0;">📷 提交 → 世界坐标</h4>
+    <pre><code class="language-java">Vector3f local = bonePose
+    .getTranslation(new Vector3f());
+Vec3 camera = info.cameraState().pos;
+
+// 提取的是相机相对坐标，加回去
+Vec3 world = new Vec3(
+    camera.x + local.x,
+    camera.y + local.y,
+    camera.z + local.z
+);</code></pre>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>对称性：</strong>
+  <ul>
+    <li><strong>世界 → 提交：</strong><span class="code-inline">pose.translate(世界 - 相机)</span> —— 减</li>
+    <li><strong>提交 → 世界：</strong><span class="code-inline">世界 = 相机 + local</span> —— 加</li>
+  </ul>
+  同一对操作，方向不同，符号相反。
+</div>
+
+<div class="warning">
+  <strong>常见错误：</strong>
+  <ul>
+    <li>❌ 忘了减 → 几何体死死跟着镜头跑</li>
+    <li>❌ 减了两次 → 离世界原点越远，偏移越大</li>
+    <li>❌ 直接用 <span class="code-inline">entity.position()</span> 替代矩阵提取 → 丢失了骨骼动画的偏移</li>
+  </ul>
+</div>
+
+<h2 id="sec7">7. 实战：WeaponAnchorGeoLayer 完整解读</h2>
+
+<p>来看你项目里真实的代码（<a href="/entity-development.html">WeaponAnchorGeoLayer.java</a>）：</p>
+
+<pre><code class="language-java">private static void capture(Player player, RenderPassInfo&lt;?&gt; info) {
+    // 第 1 步：从 PoseStack 栈顶拍快照
+    // poseStack.last() —— 回到栈顶
+    // .pose()          —— 拿到 4×4 Matrix4f
+    // new Matrix4f()   —— 复制一份快照
+    Matrix4f bonePose = new Matrix4f(info.poseStack().last().pose());
+
+    // 第 2 步：提取平移——从矩阵第 4 列 (m03, m13, m23) 读出
+    Vector3f local = bonePose.getTranslation(new Vector3f());
+
+    // 第 3 步：提取旋转——从左上 3×3 反算四元数
+    Quaternionf rotation = bonePose.getUnnormalizedRotation(new Quaternionf());
+
+    // 第 4 步：换算回世界坐标
+    Vec3 camera = info.cameraState().pos;
+    Vec3 world = new Vec3(camera.x + local.x, camera.y + local.y, camera.z + local.z);
+
+    // 第 5 步：合理性检查——世界坐标离玩家太远就放弃
+    if (world.distanceToSqr(player.position()) > SANITY_DISTANCE * SANITY_DISTANCE) {
+        return;
+    }
+    WeaponAnchorCache.put(player,
+        new Vector3f((float) world.x, (float) world.y, (float) world.z), rotation);
+}</code></pre>
+
+<table class="concept-table">
+  <tr><th>步骤</th><th>做了什么</th><th>JOML 层面</th><th>几何意义</th></tr>
+  <tr><td><span class="code-inline">info.poseStack()</span></td><td>拿到当前矩阵栈</td><td>——</td><td>拿到"变换历史记录本"</td></tr>
+  <tr><td><span class="code-inline">.last()</span></td><td>取栈顶</td><td><span class="code-inline">List&lt;Pose&gt;</span> 最后一个元素</td><td>只看最终结果，不关心中间步骤</td></tr>
+  <tr><td><span class="code-inline">.pose()</span></td><td>拿到底层 4×4 矩阵</td><td><span class="code-inline">Matrix4f</span> 引用</td><td>所有变换的最终编码</td></tr>
+  <tr><td><span class="code-inline">new Matrix4f(...)</span></td><td>复制快照</td><td>深拷贝矩阵</td><td>防止后续操作破坏数据</td></tr>
+  <tr><td><span class="code-inline">getTranslation()</span></td><td>读第 4 列</td><td>取 <span class="code-inline">m[12], m[13], m[14]</span></td><td>骨骼在相机空间中的位置</td></tr>
+  <tr><td><span class="code-inline">getUnnormalizedRotation()</span></td><td>从 3×3 反算四元数</td><td>归一化 + 正交化 + 反三角函数</td><td>骨骼在世界中的朝向</td></tr>
+</table>
+
+<h2 id="sec8">8. 自测与练习</h2>
+
+<p>打开上面的交互式可视化，动手验证以下结论：</p>
+<ol>
+  <li><strong>单位矩阵：</strong>把所有滑块归零（旋转 0°、缩放 1.0、平移 0）。观察三根轴是否和灰色原始轴完全重合。矩阵显示是否为单位矩阵？</li>
+  <li><strong>纯旋转：</strong>绕 Y 轴旋转 90°。红色 X 轴的三个分量变成了什么？原来的 (1,0,0) 现在变成了 (0,0,-1)——看出为什么了吗？</li>
+  <li><strong>纯平移：</strong>只拖拽平移滑块。观察三根彩色轴的方向和长度变了吗？只有哪个数字变了？</li>
+  <li><strong>缩放 + 平移：</strong>放大到 1.5 倍，同时平移。轴的长度变了吗？第 4 列的数字由谁决定？</li>
+  <li><strong>回到代码：</strong>在可视化里重现 <span class="code-inline">WeaponAnchorGeoLayer.capture()</span> 的场景——骨骼经过旋转+缩放+平移后，<span class="code-inline">getTranslation()</span> 取出的就是你看到橙色箭头指向的位置。</li>
+</ol>
+
+<div class="insight">
+  <strong>学完本章后你应该能回答：</strong>
+  <ul>
+    <li>✅ 4×4 矩阵的四个列分别代表什么？</li>
+    <li>✅ 为什么是 3×3 个数字描述旋转/缩放，而不是 3×2？</li>
+    <li>✅ 平移为什么放在第 4 列而不是左上角？</li>
+    <li>✅ 提交阶段 <span class="code-inline">getTranslation()</span> 取出的坐标为什么是"相机相对"的？</li>
+    <li>✅ 从相机空间坐标如何换算回世界坐标？</li>
+    <li>✅ 你项目里 <span class="code-inline">WeaponAnchorGeoLayer</span> 的每一行代码在矩阵层面做了什么？</li>
+  </ul>
+</div>
+
+<p style="text-align:center;margin:40px 0 20px;color:var(--ink-soft);font-size:.9em;">
+  🔗 继续学习：<a href="/doc/rendering-photon2-reference">Minecraft 26.2 渲染与 Photon2 完全参考</a>
+  · <a href="/doc/rendering-photon2">渲染与 Photon2 特效</a>
+</p>
+
+  </main>
+</div>
+
+<script src="/assets/docs.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function() {
+const container = document.getElementById('viz-container');
+if (!container) return;
+
+const rect = container.getBoundingClientRect();
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x1a1a2e);
+
+const camera = new THREE.PerspectiveCamera(45, rect.width / rect.height, 0.1, 100);
+camera.position.set(5, 3.5, 6);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(rect.width, rect.height);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+container.appendChild(renderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 0, 0);
+controls.update();
+
+scene.add(new THREE.AmbientLight(0x404060));
+const dl1 = new THREE.DirectionalLight(0xffffff, 1); dl1.position.set(5, 10, 7); scene.add(dl1);
+const dl2 = new THREE.DirectionalLight(0x8888ff, 0.4); dl2.position.set(-5, -3, -5); scene.add(dl2);
+
+const grid = new THREE.GridHelper(8, 8, 0x444466, 0x333355);
+grid.position.y = -0.01;
+scene.add(grid);
+
+function refLine(dir, len, color) {
+    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(dir[0]*len, dir[1]*len, dir[2]*len)]);
+    const m = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 });
+    return new THREE.Line(g, m);
+}
+const rl = 2.4;
+scene.add(refLine([1,0,0], rl, 0x888899));
+scene.add(refLine([0,1,0], rl, 0x888899));
+scene.add(refLine([0,0,1], rl, 0x888899));
+
+function refLabel(text, pos) {
+    const c = document.createElement('canvas'); c.width = 64; c.height = 40;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,64,40); ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillText(text, 32, 20);
+    const tex = new THREE.CanvasTexture(c);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+    sp.position.set(pos[0], pos[1], pos[2]); sp.scale.set(0.5, 0.32, 1);
+    return sp;
+}
+scene.add(refLabel('原X', [rl+0.4,0,0]));
+scene.add(refLabel('原Y', [0,rl+0.4,0]));
+scene.add(refLabel('原Z', [0,0,rl+0.4]));
+
+const dynGroup = new THREE.Group();
+scene.add(dynGroup);
+
+function makeArrow(color, label) {
+    const dir = new THREE.Vector3(1,0,0);
+    const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(0,0,0), 1, color, 0.28, 0.14);
+    const c = document.createElement('canvas'); c.width = 64; c.height = 40;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,64,40); ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = color; ctx.fillText(label, 32, 20);
+    const tex = new THREE.CanvasTexture(c);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+    sprite.scale.set(0.45, 0.28, 1);
+    return { arrow, label: sprite };
+}
+const xA = makeArrow(0xff4444, 'X'), yA = makeArrow(0x44ff44, 'Y'), zA = makeArrow(0x4488ff, 'Z'), tA = makeArrow(0xffaa44, 'T');
+
+dynGroup.add(xA.arrow, yA.arrow, zA.arrow, tA.arrow);
+dynGroup.add(xA.label, yA.label, zA.label, tA.label);
+
+const sGeo = new THREE.SphereGeometry(0.07, 10, 10);
+const sX = new THREE.Mesh(sGeo, new THREE.MeshStandardMaterial({ color: 0xff4444, emissive: 0xff2222, emissiveIntensity: .15 }));
+const sY = new THREE.Mesh(sGeo, new THREE.MeshStandardMaterial({ color: 0x44ff44, emissive: 0x22ff22, emissiveIntensity: .15 }));
+const sZ = new THREE.Mesh(sGeo, new THREE.MeshStandardMaterial({ color: 0x4488ff, emissive: 0x2244ff, emissiveIntensity: .15 }));
+const sT = new THREE.Mesh(sGeo, new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0xff8800, emissiveIntensity: .15 }));
+dynGroup.add(sX, sY, sZ, sT);
+
+const markerGroup = new THREE.Group();
+dynGroup.add(markerGroup);
+const cubeGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+const cubeMat = new THREE.MeshStandardMaterial({ color: 0xffaa44, emissive: 0xff8800, emissiveIntensity: 0.3, transparent: true, opacity: 0.7 });
+const targetCube = new THREE.Mesh(cubeGeo, cubeMat);
+markerGroup.add(targetCube);
+
+let animating = false, animAngle = 0;
+
+function updateMatrix(rx, ry, sc, tx, ty, tz) {
+    const radX = rx * Math.PI / 180, radY = ry * Math.PI / 180;
+    const mat = new THREE.Matrix4().identity();
+    mat.makeScale(sc, sc, sc);
+    const rxm = new THREE.Matrix4().makeRotationX(radX);
+    const rym = new THREE.Matrix4().makeRotationY(radY);
+    mat.multiplyMatrices(rxm, mat);
+    mat.multiplyMatrices(rym, mat);
+    mat.elements[12] = tx;
+    mat.elements[13] = ty;
+    mat.elements[14] = tz;
+
+    const e = mat.elements;
+    const xAxis = new THREE.Vector3(e[0], e[1], e[2]);
+    const yAxis = new THREE.Vector3(e[4], e[5], e[6]);
+    const zAxis = new THREE.Vector3(e[8], e[9], e[10]);
+    const trans = new THREE.Vector3(e[12], e[13], e[14]);
+
+    xA.arrow.setDirection(xAxis.clone().normalize());
+    xA.arrow.setLength(Math.max(xAxis.length(), 0.01), 0.28, 0.14);
+    yA.arrow.setDirection(yAxis.clone().normalize());
+    yA.arrow.setLength(Math.max(yAxis.length(), 0.01), 0.28, 0.14);
+    zA.arrow.setDirection(zAxis.clone().normalize());
+    zA.arrow.setLength(Math.max(zAxis.length(), 0.01), 0.28, 0.14);
+    const tLen = trans.length();
+    if (tLen > 0.01) {
+        tA.arrow.setDirection(trans.clone().normalize());
+        tA.arrow.setLength(tLen, 0.28, 0.14);
+        tA.arrow.visible = true;
+    } else tA.arrow.visible = false;
+
+    sX.position.copy(xAxis); sY.position.copy(yAxis); sZ.position.copy(zAxis); sT.position.copy(trans);
+    xA.label.position.copy(xAxis.clone().multiplyScalar(1.15));
+    yA.label.position.copy(yAxis.clone().multiplyScalar(1.15));
+    zA.label.position.copy(zAxis.clone().multiplyScalar(1.15));
+    tA.label.position.copy(trans.clone().multiplyScalar(1.15));
+    targetCube.position.copy(trans);
+
+    markerGroup.children.forEach(c => { if (c.isLine) markerGroup.remove(c); });
+    if (tLen > 0.01) {
+        const pts = [new THREE.Vector3(0,0,0), new THREE.Vector3(trans.x, trans.y, trans.z)];
+        const g = new THREE.BufferGeometry().setFromPoints(pts);
+        const m = new THREE.LineDashedMaterial({ color: 0xffaa44, dashSize: 0.05, gapSize: 0.05, transparent: true, opacity: 0.3 });
+        const line = new THREE.Line(g, m);
+        line.computeLineDistances();
+        markerGroup.add(line);
+    }
+
+    const ids = ['vm00','vm01','vm02','vm03','vm10','vm11','vm12','vm13','vm20','vm21','vm22','vm23'];
+    const vals = [e[0], e[4], e[8], e[12], e[1], e[5], e[9], e[13], e[2], e[6], e[10], e[14]];
+    ids.forEach((id, i) => { const el = document.getElementById(id); if (el) el.textContent = vals[i].toFixed(2); });
+
+    const bars = ['ax-x','ax-y','ax-z','ay-x','ay-y','ay-z','az-x','az-y','az-z','at-x','at-y','at-z'];
+    const bvals = [xAxis.x, xAxis.y, xAxis.z, yAxis.x, yAxis.y, yAxis.z, zAxis.x, zAxis.y, zAxis.z, trans.x, trans.y, trans.z];
+    bars.forEach((id, i) => { const el = document.getElementById(id); if (el) el.textContent = bvals[i].toFixed(2); });
+}
+
+// ── Build UI ──
+const sliders = document.createElement('div'); sliders.className = 'viz-sliders';
+sliders.innerHTML = '<label>Y轴旋转 <input type="range" id="sl-ry" min="-180" max="180" value="30" step="1"> <span class="val" id="v-ry">30°</span></label><label>X轴旋转 <input type="range" id="sl-rx" min="-180" max="180" value="0" step="1"> <span class="val" id="v-rx">0°</span></label><label>缩放 <input type="range" id="sl-sc" min="0.3" max="2.0" value="1.0" step="0.05"> <span class="val" id="v-sc">1.0×</span></label><label>TX <input type="range" id="sl-tx" min="-2.5" max="2.5" value="0" step="0.05"> <span class="val" id="v-tx">0.0</span></label><label>TY <input type="range" id="sl-ty" min="-2.5" max="2.5" value="0" step="0.05"> <span class="val" id="v-ty">0.0</span></label><label>TZ <input type="range" id="sl-tz" min="-2.5" max="2.5" value="0" step="0.05"> <span class="val" id="v-tz">0.0</span></label>';
+container.appendChild(sliders);
+
+const legend = document.createElement('div'); legend.className = 'viz-legend';
+legend.innerHTML = '<div><span style="background:#ff4444;"></span>X轴（第0列）<span style="margin-left:8px;background:#44ff44;"></span>Y轴（第1列）</div><div><span style="background:#4488ff;"></span>Z轴（第2列）<span style="margin-left:8px;background:#ffaa44;"></span>平移（第3列）</div><div style="margin-top:2px;opacity:.4;"><span style="background:transparent;border:1px solid #888;display:inline-block;width:9px;height:9px;border-radius:50%;"></span>原始轴</div>';
+container.appendChild(legend);
+
+const mdisp = document.createElement('div'); mdisp.className = 'viz-matrix-display';
+mdisp.innerHTML = '<div style="font-size:9px;color:#888;margin-bottom:2px;text-align:center;"><span style="color:#ff4444;">列0</span> <span style="color:#44ff44;">列1</span> <span style="color:#4488ff;">列2</span> <span style="color:#ffaa44;">列3</span></div><div class="vm-row"><span class="vm-cell" style="color:#ff4444;" id="vm00">-</span><span class="vm-cell" style="color:#44ff44;" id="vm01">-</span><span class="vm-cell" style="color:#4488ff;" id="vm02">-</span><span class="vm-cell" style="color:#ffaa44;" id="vm03">-</span></div><div class="vm-row"><span class="vm-cell" style="color:#ff4444;" id="vm10">-</span><span class="vm-cell" style="color:#44ff44;" id="vm11">-</span><span class="vm-cell" style="color:#4488ff;" id="vm12">-</span><span class="vm-cell" style="color:#ffaa44;" id="vm13">-</span></div><div class="vm-row"><span class="vm-cell" style="color:#ff4444;" id="vm20">-</span><span class="vm-cell" style="color:#44ff44;" id="vm21">-</span><span class="vm-cell" style="color:#4488ff;" id="vm22">-</span><span class="vm-cell" style="color:#ffaa44;" id="vm23">-</span></div><div class="vm-row" style="border-top:1px solid #444;padding-top:2px;margin-top:2px;"><span class="vm-cell" style="color:#666;">0</span><span class="vm-cell" style="color:#666;">0</span><span class="vm-cell" style="color:#666;">0</span><span class="vm-cell" style="color:#ffaa44;">1</span></div>';
+container.appendChild(mdisp);
+
+const cdiv = document.createElement('div'); cdiv.className = 'viz-controls';
+cdiv.innerHTML = '<button id="viz-reset">↺ 重置</button><button id="viz-anim">▶ 自动</button><button id="viz-ex-rot">绕Y 45°</button><button id="viz-ex-trans">平移示范</button>';
+container.appendChild(cdiv);
+
+const infoBar = document.createElement('div'); infoBar.className = 'viz-info';
+infoBar.innerHTML = 'X=<span id="ax-x" style="color:#ff4444;">-</span>,<span id="ax-y" style="color:#44ff44;">-</span>,<span id="ax-z" style="color:#4488ff;">-</span> Y=<span id="ay-x" style="color:#ff4444;">-</span>,<span id="ay-y" style="color:#44ff44;">-</span>,<span id="ay-z" style="color:#4488ff;">-</span> Z=<span id="az-x" style="color:#ff4444;">-</span>,<span id="az-y" style="color:#44ff44;">-</span>,<span id="az-z" style="color:#4488ff;">-</span> T=<span id="at-x" style="color:#ffaa44;">-</span>,<span id="at-y" style="color:#ffaa44;">-</span>,<span id="at-z" style="color:#ffaa44;">-</span>';
+container.appendChild(infoBar);
+
+function readAll() {
+    const ry = parseFloat(document.getElementById('sl-ry').value);
+    const rx = parseFloat(document.getElementById('sl-rx').value);
+    const sc = parseFloat(document.getElementById('sl-sc').value);
+    const tx = parseFloat(document.getElementById('sl-tx').value);
+    const ty = parseFloat(document.getElementById('sl-ty').value);
+    const tz = parseFloat(document.getElementById('sl-tz').value);
+    document.getElementById('v-ry').textContent = ry + '°';
+    document.getElementById('v-rx').textContent = rx + '°';
+    document.getElementById('v-sc').textContent = sc.toFixed(1) + '×';
+    document.getElementById('v-tx').textContent = tx.toFixed(1);
+    document.getElementById('v-ty').textContent = ty.toFixed(1);
+    document.getElementById('v-tz').textContent = tz.toFixed(1);
+    updateMatrix(rx, ry, sc, tx, ty, tz);
+}
+
+['sl-ry','sl-rx','sl-sc','sl-tx','sl-ty','sl-tz'].forEach(id => document.getElementById(id).addEventListener('input', readAll));
+
+document.getElementById('viz-reset').addEventListener('click', () => {
+    ['sl-ry','sl-rx','sl-sc','sl-tx','sl-ty','sl-tz'].forEach(id => document.getElementById(id).value = id === 'sl-ry' ? '30' : id === 'sl-sc' ? '1.0' : '0');
+    readAll();
+});
+document.getElementById('viz-anim').addEventListener('click', () => {
+    animating = !animating;
+    document.getElementById('viz-anim').textContent = animating ? '⏹ 停止' : '▶ 自动';
+});
+document.getElementById('viz-ex-rot').addEventListener('click', () => {
+    document.getElementById('sl-ry').value = '45'; document.getElementById('sl-rx').value = '0';
+    document.getElementById('sl-sc').value = '1.0'; document.getElementById('sl-tx').value = '0';
+    document.getElementById('sl-ty').value = '0'; document.getElementById('sl-tz').value = '0';
+    readAll();
+});
+document.getElementById('viz-ex-trans').addEventListener('click', () => {
+    document.getElementById('sl-ry').value = '20'; document.getElementById('sl-rx').value = '10';
+    document.getElementById('sl-sc').value = '1.0'; document.getElementById('sl-tx').value = '1.5';
+    document.getElementById('sl-ty').value = '1.0'; document.getElementById('sl-tz').value = '0.8';
+    readAll();
+});
+
+function resizeViz() {
+    const r = container.getBoundingClientRect();
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(r.width, r.height);
+}
+window.addEventListener('resize', resizeViz);
+
+function animate() {
+    requestAnimationFrame(animate);
+    if (animating) {
+        animAngle += 0.5;
+        document.getElementById('sl-ry').value = Math.sin(animAngle * Math.PI / 180) * 60;
+        document.getElementById('sl-rx').value = Math.cos(animAngle * Math.PI / 180 * 0.7) * 25;
+        readAll();
+    }
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+readAll();
+animate();
+resizeViz();
+new ResizeObserver(() => resizeViz()).observe(container);
+})();
+</script>
+
+</body>
+</html>

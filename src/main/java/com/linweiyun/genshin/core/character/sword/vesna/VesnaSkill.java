@@ -34,6 +34,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -262,7 +263,7 @@ public class VesnaSkill extends SkillBase {
                         + ShenheTalentConfig.getNAPerLevel(stage) * (naLevel - 1));
 
         Vec3 startPos = player.position();
-        Vec3 lookDir = player.getLookAngle();
+        Vec3 lookDir = CombatAim.direction(player);
         Vec3 endPos = startPos.add(lookDir.scale(2.5f));
 
         List<LivingEntity> targets = new AreaEntityCollector(level, startPos, endPos, 1.0f).execute();
@@ -490,7 +491,7 @@ public class VesnaSkill extends SkillBase {
                 player, 10.0, TargetSeeker.TargetingType.LINE_OF_SIGHT).execute();
         Vec3 center = primaryTarget != null
                 ? primaryTarget.position()
-                : player.position().add(player.getLookAngle().scale(2.0));
+                : player.position().add(CombatAim.direction(player).scale(2.0));
 
         // ① 150% 风元素伤害
         dealAoeAnemoDamage(player, vesna, center, BIANYI_RANGE, BIANYI_HIT_MULTIPLIER,
@@ -526,7 +527,7 @@ public class VesnaSkill extends SkillBase {
 
     /** 入门那一下的伤害：模式已经在触发时开好了，这里只结算 AoE。 */
     private void dealWindriderEnterDamage(Player player, Vesna vesna, int skillLevel) {
-        Vec3 center = player.position().add(player.getLookAngle().scale(2.0));
+        Vec3 center = player.position().add(CombatAim.direction(player).scale(2.0));
         float aoeRange = 2.5f;
         float mult = at(SKILL_DAMAGE, skillLevel);
         dealAoeAnemoDamage(player, vesna, center, aoeRange, mult,
@@ -734,7 +735,7 @@ public class VesnaSkill extends SkillBase {
         Level level = player.level();
         if (level.isClientSide()) return;
 
-        Vec3 look = player.getLookAngle();
+        Vec3 look = CombatAim.direction(player);
         Vec3 from = player.position().add(look.scale(1.5)).add(0, 2.5, 0);
         Vec3 to = center.add(0, 0.5, 0);
 

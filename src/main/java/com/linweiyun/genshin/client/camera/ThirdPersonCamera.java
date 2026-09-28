@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.client.camera;
 
 import com.linweiyun.genshin.Minegenshin;
+import com.linweiyun.genshin.client.combat.AttackApproach;
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import com.linweiyun.genshin.client.render.character.AttachmentHelper;
 import com.linweiyun.genshin.core.log.LogGroup;
@@ -53,8 +54,6 @@ import org.slf4j.Logger;
  * 斜向后退是 135°、纯侧移是 90°，用夹角卡阈值很容易把侧移一起误伤（侧移是要归位的）。
  *
  * <h2>3. WASD 一律以<b>镜头</b>为参照（与角色朝向无关，这块故意不动）</h2>
- * 「视角独立」只体现在「转鼠标时身体不跟着转」，<b>不</b>顺手去改走路方向的参照系：
- * W 跟镜头一个方向向前、A/D 是镜头对应的左右、S 是镜头对应的向后，与原版完全一致 ——
  * 按 WASD 往哪走只看镜头，跟角色此刻面朝哪无关。
  *
  * <p>为什么一行都不用改：原版把输入向量转成世界方向用的就是 {@code getYRot()}
@@ -158,7 +157,8 @@ public final class ThirdPersonCamera {
         /** 视角独立：A/D 转角色、鼠标只管镜头。 */
         INDEPENDENT,
         /** 视角跟随：身体由鼠标驾驶、镜头追着身体（大剑持续重击期间）。 */
-        FOLLOW
+        FOLLOW,
+        ACTION
     }
 
     /** 视角跟随是否开启（入口见 {@link #setFollowBody(boolean)}）。 */
@@ -223,7 +223,9 @@ public final class ThirdPersonCamera {
 
         // ② 跟随只在持续型招式期间有效；那个状态一结束就自动落回
         //    （状态机的复位是唯一出口，所以这里不会漏关）。
-        if (followBody && !ActionStateMachine.currentStateLoops()) {
+        //    例外：这一招在数据里明确要求「身体跟随镜头」（ActionBodyFacing.CAMERA）时，
+        //    哪怕状态不循环也保持跟随 —— 一直到这一招结束（AttackApproach.cancel）为止。
+        if (followBody && !ActionStateMachine.currentStateLoops() && !AttackApproach.wantsCameraFacing()) {
             setFollowBody(false);
         }
     }
@@ -246,8 +248,9 @@ public final class ThirdPersonCamera {
     public static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
+        BodyFacing facing = player == null ? BodyFacing.VANILLA : bodyFacing(player);
         if (player == null || event.getCamera().entity() != player
-                || bodyFacing(player) == BodyFacing.VANILLA) {
+                || facing == BodyFacing.VANILLA) {
             lastYaw = Float.NaN;
             lastCameraNanos = 0L;
             alignWeight = 0.0F;
@@ -278,7 +281,12 @@ public final class ThirdPersonCamera {
         } else {
             // 常态：只有「按着前进/侧移 + 1.5 秒没人为转视角」才缓缓归位，其余时间一行不碰，
             // 原版鼠标视角完全接管（yRotO 也就还留着原版的插值）。
-            if (player.tickCount - lastManualTick < ALIGN_DELAY_TICKS || !shouldAlign(player)) {
+            //
+            // 动作接管期间（ACTION）一并跳过：那时候身体可能正被 AttackApproach 转向索敌目标，
+            // 镜头要是跟着归位，就成了「一攻击镜头就被拽到目标方向」——
+            // 和「镜头永远 100% 归玩家」冲突。
+            if (player.tickCount - lastManualTick < ALIGN_DELAY_TICKS || !shouldAlign(player)
+                    || facing == BodyFacing.ACTION) {
                 // 条件一断就把权重清零：鼠标 / 后退键 / 停下脚步永远优先
                 alignWeight = 0.0F;
                 lastYaw = current;
@@ -376,6 +384,12 @@ public final class ThirdPersonCamera {
             // 第一人称看不到自己的身体，让原版规则照跑（身体 = 视角方向，W = 往镜头前走）
             return BodyFacing.VANILLA;
         }
-        return followBody ? BodyFacing.FOLLOW : BodyFacing.INDEPENDENT;
+        if (followBody) {
+            // 跟随优先：CAMERA 那一档既是「接管」也是「跟随」，跟随期间身体由鼠标驾驶。
+            return BodyFacing.FOLLOW;
+        }
+        // 出招期间把身体朝向从「跟随位移」手里接管过来：
+        // 索敌到由 AttackApproach 转向目标，没索敌就一个字段都不动。
+        return AttackApproach.holdsBodyFacing() ? BodyFacing.ACTION : BodyFacing.INDEPENDENT;
     }
 }

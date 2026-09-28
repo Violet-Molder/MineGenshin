@@ -21,4 +21,18 @@ dependencies {
 
 bootJar { archiveFileName = 'minegenshin-web.jar' }
 
+tasks.named('bootRun') {
+    doFirst {
+        // 启动后延迟 4 秒，自动在浏览器中打开文档站
+        Thread.start {
+            sleep 4000
+            try {
+                "cmd /c start http://localhost:8081".execute()
+            } catch (Exception e) {
+                logger.warn("自动打开浏览器失败: ${e.message}")
+            }
+        }
+    }
+}
+
 tasks.named('test') { useJUnitPlatform() }

@@ -24,7 +24,11 @@ public final class DocCatalog {
             new Doc("sys-render-asset", "资源、渲染与界面", "docs/systems/render-asset.md", "系统详解"),
             new Doc("sys-network-event", "网络、事件与数据生成", "docs/systems/network-event-datagen.md", "系统详解"),
             new Doc("sys-performance", "性能优化系统", "docs/systems/performance.md", "系统详解"),
+            // 渲染与特效：Blaze3D / GeckoLib / Photon2 的完整链路
+            new Doc("rendering-photon2-reference", "Minecraft 26.2 渲染与 Photon2 完全参考", "docs/rendering-photon2-reference.md", "渲染与特效"),
+            new Doc("rendering-photon2", "渲染与 Photon2 特效", "docs/rendering-and-photon2.md", "渲染与特效"),
             // 现有深入文档
+            new Doc("graphics-matrix-notes", "图形学学习笔记：4×4 变换矩阵", "web/src/main/resources/static/graphics-matrix-notes.html", "图形学学习笔记"),
             new Doc("entity-development", "实体开发文档", "web/src/main/resources/static/entity-development.html", "深入文档"),
             new Doc("entity-ai", "实体 AI 指南", "docs/entity-ai-goal-guide.md", "深入文档"),
             new Doc("character-system", "角色系统详解（薇斯娜）", "CHARACTER_SYSTEM.md", "深入文档"),

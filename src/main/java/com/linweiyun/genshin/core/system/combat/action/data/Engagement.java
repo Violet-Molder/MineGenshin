@@ -43,13 +43,19 @@ package com.linweiyun.genshin.core.system.combat.action.data;
          */
         public final double adhesionStep;
 
+        /**
+         * 近距离时是否朝目标迈一步吸附。{@code true}（默认）= 出手时朝目标推一小步；
+         * {@code false} = 只转向不移动（不跟磁铁一样）。
+         */
+        public final boolean approachStep;
+
         public Engagement(boolean ranged, boolean dash,
                           double acquireRange, double keepRange,
                           double acquireAngle, double keepAngle,
                           double stopDistance, double dashSpeed,
                           int maxApproachTicks, float turnSpeed) {
             this(ranged, dash, acquireRange, keepRange, acquireAngle, keepAngle,
-                    stopDistance, dashSpeed, maxApproachTicks, turnSpeed, USE_DEFAULT, USE_DEFAULT);
+                    stopDistance, dashSpeed, maxApproachTicks, turnSpeed, USE_DEFAULT, USE_DEFAULT, true);
         }
 
         public Engagement(boolean ranged, boolean dash,
@@ -58,6 +64,18 @@ package com.linweiyun.genshin.core.system.combat.action.data;
                           double stopDistance, double dashSpeed,
                           int maxApproachTicks, float turnSpeed,
                           double adhesionBand, double adhesionStep) {
+            this(ranged, dash, acquireRange, keepRange, acquireAngle, keepAngle,
+                    stopDistance, dashSpeed, maxApproachTicks, turnSpeed,
+                    adhesionBand, adhesionStep, true);
+        }
+
+        public Engagement(boolean ranged, boolean dash,
+                          double acquireRange, double keepRange,
+                          double acquireAngle, double keepAngle,
+                          double stopDistance, double dashSpeed,
+                          int maxApproachTicks, float turnSpeed,
+                          double adhesionBand, double adhesionStep,
+                          boolean approachStep) {
             this.ranged = ranged;
             this.dash = dash;
             this.acquireRange = acquireRange;
@@ -70,6 +88,7 @@ package com.linweiyun.genshin.core.system.combat.action.data;
             this.turnSpeed = turnSpeed;
             this.adhesionBand = adhesionBand;
             this.adhesionStep = adhesionStep;
+            this.approachStep = approachStep;
         }
 
         /** 近战默认：索敌 6 / 保持 9 / 攻击距离外突进贴脸。 */
@@ -95,7 +114,19 @@ package com.linweiyun.genshin.core.system.combat.action.data;
                                 double dashSpeed, int maxApproachTicks, float turnSpeed,
                                 double adhesionBand, double adhesionStep) {
             return new Engagement(ranged, dash, acquireRange, keepRange, acquireAngle, keepAngle,
-                    stopDistance, dashSpeed, maxApproachTicks, turnSpeed, adhesionBand, adhesionStep);
+                    stopDistance, dashSpeed, maxApproachTicks, turnSpeed,
+                    adhesionBand, adhesionStep, this.approachStep);
+        }
+
+        /**
+         * 近距离时是否朝目标迈一步吸附。
+         *
+         * <p>{@code true}（默认）= 出手时朝目标推一小步；{@code false} = 只转向不移动。
+         */
+        public Engagement withApproachStep(boolean enabled) {
+            return new Engagement(ranged, dash, acquireRange, keepRange, acquireAngle, keepAngle,
+                    stopDistance, dashSpeed, maxApproachTicks, turnSpeed,
+                    adhesionBand, adhesionStep, enabled);
         }
 
         public Engagement withDash(boolean enabled) {

@@ -13,6 +13,7 @@ import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.Vodyanitsa;
 import com.linweiyun.genshin.core.character.polearm.arlecchino.Arlecchino;
 import com.linweiyun.genshin.core.character.polearm.raiden_shogun.RaidenShogun;
 import com.linweiyun.genshin.core.character.polearm.shenhe.Shenhe;
+import com.linweiyun.genshin.core.character.polearm.test.TestCharacter;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import java.util.Collection;
@@ -38,6 +39,8 @@ public class ModCharacters {
    public static final DeferredHolder<PGCharacter, Vesna> VESNA = register("vesna", 115001, Vesna::new);
    public static final DeferredHolder<PGCharacter, Vodyanitsa> VODYANITSA = register("vodyanitsa", 145002, Vodyanitsa::new);
     public static final DeferredHolder<PGCharacter, Linweiyun> LINWEIYUN = register("linweiyun", 105001, Linweiyun::new);
+    /** 测试用长柄角色（135009）—— 数值 / 资源 / 技能全部照抄林薇云，见 {@link TestCharacter}。 */
+    public static final DeferredHolder<PGCharacter, TestCharacter> TEST = register("test", 135009, TestCharacter::new);
 
     private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(String name, int uuid, Supplier<T> factory) {
       DeferredHolder<PGCharacter, T> holder = CHARACTERS.register(name, factory);

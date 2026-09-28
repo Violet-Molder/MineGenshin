@@ -101,10 +101,6 @@ public final class CharacterRenderDispatcher {
          float delta = Float.isNaN(poseProbeLast) ? 0.0F : Math.abs(sum - poseProbeLast);
          poseProbeLast = sum;
          if (!(delta < 2.0F)) {
-            ANIM_LOGGER.info(
-               "姿态 frame={} Δ={} 状态={} 刻={} {}",
-               new Object[]{frame, Math.round(delta * 10.0F) / 10.0F, AnimationStateSync.stateOf(player), player.tickCount, detail}
-            );
          }
       }
    }
@@ -137,12 +133,6 @@ public final class CharacterRenderDispatcher {
                   }
                }
             );
-      }
-
-      String key = shown.toString();
-      if (!key.equals(lastProbedProps)) {
-         lastProbedProps = key;
-         ANIM_LOGGER.info("本帧会画出的道具 {}（状态={}，刻={}）", new Object[]{key.isEmpty() ? "（无）" : key, AnimationStateSync.stateOf(player), player.tickCount});
       }
    }
 
@@ -354,6 +344,8 @@ public final class CharacterRenderDispatcher {
             if (!supportLayersDisabled()) {
                created.withRenderLayer(new BoneMountGeoLayer(created));
                created.withRenderLayer(new TranslucentBoneGeoLayer(created));
+               // 只读骨骼位姿、不画东西：把「手上武器」的世界位姿喂给 Photon 特效用（见 WeaponAnchorCache）
+               created.withRenderLayer(new WeaponAnchorGeoLayer(created));
             }
 
             return created;

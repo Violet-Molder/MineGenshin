@@ -27,6 +27,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.HitResult;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -132,7 +133,7 @@ public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity 
         p.cy = pos.y + 1.0;
         p.cz = pos.z;
 
-        p.spawnYaw = ownerPlayer.getYRot();
+        p.spawnYaw = CombatAim.yaw(ownerPlayer);
         p.scatterAngleOffset = -60f + level.getRandom().nextFloat() * 120f;
 
         float targetAngle = p.spawnYaw + p.scatterAngleOffset;
@@ -246,7 +247,7 @@ public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity 
     private void enterAttackPhase() {
         phase = PHASE_ATTACKING;
         Player ownerPlayer = getOwnerPlayer();
-        attackLockYaw = (ownerPlayer != null) ? ownerPlayer.getYRot() : spawnYaw;
+        attackLockYaw = (ownerPlayer != null) ? CombatAim.yaw(ownerPlayer) : spawnYaw;
     }
 
     // ==================== 阶段 2：攻击 ====================

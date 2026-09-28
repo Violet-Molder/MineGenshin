@@ -4,9 +4,11 @@ package com.linweiyun.genshin.core.character.allweapon.linweiyun;
 
 import com.linweiyun.genshin.content.items.artifact.inventory.AllWeaponArtifactInventory;
 import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
-import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
-import com.linweiyun.genshin.core.system.combat.action.data.BoneMountSource;
-import com.linweiyun.genshin.core.system.combat.action.data.CharacterBoneMount;
+import com.linweiyun.genshin.core.system.combat.action.data.*;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class LinweiyunResources {
    public static final String MODEL_AUTHOR = "下一只风筝";
@@ -51,6 +53,35 @@ public final class LinweiyunResources {
             CharacterBoneMount.of("magic", BoneMountSource.ofSlot(
                     AllWeaponArtifactInventory.slotFor(WeaponAppearance.CATALYST))))
       .withModelAuthor("下一只风筝", "https://space.bilibili.com/281665959");
+
+   public static final CharacterActionData POLEARM_ACTION_DATA = buildPolearm();
+
+   private static CharacterActionData buildPolearm() {
+      Map<Integer, ActionStep> comboSteps = new LinkedHashMap<>();
+      comboSteps.put(1, new ActionStep(
+              "shenhe_attack_1",
+              40,
+              16,
+              30,
+              List.of(new Move(10, 2)),
+              List.of(new Hit(12, 0.5, 0.5, 2)),
+              List.of(),
+              0,0,0,8
+
+      ).withEngagement(Engagement.melee().withApproachStep(false)));
+      comboSteps.put(2, new ActionStep(
+              "shenhe_attack_2",
+              40,
+              20,
+              30,
+              List.of(new Move(10, 2)),
+              List.of(new Hit(15, 0.5, 0.5, 2)),
+              List.of(),
+              0,0,0,8
+
+      ).withEngagement(Engagement.melee().withApproachStep(false)));
+      return new CharacterActionData(new ComboData(2, comboSteps), null, null, null);
+   }
 
    private LinweiyunResources() {
    }

@@ -7,6 +7,7 @@ import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.compat.PlayerStatBridge;
 import net.minecraft.util.Mth;
@@ -161,7 +162,7 @@ public final class ShieldService {
     public static void grant(LivingEntity entity, ShieldProfile profile, float shieldValue, int durationTicks) {
         ShieldState state = get(entity);
         state.apply(profile, shieldValue, durationTicks,
-                entity.level().getGameTime(), entity.getYRot());
+                entity.level().getGameTime(), CombatAim.yaw(entity));
         push(entity, state);
 
         // 免疫类盾：把身上已经挂着的敌对元素直接清掉（冰盾要顺带解除寒元素减速与冻结）

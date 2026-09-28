@@ -11,6 +11,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -244,7 +245,7 @@ public class TargetSeeker {
 
     private List<LivingEntity> collectLineOfSight() {
         Vec3 eyePos = source.getEyePosition();
-        Vec3 lookDir = source.getLookAngle().normalize();
+        Vec3 lookDir = CombatAim.direction(source).normalize();
         Vec3 endPos = eyePos.add(lookDir.scale(range));
 
         AABB searchBox = new AABB(eyePos, endPos).inflate(TUNNEL_HALF_SIZE);
@@ -263,7 +264,7 @@ public class TargetSeeker {
 
     private boolean isInForwardTunnel(Entity target) {
         Vec3 eyePos = source.getEyePosition();
-        Vec3 lookDir = source.getLookAngle().normalize();
+        Vec3 lookDir = CombatAim.direction(source).normalize();
         Vec3 targetCenter = target.getBoundingBox().getCenter();
         Vec3 toTarget = targetCenter.subtract(eyePos);
 

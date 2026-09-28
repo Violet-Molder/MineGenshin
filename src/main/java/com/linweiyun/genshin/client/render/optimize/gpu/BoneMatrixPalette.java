@@ -15,16 +15,6 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * 把「本帧这一根根骨骼的世界矩阵」写进常量缓冲 —— GPU 蒙皮每帧唯一的 CPU 侧工作量。
- *
- * <h2>为什么矩阵仍然在 CPU 上算</h2>
- * 姿势是每根骨骼各自一串 {@code 位移 → 轴心 → 旋转 → 缩放}，逐骨骼依赖父级结果，而且骨骼
- * 位置监听（挂点层）必须在这一刻拿到矩阵。所以只有「顶点 × 矩阵」这一步交给 GPU，
- * 骨骼链本身照旧走 {@link BoneWalker#prepBone}，与 CPU 路径<b>同一份代码</b>，动画与挂点行为
- * 不可能出现两套。
- *
- * <h2>两次遍历为什么不合并</h2>
- * 矩阵可以直接按 {@link CompiledBone#index} 散列写入，但可见区间必须按遍历顺序累加，
- * 所以这里只走<b>一趟</b>递归：边走边记矩阵，边走边把「连续可见顶点区间」压成 run。
  */
 public final class BoneMatrixPalette {
 
