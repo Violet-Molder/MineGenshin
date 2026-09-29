@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.mixin.compat;
 
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.neoforged.fml.ModList;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;

@@ -5,9 +5,8 @@ import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarConduc
 import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarSwirlEffect;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.character.IStellarHousehold;
-import com.linweiyun.genshin.core.character.IStellarStateHolder;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.util.capability.IStellarHousehold;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -64,14 +63,6 @@ public final class StellarGlimmer {
 
     /**
      * 星烁反应的伤害加成总和（反应加成区里那一项，和元素精通加算）。
-     *
-     * <p>来源两部分相加：
-     * <ol>
-     *   <li><b>效果/ buff</b>：{@code ICharacterEffect.getStellarGlimmerBonus(分支)} ——
-     *       写「星烁加成」的两个分支都给，只写一个的只给那一个；</li>
-     *   <li><b>角色自己</b>：{@code PGCharacter.getStellarGlimmerBonus(分支)} ——
-     *       天赋类加成（同样是按分支给的）。</li>
-     * </ol>
      */
     public static float bonusOf(@Nullable PGCharacter character, StellarGlimmerBranch branch) {
         if (character == null || branch == null) {
@@ -83,19 +74,15 @@ public final class StellarGlimmer {
     }
 
     /**
-     * 全队「星扩散户口」—— 谁的户口负责星扩散、能转化、给多少基础伤害提升。
+     * 全队「星扩散户口」—— 检测队伍里是否有角色带星扩散户口。
      *
-     * <p><b>户口 = 转化 + 体系加成</b>（写在同一个天赋里），两者是绑定的；
-     * 和「能进入星扩散状态」是两回事（后者见 {@link IStellarStateHolder}）。
-     *
-     * @return 队伍里星扩散户口（取基础加成最高的那一份）；没有就返回 null
+     * @return 队伍里第一个找到的星扩散户口（仅用于 {@code != null} 检测）；没有就返回 null
      */
     @Nullable
     public static IStellarHousehold.StellarHousehold swirlHousehold(@Nullable Level level) {
         if (!(level instanceof ServerLevel serverLevel)) {
             return null;
         }
-        IStellarHousehold.StellarHousehold best = null;
         for (Player player : serverLevel.players()) {
             PlayerCharactersAttachment attachment = player.getData(
                     AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
@@ -103,23 +90,39 @@ public final class StellarGlimmer {
                 PGCharacter member = attachment.getPartyCharacter(i);
                 if (member instanceof IStellarHousehold provider) {
                     IStellarHousehold.StellarHousehold household = provider.stellarHousehold();
-                    if (household != null && household.branch() == StellarGlimmerBranch.SWIRL
-                            && (best == null || household.baseBonusMult() > best.baseBonusMult())) {
-                        best = household;
+                    if (household != null && household.branch() == StellarGlimmerBranch.SWIRL) {
+                        return household;
                     }
                 }
             }
         }
-        return best;
+        return null;
     }
 
     /**
-     * 全队「星扩散反应基础伤害提升」—— 就是星扩散户口给的那一份（没有户口就是 0）。
+     * 全队「星扩散反应基础伤害提升」—— 全队所有星扩散户口的 {@code baseBonusMult} 累加。
      *
      * <p>加在星扩散的基础区上（{@code 基础区 × (1 + 基础倍率提升)}）。
+     * 有多角色带星扩散户口时累加，没有就是 0。
      */
     public static float swirlBaseBonusMult(@Nullable Level level) {
-        IStellarHousehold.StellarHousehold household = swirlHousehold(level);
-        return household == null ? 0f : household.baseBonusMult();
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return 0f;
+        }
+        float total = 0f;
+        for (Player player : serverLevel.players()) {
+            PlayerCharactersAttachment attachment = player.getData(
+                    AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+            for (int i = 0; i < 4; i++) {
+                PGCharacter member = attachment.getPartyCharacter(i);
+                if (member instanceof IStellarHousehold provider) {
+                    IStellarHousehold.StellarHousehold household = provider.stellarHousehold();
+                    if (household != null && household.branch() == StellarGlimmerBranch.SWIRL) {
+                        total += household.baseBonusMult();
+                    }
+                }
+            }
+        }
+        return total;
     }
 }

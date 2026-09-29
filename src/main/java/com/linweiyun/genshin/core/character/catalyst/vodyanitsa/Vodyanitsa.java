@@ -3,7 +3,7 @@ package com.linweiyun.genshin.core.character.catalyst.vodyanitsa;
 import com.linweiyun.genshin.config.character.VodyanitsaAttributeConfig;
 import com.linweiyun.genshin.core.character.catalyst.CatalystCharacter;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.DescSynced;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import net.minecraft.network.chat.Component;

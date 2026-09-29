@@ -2,7 +2,7 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.mixin.mixins;
 
-import com.linweiyun.genshin.core.asset.pack.GeoPackResources;
+import com.linweiyun.genshin.asset.pack.GeoPackResources;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

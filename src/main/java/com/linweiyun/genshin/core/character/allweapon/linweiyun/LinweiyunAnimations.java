@@ -1,9 +1,9 @@
 package com.linweiyun.genshin.core.character.allweapon.linweiyun;
 
-import com.linweiyun.genshin.core.character.CharacterHelper;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.allweapon.AllWeaponCharacter;
-import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
+import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
 import com.linweiyun.genshin.core.system.combat.animation.config.LocomotionAnims;
 import com.geckolib.animation.RawAnimation;

@@ -5,7 +5,7 @@ import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.character.polearm.PolearmCharacter;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 

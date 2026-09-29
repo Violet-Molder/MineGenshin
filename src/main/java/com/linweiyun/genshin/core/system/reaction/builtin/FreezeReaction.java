@@ -13,8 +13,8 @@ import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
 

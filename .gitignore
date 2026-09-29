@@ -44,6 +44,8 @@ logs/
 ### 本地私有目录：不上传 ###
 /src/private/
 
+/src/main/java/com/linweiyun/genshin/test/
+
 ### 逐文件的 geo / 动画母本：本地保留、不进仓库（构建期收进整包） ###
 # 母本就放在正常的资源路径下（开发时看得见、直接改、Blockbench 直接放），
 # 构建期被收进整包文件，母本本身不提交。

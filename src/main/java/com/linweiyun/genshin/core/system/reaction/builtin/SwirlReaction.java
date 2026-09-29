@@ -4,6 +4,7 @@ import com.linweiyun.genshin.content.items.weapon.catalyst.HymnTheMaelstrom;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.genshin.core.character.util.capability.IStellarStateHolder;
 import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.about.AttachmentProfile;
@@ -16,7 +17,6 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
 import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionManager;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectHelper;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectInstance;
@@ -32,8 +32,8 @@ import com.linweiyun.genshin.content.entities.area.StellarVortexEntity;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.VodyanitsaTalent;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.content.entities.ModEntities;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -416,7 +416,7 @@ public class SwirlReaction extends ElementalReaction {
             for (int i = 0; i < 4; i++) {
                 PGCharacter character = att.getPartyCharacter(i);
                 // 状态持有者（能进入星烁状态的角色）才吃这个 buff —— 和户口无关
-                if (character instanceof com.linweiyun.genshin.core.character.IStellarStateHolder holder
+                if (character instanceof IStellarStateHolder holder
                         && holder.canHoldStellarState()) {
                     CharacterEffectInstance instance = new CharacterEffectInstance(
                             radianceEffect, duration, 0, false);

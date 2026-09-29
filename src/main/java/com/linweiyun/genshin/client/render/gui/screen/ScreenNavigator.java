@@ -2,10 +2,10 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.gui.screen;
 
-import com.linweiyun.genshin.core.character.CharacterHelper;
-import com.linweiyun.genshin.core.character.ICharacterConfigUI;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
+import com.linweiyun.genshin.core.character.util.config.ICharacterConfigUI;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.character.configui.CharacterConfigUI;
+import com.linweiyun.genshin.core.character.util.config.CharacterConfigUI;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
 import net.minecraft.client.Minecraft;

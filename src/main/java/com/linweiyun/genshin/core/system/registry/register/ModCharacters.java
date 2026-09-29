@@ -5,9 +5,6 @@ package com.linweiyun.genshin.core.system.registry.register;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.allweapon.linweiyun.Linweiyun;
-import com.linweiyun.genshin.core.character.attachment.CharacterAttachment;
-import com.linweiyun.genshin.core.character.attachment.CharacterAttachmentType;
-import com.linweiyun.genshin.core.character.attachment.ModCharacterAttachmentTypes;
 import com.linweiyun.genshin.core.character.catalyst.columbina.Columbina;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.Vodyanitsa;
 import com.linweiyun.genshin.core.character.polearm.arlecchino.Arlecchino;
@@ -44,34 +41,8 @@ public class ModCharacters {
 
     private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(String name, int uuid, Supplier<T> factory) {
       DeferredHolder<PGCharacter, T> holder = CHARACTERS.register(name, factory);
-      // 反编译还原：泛型上 Supplier<T> 不能直接塞进 Supplier<PGCharacter>，用一层 lambda 转一下
       FACTORIES.put(uuid, () -> factory.get());
       FACTORIES_BY_ID.put(Minegenshin.id(name), () -> factory.get());
-      return holder;
-   }
-
-   @SafeVarargs
-   private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(
-      String name, int uuid, Supplier<T> factory, Class<? extends CharacterAttachment>... attachmentClasses
-   ) {
-      DeferredHolder<PGCharacter, T> holder = register(name, uuid, factory);
-
-      for (Class<? extends CharacterAttachment> clazz : attachmentClasses) {
-         try {
-            String typeId = (String)clazz.getField("TYPE_ID").get(null);
-            Supplier<CharacterAttachment> attachmentFactory = () -> {
-               try {
-                  return clazz.getDeclaredConstructor().newInstance();
-               } catch (ReflectiveOperationException e) {
-                  throw new RuntimeException("Failed to instantiate attachment: " + clazz.getName(), e);
-               }
-            };
-            ModCharacterAttachmentTypes.CHARACTER_ATTACHMENT_TYPES_REGISTER.register(typeId, () -> new CharacterAttachmentType<>(typeId, attachmentFactory));
-         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Auto-register attachment failed: " + clazz.getName(), e);
-         }
-      }
-
       return holder;
    }
 

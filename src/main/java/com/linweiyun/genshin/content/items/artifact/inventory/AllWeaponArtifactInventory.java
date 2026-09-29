@@ -2,7 +2,7 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.content.items.artifact.inventory;
 
-import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
+import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import net.minecraft.world.item.ItemStack;
 

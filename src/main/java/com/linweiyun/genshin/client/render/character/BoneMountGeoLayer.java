@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.client.render.character;
 
-import com.linweiyun.genshin.core.character.CharacterHelper;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
 
 import com.linweiyun.genshin.client.render.optimize.RenderOptimize;
 import com.linweiyun.genshin.client.render.optimize.geo.CompiledBone;
@@ -22,8 +22,8 @@ import com.geckolib.renderer.layer.GeoRenderLayer;
 import com.google.common.reflect.TypeToken;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.mojang.math.Axis;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;

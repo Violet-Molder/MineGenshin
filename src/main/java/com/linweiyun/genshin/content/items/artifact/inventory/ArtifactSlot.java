@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.content.items.artifact.inventory;
 
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.world.Container;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;

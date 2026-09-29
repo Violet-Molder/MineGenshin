@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
  * 贴图是<b>资源</b>不是生成物，放在 {@code item/&lt;物品id&gt;/texture.png}，模型里的
  * {@code layer0} 直接引用它（sprite id {@code minegenshin:item/&lt;id&gt;/texture}）。
  *
- * <p>这三条路径都由 {@code core.asset.AssetRedirects} 在运行期映射回原版入口，
+ * <p>这三条路径都由 {@code asset.AssetRedirects} 在运行期映射回原版入口，
  * 所以数据生成也必须产出到这个布局 —— 否则下一次 {@code runData} 会在原版根目录下
  * 重建一份「旧的」文件，布局又变回两套。
  *

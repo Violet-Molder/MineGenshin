@@ -4,7 +4,7 @@ package com.linweiyun.genshin.core.character.fist;
 
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
 import com.linweiyun.genshin.content.items.weapon.fist.Fist;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import java.util.List;
 import java.util.Map;

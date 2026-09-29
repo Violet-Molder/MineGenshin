@@ -1,45 +1,20 @@
 package com.linweiyun.genshin.core.character.sword.vesna;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.character.IStellarHousehold;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.talent.TalentBase;
+import com.linweiyun.genshin.core.character.util.capability.IStellarHousehold;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
 /**
  * 薇斯娜的<b>天赋</b>（突破天赋 / 被动）。
- *
- * <p>这个类名以前是「技能」用的（现在技能搬去 {@link VesnaSkill}）。这里放三块：
- *
- * <h2>1. 突破天赋 1「仪典·春之行列」—— 整肃</h2>
- * 整肃是「大权区」的来源：每层 +10%，只作用在她召唤的灵剑那几段（二阶第二段 /
- * 三阶两段 / 大招）。
- * <ul>
- *   <li>层数本体是 {@code Vesna.decreeTicks}（{@code @DescSynced @Persisted(key = "decreeTicks")}）
- *       —— 键属于存档格式，所以数组留在主类上，<b>怎么叠 / 怎么掉</b>在本类；</li>
- *   <li>6 层是一个<b>队列</b>：满 6 层时第 7 次会挤掉最早的那一层（剩余刻数最少的那格）；</li>
- *   <li>每层<b>独立计时</b>（文案写「每层独立计算持续时间」），所以是「每层一个计时器」
- *       而不是一个总时长。</li>
- * </ul>
- *
- * <h2>2. 辉映·星扩散 —— 户口与基础伤害提升</h2>
- * 队伍里的角色触发星扩散时，按<b>薇斯娜自己的攻击力</b>给基础伤害提升：
- * {@code floor(攻击力/100) × 0.7%}，上限 14%。「转化」和「加成」是同一个天赋里的两半，
- * 所以一起放在 {@link #stellarHousehold} 返回的户口里。
- *
- * <h2>3. 突破 4「辉映·星扩散」的队伍元素构成加成</h2>
- * 只在处于星扩散状态时按队伍元素构成给自己加属性：冰/风角色每人攻击力 +6%、
- * 其他元素角色每人元素精通 +25（用临时修饰符，退出时只摘自己那两个来源）。
- *
- * <p>每刻的三件事（整肃倒计时 → 退场清层 → 突破 4 重算）都走 {@link #tick}，
- * 顺序与重构前 {@code Vesna.tick} 里的一致。
  */
 public class VesnaTalent extends TalentBase {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CHARACTER);
@@ -148,13 +123,6 @@ public class VesnaTalent extends TalentBase {
 
     /**
      * 队伍里的角色触发星扩散时，按<b>薇斯娜自己的攻击力</b>给的基础伤害提升。
-     *
-     * <pre>
-     * 提升 = floor(攻击力 / 100) × 0.7%，上限 14%
-     * 例：攻击力 1234 → 12 档 → +8.4%；攻击力 99 → 0 档 → +0%
-     * </pre>
-     *
-     * <p>（户口 {@link #stellarHousehold} 会把这份加成带出去给全队。）
      */
     public float stellarSwirlBaseBonusMult(Vesna vesna) {
         double atk = vesna.getData().getAttributeTotalValue(ModAttributes.ATK.value());
@@ -164,9 +132,6 @@ public class VesnaTalent extends TalentBase {
 
     /**
      * 薇斯娜的<b>星扩散户口</b>：冰扩散 → 星扩散，并按攻击力给全队基础伤害提升。
-     *
-     * <p>「转化」和「加成」是同一个天赋里的两半，所以一起放在这份户口里返回；
-     * 她能<b>进入</b>星扩散状态是另一件事（见 {@code IStellarStateHolder}）。
      */
     public IStellarHousehold.StellarHousehold stellarHousehold(Vesna vesna) {
         return new IStellarHousehold.StellarHousehold(

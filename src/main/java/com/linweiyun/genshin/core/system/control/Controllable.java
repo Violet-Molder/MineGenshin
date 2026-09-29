@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.system.control;
 
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.action.ActionManager;
 import com.linweiyun.genshin.core.system.combat.action.InterruptReason;
 import com.linweiyun.genshin.core.system.poise.PoiseService;

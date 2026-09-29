@@ -5,14 +5,15 @@ import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.catalyst.columbina.Columbina;
+import com.linweiyun.genshin.core.character.util.capability.IStellarStateHolder;
 import com.linweiyun.genshin.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.performance.TickSnapshot;
 import net.minecraft.server.level.ServerLevel;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
@@ -144,7 +145,7 @@ public class ReactionPriorityCalculator {
                     AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
             for (int i = 0; i < 4; i++) {
                 PGCharacter character = att.getPartyCharacter(i);
-                if (character instanceof com.linweiyun.genshin.core.character.IStellarStateHolder holder
+                if (character instanceof IStellarStateHolder holder
                         && holder.canHoldStellarState()) {
                     result.add(character);
                 }

@@ -2,7 +2,7 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.core.system.combat.action.data;
 
-import com.linweiyun.genshin.core.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.GenshinAssets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

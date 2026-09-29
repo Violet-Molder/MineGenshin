@@ -7,8 +7,8 @@ import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.reaction.*;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import org.slf4j.Logger;
 
 public class ElectroChargedReaction extends ElementalReaction {

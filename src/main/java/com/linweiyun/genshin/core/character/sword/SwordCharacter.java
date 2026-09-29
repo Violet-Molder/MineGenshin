@@ -3,7 +3,7 @@ package com.linweiyun.genshin.core.character.sword;
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
 import com.linweiyun.genshin.content.items.weapon.sword.Sword;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 

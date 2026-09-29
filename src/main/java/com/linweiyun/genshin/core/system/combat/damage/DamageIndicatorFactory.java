@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import java.util.Map;
 import java.util.UUID;
 
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 /**
  * 伤害飘字工厂 —— 所有飘字的统一入口。
  *

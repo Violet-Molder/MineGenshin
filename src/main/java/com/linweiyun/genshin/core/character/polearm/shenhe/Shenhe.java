@@ -3,13 +3,13 @@
 package com.linweiyun.genshin.core.character.polearm.shenhe;
 
 import com.linweiyun.genshin.config.character.ShenheAttributeConfig;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
-import com.linweiyun.genshin.core.character.IStellarStateHolder;
-import com.linweiyun.genshin.core.character.appearance.ShenheAppearanceData;
+import com.linweiyun.genshin.core.character.util.capability.IStellarStateHolder;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.appearance.ShenheAppearanceData;
 import com.linweiyun.genshin.core.character.claymore.ClaymoreCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;

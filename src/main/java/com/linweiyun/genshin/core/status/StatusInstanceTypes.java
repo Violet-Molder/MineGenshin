@@ -2,8 +2,8 @@ package com.linweiyun.genshin.core.status;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 

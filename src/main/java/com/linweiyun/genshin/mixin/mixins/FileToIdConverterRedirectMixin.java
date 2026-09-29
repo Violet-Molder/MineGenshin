@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.mixin.mixins;
 
-import com.linweiyun.genshin.core.asset.AssetRedirects;
+import com.linweiyun.genshin.asset.AssetRedirects;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;

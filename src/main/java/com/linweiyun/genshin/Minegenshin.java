@@ -6,10 +6,9 @@ import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.content.items.ModItems;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.Backpack;
-import com.linweiyun.genshin.core.character.attachment.ModCharacterAttachmentTypes;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
@@ -76,7 +75,6 @@ public class Minegenshin {
         ModElementalReactions.register(modEventBus);
         ArtifactSets.register(modEventBus);
         ModDataComponents.register(modEventBus);
-        ModCharacterAttachmentTypes.register(modEventBus);
 
         ModAttributes.ATTRIBUTES.register(modEventBus);
         ModCharacters.CHARACTERS.register(modEventBus);

@@ -4,8 +4,8 @@ import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.content.items.artifact.type.ArtifactType;
 import com.linweiyun.genshin.content.stat.TeyvatItemStat;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;

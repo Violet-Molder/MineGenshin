@@ -4,8 +4,8 @@ package com.linweiyun.genshin.core.system.combat.action;
 
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.attack.PlungeState;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import java.util.Map;

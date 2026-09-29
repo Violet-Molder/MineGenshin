@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.core.system.combat.animation.action;
 
-import com.linweiyun.genshin.core.character.CharacterHelper;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
 
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
 import com.linweiyun.genshin.core.system.combat.animation.config.DefaultCharacterAnimations;

@@ -4,10 +4,10 @@ package com.linweiyun.genshin.core.character.allweapon;
 
 import com.linweiyun.genshin.content.items.artifact.inventory.AllWeaponArtifactInventory;
 import com.linweiyun.genshin.content.items.weapon.WeaponItem;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
-import com.linweiyun.genshin.core.character.CharacterWeaponClass;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterWeaponClass;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
+import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.character.claymore.ClaymoreSkill;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;

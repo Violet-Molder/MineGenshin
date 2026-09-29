@@ -4,8 +4,8 @@ package com.linweiyun.genshin.client.render.character.appearance;
 
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
-import com.linweiyun.genshin.core.character.appearance.EarBoneRules;
-import com.linweiyun.genshin.core.character.appearance.LegBoneRules;
+import com.linweiyun.genshin.core.character.util.appearance.EarBoneRules;
+import com.linweiyun.genshin.core.character.util.appearance.LegBoneRules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.client.combat.state;
 
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;

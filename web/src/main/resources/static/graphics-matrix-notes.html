@@ -299,12 +299,18 @@ this.entityRenderDispatcher.submit(state, cameraState,
     <pre><code class="language-java">Vec3 target = new Vec3(120.5, 64, -330.25);
 Vec3 camera = cameraRenderState.pos;
 
-// 因为 PoseStack 原点 = 相机
+// 关键一步：提交阶段的 PoseStack 原点是相机
+// 所以要把世界坐标换算成"相对相机的偏移"
+
+// 写法 1（手算各分量，更显式）：
 pose.translate(
     target.x - camera.x,
     target.y - camera.y,
     target.z - camera.z
-);</code></pre>
+);
+
+// 写法 2（Vec3.subtract，更简洁）：
+pose.translate(target.subtract(camera));</code></pre>
   </div>
   <div>
     <h4 style="margin-top:0;">📷 提交 → 世界坐标</h4>

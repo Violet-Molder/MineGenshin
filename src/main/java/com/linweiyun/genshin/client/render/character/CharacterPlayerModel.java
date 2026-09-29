@@ -3,9 +3,9 @@
 package com.linweiyun.genshin.client.render.character;
 
 import com.linweiyun.genshin.client.render.geo.GenshinGeoModel;
-import com.linweiyun.genshin.core.asset.GenshinAssets;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.asset.GenshinAssets;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
 import lombok.Generated;
 import org.slf4j.Logger;

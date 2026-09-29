@@ -2,7 +2,9 @@ package com.linweiyun.genshin.client.render.geo;
 
 import com.geckolib.animatable.GeoAnimatable;
 import com.geckolib.renderer.base.GeoRenderState;
-import com.linweiyun.genshin.core.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.GeoAssetKind;
+import com.linweiyun.genshin.asset.GeoPathOverrides;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -14,8 +16,6 @@ import net.minecraft.resources.Identifier;
  * assets/minegenshin/item/test_sword/test_sword.animation.json   ← 可选
  * assets/minegenshin/item/test_sword/test_sword.png
  * </pre>
- *
- * <p>路径同样会过 {@link com.linweiyun.genshin.core.asset.GeoPathOverrides} 的规则链，
  * 需要临时改某个物品的模型时不用动这个类。
  */
 public abstract class GenshinItemGeoModel<T extends GeoAnimatable> extends GenshinGeoModel<T> {
@@ -36,19 +36,19 @@ public abstract class GenshinItemGeoModel<T extends GeoAnimatable> extends Gensh
 
     @Override
     public Identifier getModelResource(GeoRenderState renderState) {
-        return com.linweiyun.genshin.core.asset.GeoPathOverrides.resolve(
-                com.linweiyun.genshin.core.asset.GeoAssetKind.MODEL, this, modelId);
+        return GeoPathOverrides.resolve(
+                GeoAssetKind.MODEL, this, modelId);
     }
 
     @Override
     public Identifier getTextureResource(GeoRenderState renderState) {
-        return com.linweiyun.genshin.core.asset.GeoPathOverrides.resolve(
-                com.linweiyun.genshin.core.asset.GeoAssetKind.TEXTURE, this, textureId);
+        return GeoPathOverrides.resolve(
+                GeoAssetKind.TEXTURE, this, textureId);
     }
 
     @Override
     public Identifier getAnimationResource(T animatable) {
-        return com.linweiyun.genshin.core.asset.GeoPathOverrides.resolve(
-                com.linweiyun.genshin.core.asset.GeoAssetKind.ANIMATION, this, animationId);
+        return GeoPathOverrides.resolve(
+                GeoAssetKind.ANIMATION, this, animationId);
     }
 }

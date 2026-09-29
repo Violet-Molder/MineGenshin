@@ -2,8 +2,8 @@ package com.linweiyun.genshin.core.network;
 
 import com.linweiyun.genshin.api.damage.DamageIndicatorData;
 import com.linweiyun.genshin.api.damage.DamageIndicatorSink;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.lowdragmc.lowdraglib2.networking.both.PacketRPCPacket;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacket;
 import com.lowdragmc.lowdraglib2.networking.rpc.RPCPacketDistributor;

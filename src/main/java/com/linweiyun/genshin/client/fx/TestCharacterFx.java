@@ -4,7 +4,7 @@ import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import com.linweiyun.genshin.client.render.character.AttachmentHelper;
 import com.linweiyun.genshin.client.render.character.WeaponAnchorCache;
-import com.linweiyun.genshin.core.character.CharacterHelper;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.core.character.polearm.test.TestAnimations;
 import com.linweiyun.genshin.core.character.polearm.test.TestCharacter;
 import com.linweiyun.genshin.core.character.talent.SkillCastHooks;

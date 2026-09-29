@@ -3,10 +3,9 @@
 package com.linweiyun.genshin.core.character.allweapon.linweiyun;
 
 import com.linweiyun.genshin.config.character.LinweiyunAttributeConfig;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import com.linweiyun.genshin.core.character.allweapon.AllWeaponCharacter;
-import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
-import com.linweiyun.genshin.core.character.configui.CharacterConfigUI;
+import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;

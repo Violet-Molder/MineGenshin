@@ -1,16 +1,19 @@
 package com.linweiyun.genshin.core.character.sword.vesna;
+import com.linweiyun.genshin.content.skill_node.ElementalOrbSpawner;
+import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 import com.linweiyun.genshin.core.system.combat.action.data.Hit;
 
 import java.util.List;
 
-import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProjectile;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaSpiritSwordEntity;
 import com.linweiyun.genshin.content.skill_node.AreaEntityCollector;
-import com.linweiyun.genshin.content.skill_node.ElementalOrbSpawner;
 import com.linweiyun.genshin.content.skill_node.TargetSeeker;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.sword.vesna.attack.VesnaChargedAttack;
+import com.linweiyun.genshin.core.character.sword.vesna.attack.VesnaNormalAttack;
+import com.linweiyun.genshin.core.character.sword.vesna.attack.VesnaPlungeAttack;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
@@ -23,18 +26,17 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.combat.decay.DecayGroup;
 import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
-import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -251,112 +253,21 @@ public class VesnaSkill extends SkillBase {
                 .build();
     }
 
-    // ==================== 普攻 ====================
+    // ==================== 普攻/重击/下落 = 转发到独立类 ====================
 
     @Override
     public void attack(Player player, PGCharacter character, int stage) {
-        Level level = player.level();
-
-        int naLevel = Math.max(1, character.getData().getNormalAttackLevel());
-        float multiplier = (float) (
-                ShenheTalentConfig.getNABase(stage)
-                        + ShenheTalentConfig.getNAPerLevel(stage) * (naLevel - 1));
-
-        Vec3 startPos = player.position();
-        Vec3 lookDir = CombatAim.direction(player);
-        Vec3 endPos = startPos.add(lookDir.scale(2.5f));
-
-        List<LivingEntity> targets = new AreaEntityCollector(level, startPos, endPos, 1.0f).execute();
-
-        for (LivingEntity target : targets) {
-            if (target != player && target.isAlive()) {
-                ModDamageSpec spec = ModDamageSpec.builder(AttackType.NORMAL_ATTACK, ModElements.ANEMO.get())
-                        .multiplier(multiplier)
-                        .elementAmount(AttachmentType.ULTRA_STRONG.getInitialAmount())
-                        .attackerCharacter(character)
-                        .build();
-                ModDamageSource source = ModDamageSource.from(spec, player);
-                if (target.level() instanceof ServerLevel serverLevel) {
-                    target.hurtServer(serverLevel, source, 0f);
-                    if (stage == 6 && target.isAlive()) {
-                        target.hurtServer(serverLevel, source, 0f);
-                    }
-                }
-            }
-        }
-
-        if (level.isClientSide()) return;
-        if (!(character instanceof Vesna vesna)) return;
-
-        // 风元素微粒：六段普攻各自有一次机会，期望大约「整套 3 个」（0.5 × 6）。
-        // 位置跟着自己脚下撒，和元素战技的灵剑微粒（固定 1 个）分开。
-        if (level.getRandom().nextFloat() < NORMAL_ATTACK_PARTICLE_CHANCE) {
-            new ElementalOrbSpawner(level, ModElements.ANEMO.get(), 1, true, player.position()).execute();
-        }
-
-        if (!vesna.isWindriderActive()) return;
-
-        int bellCount = getBellCountForStage(stage);
-        int skillLevel = character.getData().getElementalSkillLevel();
-        for (int i = 0; i < bellCount; i++) {
-            VesnaAttackProjectile projectile = VesnaAttackProjectile.create(
-                    level, vesna, player.position(), skillLevel);
-            if (projectile != null) {
-                level.addFreshEntity(projectile);
-                vesna.addEnergy(1);
-            }
-        }
+        VesnaNormalAttack.execute(player, character, stage);
     }
-
-    private static int getBellCountForStage(int stage) {
-        return switch (stage) {
-            case 1, 2, 4, 5 -> 1;
-            case 3 -> 2;
-            case 6 -> 3;
-            default -> 0;
-        };
-    }
-
-    // ==================== 重击 ====================
 
     @Override
     public void chargeAttack(Player player, PGCharacter character) {
-        Level level = player.level();
-        if (level.isClientSide()) return;
+        VesnaChargedAttack.execute(player, character);
+    }
 
-        LivingEntity primaryTarget = new TargetSeeker(player, 10.0, TargetSeeker.TargetingType.LINE_OF_SIGHT).execute();
-        if (primaryTarget == null) return;
-
-        float aoeRange = 1.5f;
-        Vec3 center = primaryTarget.position();
-        List<LivingEntity> targets = new AreaEntityCollector(level,
-                center.add(-aoeRange, -aoeRange, -aoeRange),
-                center.add(aoeRange, aoeRange, aoeRange),
-                aoeRange).execute();
-
-        for (LivingEntity target : targets) {
-            if (target != player) {
-                ModDamageSpec spec = ModDamageSpec.stellarDirect(
-                        ElementalReactionType.STELLAR_SWIRL_WIND, ModElements.ANEMO.get(), 1.0f,
-                        0.5f);
-                spec.setStellarContributors(List.of(character));
-                ModDamageSource source = ModDamageSource.from(spec, player);
-                target.hurtServer((ServerLevel) level, source, 0f);
-            }
-        }
-
-        if (!(character instanceof Vesna vesna)) return;
-        if (!vesna.isWindriderActive()) return;
-
-        int skillLevel = character.getData().getElementalSkillLevel();
-        for (int i = 0; i < 2; i++) {
-            VesnaAttackProjectile projectile = VesnaAttackProjectile.create(
-                    level, vesna, player.position(), skillLevel);
-            if (projectile != null) {
-                level.addFreshEntity(projectile);
-                vesna.addEnergy(1);
-            }
-        }
+    @Override
+    public void plungingAttack(Player player, PGCharacter character) {
+        VesnaPlungeAttack.execute(player, character);
     }
 
     // ==================== E ====================
@@ -619,13 +530,6 @@ public class VesnaSkill extends SkillBase {
 
     /**
      * 大招落地：以<b>落点</b>为圆心、方圆 {@value #BURST_RADIUS} 格内造成
-     * {@value #BURST_SWORD_DAMAGE} 倍率（灵剑那档）的<b>风元素范围伤害</b>。
-     *
-     * <p>落点不是「玩家现在的位置」——是客户端在<b>开始下坠那一刻</b>锁好并发过来的
-     * （{@code BurstLanding}）。下坠不追踪，敌人跑了就打空，落点也不会跟着变。
-     *
-     * <p>身上有<b>辉映·星扩散</b>时整段伤害转化为「星扩散-风」
-     * （走星烁管线：吃星烁加成与精通，不吃增伤/防御 —— 见 {@code StellarDamage}）。
      */
     @Override
     public void elementalBurst(Player player, PGCharacter character) {

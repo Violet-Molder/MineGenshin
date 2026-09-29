@@ -12,10 +12,9 @@ import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
 import com.linweiyun.genshin.core.system.about.block.BlockElementRules;
 import com.linweiyun.genshin.core.system.about.block.BlockElementStore;
 import com.linweiyun.genshin.core.system.about.host.BlockHost;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import org.slf4j.Logger;
 /**
  * 融化反应 —— 增幅反应

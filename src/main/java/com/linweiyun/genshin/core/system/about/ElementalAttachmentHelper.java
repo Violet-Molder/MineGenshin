@@ -8,8 +8,8 @@ import com.linweiyun.genshin.core.system.about.host.ElementalHost;
 import com.linweiyun.genshin.core.system.about.host.EntityHost;
 import com.linweiyun.genshin.core.system.reaction.ElementalReactionManager;
 import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
 import org.slf4j.Logger;
 

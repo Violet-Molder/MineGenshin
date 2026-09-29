@@ -7,8 +7,8 @@ import com.linweiyun.genshin.core.system.poise.HitPoise;
 import com.linweiyun.genshin.core.system.poise.HitImpact;
 import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
 import com.linweiyun.genshin.core.system.performance.HotPathLog;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import lombok.Getter;
 import org.slf4j.Logger;
 

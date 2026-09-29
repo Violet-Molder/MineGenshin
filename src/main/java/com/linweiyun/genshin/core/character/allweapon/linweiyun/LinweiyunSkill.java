@@ -3,7 +3,11 @@
 package com.linweiyun.genshin.core.character.allweapon.linweiyun;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.attack.LinweiyunElementalBurst;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.attack.LinweiyunElementalSkill;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.attack.LinweiyunNormalAttack;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.attack.LinweiyunPlungeAttack;
+import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import net.minecraft.world.entity.player.Player;
 
@@ -13,8 +17,7 @@ import java.util.Locale;
  * 林薇云的<b>普通形态技能</b>（拳 / 剑 / 长柄 / 法器 / 弓 —— 大剑形态见
  * {@link LinweiyunClaymoreSkill}）。
  *
- * <p>普攻 / 战技 / 爆发的实现照抄申鹤那套，抽在 {@link LinweiyunSkillLogic} 里，这里只做转发。
- * 段数同样用 3 段（申鹤那套的段数）。
+ * <p>普攻 / 战技 / 爆发的实现分别在 {@link LinweiyunNormalAttack 独立攻击类} 里。
  */
 public class LinweiyunSkill extends SkillBase {
    private final WeaponAppearance form;
@@ -36,9 +39,6 @@ public class LinweiyunSkill extends SkillBase {
 
    /**
     * 起飞前摇的动画：<b>按形态各一条</b>（{@code fly_start_sword} / {@code fly_start_polearm} …）。
-    *
-    * <p>没做素材的形态会查不到动画，{@code AnimationAvailability} 会拦住切换 ——
-    * 状态与前摇计时照常走，只是视觉上停在上一帧。
     */
    @Override
    public String flyStartAnimation() {
@@ -52,16 +52,26 @@ public class LinweiyunSkill extends SkillBase {
 
    @Override
    public void attack(Player player, PGCharacter character, int comboStage) {
-      LinweiyunSkillLogic.attack(player, character, comboStage);
+      LinweiyunNormalAttack.execute(player, character, comboStage);
+   }
+
+   @Override
+   public void chargeAttack(Player player, PGCharacter character) {
+      // 非大剑形态暂无重击逻辑
+   }
+
+   @Override
+   public void plungingAttack(Player player, PGCharacter character) {
+      LinweiyunPlungeAttack.execute(player, character);
    }
 
    @Override
    public void elementalSkill(Player player, PGCharacter character, int skillType) {
-      LinweiyunSkillLogic.elementalSkill(player, character, skillType);
+      LinweiyunElementalSkill.execute(player, character, skillType);
    }
 
    @Override
    public void elementalBurst(Player player, PGCharacter character) {
-      LinweiyunSkillLogic.elementalBurst(player, character);
+      LinweiyunElementalBurst.execute(player, character);
    }
 }

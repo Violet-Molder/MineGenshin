@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.system.poise.impact;
 
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.poise.PoiseService;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import net.minecraft.core.registries.BuiltInRegistries;

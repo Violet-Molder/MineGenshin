@@ -7,14 +7,10 @@ import com.linweiyun.genshin.core.status.StatusInstance;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
 import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.about.host.ElementalHost;
-import com.linweiyun.genshin.core.system.about.host.ElementalHost;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
-import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;

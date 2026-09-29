@@ -6,12 +6,12 @@ import com.geckolib.cache.animation.BakedAnimations;
 import com.geckolib.cache.model.BakedGeoModel;
 import com.geckolib.loading.math.MathParser;
 import com.linweiyun.genshin.Minegenshin;
-import com.linweiyun.genshin.core.asset.ModAssetPaths;
-import com.linweiyun.genshin.core.asset.GenshinAssets;
-import com.linweiyun.genshin.core.asset.pack.GeoPackSource;
-import com.linweiyun.genshin.core.asset.pack.GenshinGsonLoader;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.asset.ModAssetPaths;
+import com.linweiyun.genshin.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.pack.GeoPackSource;
+import com.linweiyun.genshin.asset.pack.GenshinGsonLoader;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -56,7 +56,7 @@ import java.util.concurrent.Executor;
  *
  * <h2>整包</h2>
  * 仓库里没有逐文件的 {@code .geo.json} / {@code .animation.json}，全部收在一个
- * {@code .minegenshin} 整包里（见 {@link com.linweiyun.genshin.core.asset.pack.GeoPack}）。
+ * {@code .minegenshin} 整包里（见 {@link com.linweiyun.genshin.asset.pack.GeoPack}）。
  * 扫描时把「磁盘上有什么」与「包里有什么」拼成同一张候选表：包内条目按同一套路径 / 后缀规则
  * 参与扫描，读取走 {@link GenshinGsonLoader#readPacked}。找得到整包读取器的环境才读得出包，
  * 找不到的环境包内为空，模型 / 动画自然显示不出来。

@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.core.character.allweapon;
 
-import com.linweiyun.genshin.core.character.appearance.CharacterAppearanceData;
-import com.linweiyun.genshin.core.character.appearance.WeaponAppearance;
+import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearanceData;
+import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 
 import java.util.Map;
 

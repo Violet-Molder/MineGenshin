@@ -4,7 +4,7 @@ import com.linweiyun.genshin.config.character.LinweiyunTalentConfig;
 import com.linweiyun.genshin.config.character.TalentConfigSource;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.allweapon.AllWeaponAppearanceData;
-import com.linweiyun.genshin.core.character.configui.CharacterConfigScreen;
+import com.linweiyun.genshin.core.character.util.config.CharacterConfigScreen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 

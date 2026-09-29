@@ -18,10 +18,10 @@ import com.linweiyun.genshin.client.render.character.appearance.CharacterFaceBon
 import com.linweiyun.genshin.client.render.character.appearance.CharacterPropBones;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterPuppetBones;
 import com.linweiyun.genshin.config.PerformanceConfig;
-import com.linweiyun.genshin.core.character.CharacterHelper;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.mojang.blaze3d.vertex.PoseStack;

@@ -1,19 +1,7 @@
 package com.linweiyun.genshin.client.render.gui.hud;
 
-import com.google.common.base.Suppliers;
-import com.linweiyun.genshin.Minegenshin;
-import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.lowdragmc.lowdraglib2.gui.hud.ModularHudLayer;
-import com.lowdragmc.lowdraglib2.gui.sync.bindings.impl.SupplierDataSource;
-import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
-import com.lowdragmc.lowdraglib2.gui.ui.UI;
-import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
-import com.linweiyun.genshin.core.log.LogGroup;
-import com.linweiyun.genshin.core.log.ModLog;
-import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
+import com.linweiyun.genshin.util.log.LogGroup;
+import com.linweiyun.genshin.util.log.ModLog;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

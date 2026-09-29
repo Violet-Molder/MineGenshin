@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.character.polearm.test;
 
 import com.linweiyun.genshin.config.character.LinweiyunAttributeConfig;
-import com.linweiyun.genshin.core.character.CharacterAscendAttribute;
+import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import com.linweiyun.genshin.core.character.polearm.PolearmCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;

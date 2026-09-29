@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.core.character.polearm.test;
 
-import com.linweiyun.genshin.core.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.GenshinAssets;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterBoneMount;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;

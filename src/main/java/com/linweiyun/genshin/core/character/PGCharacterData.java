@@ -9,9 +9,8 @@ import com.linweiyun.genshin.content.effect.character.CharacterEffectContainer;
 import com.linweiyun.genshin.content.items.artifact.inventory.AllWeaponArtifactInventory;
 import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
 import com.linweiyun.genshin.core.attachment.StatusContainer;
-import com.linweiyun.genshin.core.character.appearance.CharacterAppearance;
-import com.linweiyun.genshin.core.character.appearance.CharacterAppearanceData;
-import com.linweiyun.genshin.core.character.attachment.CharacterAttachmentContainer;
+import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearance;
+import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearanceData;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
@@ -107,8 +106,6 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
    private ArtifactInventory artifactInventory = new ArtifactInventory();
    @Persisted(key = "weapon_base_atk")
    private double weaponBaseATK = 0.0;
-   @Persisted(key = "character_attachments")
-   private CharacterAttachmentContainer characterAttachments = new CharacterAttachmentContainer();
    @Persisted(key = "leg_appearance")
    @DescSynced
    private int legAppearance = CharacterAppearance.DEFAULT_MASK;
@@ -296,10 +293,6 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
 
    public int getLevel() {
       return this.characterLevel;
-   }
-
-   public CharacterAttachmentContainer getAttachments() {
-      return this.characterAttachments;
    }
 
    private void recalculateTalentLevels() {
