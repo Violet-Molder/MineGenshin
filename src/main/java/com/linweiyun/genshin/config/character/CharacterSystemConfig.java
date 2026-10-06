@@ -27,6 +27,7 @@ public final class CharacterSystemConfig {
 
     public static ModConfigSpec.ConfigValue<List<? extends String>> CUSTOM_MODEL_CHARACTERS;
     public static ModConfigSpec.ConfigValue<List<? extends String>> ACTION_SYSTEM_CHARACTERS;
+    public static ModConfigSpec.BooleanValue LOAD_CHARACTER_GEO;
 
     private CharacterSystemConfig() {
     }
@@ -34,9 +35,16 @@ public final class CharacterSystemConfig {
     public static void register(ModConfigSpec.Builder builder) {
         builder.push("character_system");
 
+        LOAD_CHARACTER_GEO = builder
+                .comment("总门禁：是否加载角色 Geo 模型与动画。",
+                        "设为 false 时角色不加载 Geo 模型和动画（走原版渲染兜底），",
+                        "但物品和实体的 Geo 不受影响。改完后需要重启游戏 / 重载资源。")
+                .define("load_character_geo", false);
+
         CUSTOM_MODEL_CHARACTERS = builder
                 .comment("使用专属模型 + GeckoLib 动画的角色 ID 名单。",
-                        "不在名单里的角色不做模型替换，只在伤害结算那一刻播一次摆臂。")
+                        "不在名单里的角色不做模型替换，只在伤害结算那一刻播一次摆臂。",
+                        "load_character_geo 为 false 时本名单不生效。")
                 .defineListAllowEmpty("custom_model_characters",
                         List.of(),
                         () -> "vesna",
@@ -65,6 +73,18 @@ public final class CharacterSystemConfig {
     /** 这个角色是否启用完整动作系统。 */
     public static boolean actionSystem(String characterId) {
         return inList(ACTION_SYSTEM_CHARACTERS, characterId);
+    }
+
+    /** 总门禁：是否加载角色 Geo 模型与动画。false 时 Geo缓存不扫 character/ 根。 */
+    public static boolean loadCharacterGeo() {
+        if (LOAD_CHARACTER_GEO == null) {
+            return true;
+        }
+        try {
+            return LOAD_CHARACTER_GEO.get();
+        } catch (IllegalStateException notLoadedYet) {
+            return LOAD_CHARACTER_GEO.getDefault();
+        }
     }
 
     private static boolean inList(ModConfigSpec.ConfigValue<List<? extends String>> config, String characterId) {

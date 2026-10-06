@@ -28,6 +28,7 @@ const FALLBACK_MENU = [
   { slug: "port-targeting-patch", title: "索敌移植补丁记录", group: "深入文档", href: "/doc/port-targeting-patch" },
   { slug: "rendering-photon2", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2" },
   { slug: "rendering-photon2-reference", title: "Minecraft 26.2 渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference" },
+  { slug: "ldlib2-node-graph", title: "LDLib2 节点图工具包", group: "扩展框架", href: "/doc/ldlib2-node-graph" },
   { slug: "readme", title: "项目介绍", group: "项目", href: "/doc/readme" },
   { slug: "changelog", title: "更新日志", group: "项目", href: "/doc/changelog" },
 ];

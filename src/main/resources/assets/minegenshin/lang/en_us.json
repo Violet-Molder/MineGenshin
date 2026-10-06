@@ -3,7 +3,7 @@
   "character.name.linweiyun": "Linweiyun",
   "character.name.raiden_shogun": "Raiden Shogun",
   "character.name.shenhe": "Shenhe",
-  "character.name.test": "Test",
+  "character.name.sandrone": "Test",
   "character.name.columbina": "Columbina",
   "character.name.vesna": "Vesna",
 
@@ -345,6 +345,7 @@
   "key.minegenshin.artifact_equip_screen_key": "Backpack",
   "key.minegenshin.artifact_equip_screen_key_2": "Ascension Screen",
   "key.minegenshin.config_key": "Character Config",
+  "key.minegenshin.walk_toggle": "Walk/Run Toggle",
   "button.tutorial.one": "One",
 
   "item.minegenshin.dark_fragment": "Dark Fragment",
@@ -744,6 +745,8 @@
   "key.minegenshin.switched_character": "Switched to %s",
 
   "message.minegenshin.no_alive_character": "No party members with HP > 0, cannot enable Genshin mode",
+  "message.minegenshin.walk_mode_on": "Switched to Walk mode (slower)",
+  "message.minegenshin.walk_mode_off": "Switched to Run mode",
   "message.minegenshin.adventure_rank_exp_low": "Experience level below 30, cannot breakthrough Adventure Rank",
   "message.minegenshin.adventure_rank_breakthrough_not_met": "Adventure Rank breakthrough conditions not met",
   "message.minegenshin.adventure_rank_breakthrough_success": "Adventure Rank breakthrough successful! Current World Level: %s",

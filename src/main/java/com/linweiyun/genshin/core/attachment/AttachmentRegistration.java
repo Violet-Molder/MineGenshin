@@ -42,6 +42,27 @@ public class AttachmentRegistration {
             );
 
     /**
+     * 「走 / 跑」切换状态。{@code true} = 走（速度变慢），{@code false} = 跑（原版走路速度）。
+     *
+     * <p>原神模式的移速还原：走 / 跑 - 疾跑 的切换看「是否进入原版冲刺」，走 - 跑 的
+     * 切换看这个附件。疾跑（冲刺）时不会减速，疾跑/走 都只在「没在冲刺」这个前提下区分。
+     *
+     * <p>真正的移速修正（叠加到 {@code Attributes.MOVEMENT_SPEED}）在
+     * {@code WalkRunSprintHandler} 里每 tick 重算，这里只存「走」这个开关本身。
+     */
+    public static final Supplier<AttachmentType<Boolean>> WALK_MODE_ATTACHMENT =
+            ATTACHMENTS.register("player_walk_mode",
+                    () -> AttachmentType.builder(() -> false)
+                            .serialize(Codec.BOOL.fieldOf("walk_mode"))
+                            .sync(StreamCodec.of(
+                                    FriendlyByteBuf::writeBoolean,
+                                    FriendlyByteBuf::readBoolean
+                            ))
+                            .copyOnDeath()
+                            .build()
+            );
+
+    /**
      * 「这个玩家从原神模式里退出来过」。
      *
      * <p>非原神模式下要把当前角色的属性折算到玩家身上，但折算只能在

@@ -4,7 +4,7 @@ import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
-import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
+import com.linweiyun.genshin.core.character.ModCharacters;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;

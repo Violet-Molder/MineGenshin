@@ -9,6 +9,7 @@ public record LocomotionAnims(
    RawAnimation idle,
    RawAnimation walk,
    RawAnimation run,
+   RawAnimation sprint,
    RawAnimation walkBack,
    RawAnimation crouch,
    RawAnimation crouchWalk,
@@ -52,6 +53,7 @@ public record LocomotionAnims(
          loop(idle),
          loop(walk),
          loop(run),
+         loop("sprint"),
          loop(walkBack),
          loop(crouch),
          loop(crouchWalk),
@@ -72,11 +74,38 @@ public record LocomotionAnims(
       );
    }
 
+   public LocomotionAnims withSprint(@Nullable String sprint) {
+      return new LocomotionAnims(
+         this.idle,
+         this.walk,
+         this.run,
+         sprint == null ? null : loop(sprint),
+         this.walkBack,
+         this.crouch,
+         this.crouchWalk,
+         this.sleep,
+         this.climb,
+         this.waterIdle,
+         this.waterWalk,
+         this.waterWalkBack,
+         this.swim,
+         this.jump,
+         this.jumpDown,
+         this.landing,
+         this.landingLight,
+         this.runStop,
+         this.fly,
+         this.flyUp,
+         this.flyDown
+      );
+   }
+
    public LocomotionAnims withTransitions(@Nullable String landing, int landingTicks, @Nullable String runStop, int runStopTicks) {
       return new LocomotionAnims(
          this.idle,
          this.walk,
          this.run,
+         this.sprint,
          this.walkBack,
          this.crouch,
          this.crouchWalk,
@@ -102,6 +131,7 @@ public record LocomotionAnims(
          this.idle,
          this.walk,
          this.run,
+         this.sprint,
          this.walkBack,
          this.crouch,
          this.crouchWalk,
@@ -127,6 +157,7 @@ public record LocomotionAnims(
          this.idle,
          this.walk,
          this.run,
+         this.sprint,
          this.walkBack,
          this.crouch,
          this.crouchWalk,

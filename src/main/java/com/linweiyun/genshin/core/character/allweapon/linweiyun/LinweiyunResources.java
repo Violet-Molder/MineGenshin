@@ -68,7 +68,7 @@ public final class LinweiyunResources {
               List.of(),
               0,0,0,8
 
-      ).withEngagement(Engagement.melee().withApproachStep(false)));
+      ).withEngagement(Engagement.melee()));
       comboSteps.put(2, new ActionStep(
               "shenhe_attack_2",
               40,
@@ -79,7 +79,7 @@ public final class LinweiyunResources {
               List.of(),
               0,0,0,8
 
-      ).withEngagement(Engagement.melee().withApproachStep(false)));
+      ).withEngagement(Engagement.melee()));
       return new CharacterActionData(new ComboData(2, comboSteps), null, null, null);
    }
 

@@ -1,16 +1,15 @@
 // restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
-package com.linweiyun.genshin.core.system.registry.register;
+package com.linweiyun.genshin.core.character;
 
 import com.linweiyun.genshin.Minegenshin;
-import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.allweapon.linweiyun.Linweiyun;
 import com.linweiyun.genshin.core.character.catalyst.columbina.Columbina;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.Vodyanitsa;
 import com.linweiyun.genshin.core.character.polearm.arlecchino.Arlecchino;
 import com.linweiyun.genshin.core.character.polearm.raiden_shogun.RaidenShogun;
 import com.linweiyun.genshin.core.character.polearm.shenhe.Shenhe;
-import com.linweiyun.genshin.core.character.polearm.test.TestCharacter;
+import com.linweiyun.genshin.core.character.claymore.sandrone.SandroneCharacter;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import java.util.Collection;
@@ -19,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
+
+import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
@@ -28,6 +29,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public class ModCharacters {
    public static final DeferredRegister<PGCharacter> CHARACTERS = ModRegistries.CHARACTERS;
    private static final Map<Integer, Supplier<PGCharacter>> FACTORIES = new LinkedHashMap<>();
+
    private static final Map<Identifier, Supplier<PGCharacter>> FACTORIES_BY_ID = new LinkedHashMap<>();
    public static final DeferredHolder<PGCharacter, Shenhe> SHENHE = register("shenhe", 135001, Shenhe::new);
    public static final DeferredHolder<PGCharacter, Arlecchino> ARLECCHINO = register("arlecchino", 135002, Arlecchino::new);
@@ -36,8 +38,8 @@ public class ModCharacters {
    public static final DeferredHolder<PGCharacter, Vesna> VESNA = register("vesna", 115001, Vesna::new);
    public static final DeferredHolder<PGCharacter, Vodyanitsa> VODYANITSA = register("vodyanitsa", 145002, Vodyanitsa::new);
     public static final DeferredHolder<PGCharacter, Linweiyun> LINWEIYUN = register("linweiyun", 105001, Linweiyun::new);
-    /** 测试用长柄角色（135009）—— 数值 / 资源 / 技能全部照抄林薇云，见 {@link TestCharacter}。 */
-    public static final DeferredHolder<PGCharacter, TestCharacter> TEST = register("test", 135009, TestCharacter::new);
+    /** 测试用长柄角色（135009）—— 数值 / 资源 / 技能全部照抄林薇云，见 {@link SandroneCharacter}。 */
+    public static final DeferredHolder<PGCharacter, SandroneCharacter> TEST = register(SandroneCharacter.ID, SandroneCharacter.UID, SandroneCharacter::new);
 
     private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(String name, int uuid, Supplier<T> factory) {
       DeferredHolder<PGCharacter, T> holder = CHARACTERS.register(name, factory);

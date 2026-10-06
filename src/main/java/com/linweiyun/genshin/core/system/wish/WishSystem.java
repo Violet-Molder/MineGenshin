@@ -6,7 +6,7 @@ import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
-import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
+import com.linweiyun.genshin.core.character.ModCharacters;
 import com.linweiyun.genshin.content.items.ModItems;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;

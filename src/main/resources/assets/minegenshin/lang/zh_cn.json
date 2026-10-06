@@ -3,7 +3,7 @@
   "character.name.linweiyun": "林薇云",
   "character.name.raiden_shogun": "雷电将军",
   "character.name.shenhe": "申鹤",
-  "character.name.test": "测试角色",
+  "character.name.sandrone": "测试角色",
   "character.name.columbina": "哥伦比娅",
   "character.name.vesna": "薇斯娜",
 
@@ -589,6 +589,7 @@
   "key.minegenshin.artifact_equip_screen_key": "背包",
   "key.minegenshin.artifact_equip_screen_key_2": "升格界面",
   "key.minegenshin.config_key": "角色配置",
+  "key.minegenshin.walk_toggle": "走/跑切换",
   "button.tutorial.one": "一",
 
   "item.minegenshin.dark_fragment": "漆黑碎片",
@@ -696,6 +697,8 @@
   "key.minegenshin.switched_character": "已切换到角色 %s",
 
   "message.minegenshin.no_alive_character": "队伍中没有生命值大于0的角色，无法开启原神模式",
+  "message.minegenshin.walk_mode_on": "已切换为「走」模式（移动变慢）",
+  "message.minegenshin.walk_mode_off": "已切换为「跑」模式",
   "message.minegenshin.adventure_rank_exp_low": "经验等级不足30级，无法进行冒险等级突破",
   "message.minegenshin.adventure_rank_breakthrough_not_met": "不满足冒险等级突破条件",
   "message.minegenshin.adventure_rank_breakthrough_success": "冒险等级突破成功！当前世界等级: %s",

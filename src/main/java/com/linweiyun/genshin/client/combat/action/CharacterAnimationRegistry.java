@@ -7,8 +7,8 @@ import com.linweiyun.genshin.core.character.allweapon.linweiyun.Linweiyun;
 import com.linweiyun.genshin.core.character.allweapon.linweiyun.LinweiyunAnimations;
 import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheAnimations;
 import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheResources;
-import com.linweiyun.genshin.core.character.polearm.test.TestAnimations;
-import com.linweiyun.genshin.core.character.polearm.test.TestCharacter;
+import com.linweiyun.genshin.core.character.claymore.sandrone.TestAnimations;
+import com.linweiyun.genshin.core.character.claymore.sandrone.SandroneCharacter;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.character.sword.vesna.VesnaAnimations;
 
@@ -45,7 +45,7 @@ public final class CharacterAnimationRegistry {
                 LinweiyunAnimations.INSTANCE);
 
         // test：长柄测试角色，动画复用林薇云那份，只是把飞行接过成长柄那三条。
-        CharacterActions.register(TestCharacter.ID, ResourceDrivenActionHandler.INSTANCE,
+        CharacterActions.register(SandroneCharacter.ID, ResourceDrivenActionHandler.INSTANCE,
                 TestAnimations.INSTANCE);
 
         registerPlaceholder("arlecchino");

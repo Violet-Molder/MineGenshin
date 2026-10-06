@@ -6,8 +6,8 @@ import com.geckolib.cache.animation.BakedAnimations;
 import com.geckolib.cache.model.BakedGeoModel;
 import com.geckolib.loading.math.MathParser;
 import com.linweiyun.genshin.Minegenshin;
-import com.linweiyun.genshin.asset.ModAssetPaths;
 import com.linweiyun.genshin.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.ModAssetPaths;
 import com.linweiyun.genshin.asset.pack.GeoPackSource;
 import com.linweiyun.genshin.asset.pack.GenshinGsonLoader;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -32,43 +32,6 @@ import java.util.concurrent.Executor;
 
 /**
  * 本 MOD 自己的 GeckoLib 资源缓存（模型 + 动画）。
- *
- * <h2>为什么不用 GeckoLib 的缓存</h2>
- * GeckoLib 5.5.6 的扫描根是<b>硬编码</b>的 {@code assets/<ns>/geckolib/{models,animations}}，
- * 没有公开接口能加根目录。本 MOD 想让角色资源集中在
- * {@code assets/minegenshin/character/<角色id>/}，所以自己扫、自己烘培、自己存。
- *
- * <h2>为什么不用 Mixin 改 GeckoLib</h2>
- * 所有模型/动画查找都收敛在 {@code GeoModel.getBakedModel(Identifier)} 与
- * {@code GeoModel.getBakedAnimation(T, String)} 这两个 <b>public 非 final</b> 方法上
- * （`RenderPassInfo.create` 与 `AnimationProcessor` 都走它们），
- * 所以在自己的 {@link GenshinGeoModel} 里覆盖这两个方法就够了 ——
- * 不碰 GeckoLib 任何内部状态，<b>整合包里其它 MOD 完全不受影响</b>。
- *
- * <h2>烘培用的是 GeckoLib 的公开 API</h2>
- * {@link GeckoLibGsonLoader} 与 {@link MathParser} 都是 public，
- * 所以烘培结果与 GeckoLib 自己烘的一模一样，不存在两套解析逻辑。
- *
- * <h2>扫描范围</h2>
- * 只扫本 MOD 命名空间下的 {@code character/}、{@item}/、{@code entity/} 三个根，
- * 且只认 {@code .geo.json} 与 {@code .animation.json} 两种后缀 ——
- * 所以 {@code assets/minegenshin/items/xxx.json}（物品定义）这类同前缀文件不会被误收。
- *
- * <h2>整包</h2>
- * 仓库里没有逐文件的 {@code .geo.json} / {@code .animation.json}，全部收在一个
- * {@code .minegenshin} 整包里（见 {@link com.linweiyun.genshin.asset.pack.GeoPack}）。
- * 扫描时把「磁盘上有什么」与「包里有什么」拼成同一张候选表：包内条目按同一套路径 / 后缀规则
- * 参与扫描，读取走 {@link GenshinGsonLoader#readPacked}。找得到整包读取器的环境才读得出包，
- * 找不到的环境包内为空，模型 / 动画自然显示不出来。
- * 两边同名时用哪一份由 {@link GeoPackSource#usePacked} 裁定：<b>包内条目优先</b>
- * （磁盘上同名位置另有一份随包副本，两份不等价），{@code local/} 那一份例外。
- *
- * <h2>两种资源</h2>
- * 对象目录里还有一个免打包子目录 {@code local/}（见 {@code ModAssetPaths.LOCAL_DIR}）：
- * 里面的 {@code .geo.json} / {@code .animation.json} 直接放在仓库里、原样直读、永不进整包。
- * 它不算资源身份（键会去掉 {@code local} 这一层），所以
- * {@code character/vesna/local/vesna.geo.json} 就是 {@code character/vesna/vesna} 这个模型；
- * 与包内同名时以它为准（先处理包与对象根、后处理 {@code local/}，后面的覆盖前面的）。
  */
 public final class GenshinGeoCache implements PreparableReloadListener {
 
@@ -257,6 +220,8 @@ public final class GenshinGeoCache implements PreparableReloadListener {
         Map<Identifier, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
 
         for (String root : ROOTS) {
+            // 扫描阶段不受门禁影响：缓存始终全量扫描，
+            // 角色 Geo 是否启用的门禁只在校验渲染执行时生效（见 CharacterRenderDispatcher）。
             Map<Identifier, Resource> resources;
             try {
                 resources = resourceManager.listResources(root, id -> id.getNamespace().equals(Minegenshin.MOD_ID));

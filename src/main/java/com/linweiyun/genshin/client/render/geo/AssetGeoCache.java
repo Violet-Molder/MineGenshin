@@ -363,26 +363,8 @@ public final class AssetGeoCache implements PreparableReloadListener {
       if (empty && ++emptyScans < 5) {
          LOGGER.warn("[AssetGeoCache] 本次一个文件都没扫到（资源可能还没就绪），保留重扫机会：第 {} / {} 次", new Object[]{emptyScans, 5});
       } else {
-         if (empty) {
-            LOGGER.error("[AssetGeoCache] 连续 {} 次没扫到任何统一布局资源，停止重扫", emptyScans);
-         }
-
          emptyScans = 0;
          reloaded = true;
-         LOGGER.info("[AssetGeoCache] 已索引 {} 个目录 / {} 个模型 / {} 个动画文件", new Object[]{index.size(), models.size(), animations.size()});
-         if (LOGGER.isInfoEnabled()) {
-            for (Entry<String, AssetGeoCache.DirFiles> entry : new TreeMap<>(index).entrySet()) {
-               AssetGeoCache.DirFiles files = entry.getValue();
-               LOGGER.info(
-                  "[AssetGeoCache]   {}  model={}  animation={}  texture={}",
-                  new Object[]{entry.getKey(), describe(files.model()), describe(files.animation()), describe(files.texture())}
-               );
-            }
-
-            for (Entry<Identifier, BakedAnimations> entry : new TreeMap<>(animations).entrySet()) {
-               LOGGER.info("[AssetGeoCache]   动画 {} 里可用名字：{}", entry.getKey(), entry.getValue().animations().keySet());
-            }
-         }
       }
    }
 

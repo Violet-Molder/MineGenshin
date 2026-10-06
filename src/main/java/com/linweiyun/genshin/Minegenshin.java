@@ -6,6 +6,7 @@ import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.content.items.ModItems;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.Backpack;
+import com.linweiyun.genshin.core.character.ModCharacters;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -98,9 +99,6 @@ public class Minegenshin {
     private void commonSetup(FMLCommonSetupEvent event) {
         ModElements.setupSubElements();
         NetworkManager.init();
-        // 属性上限解放（AttributeFix 等价物）：要等所有属性都注册完，
-        // 所以放 enqueueWork。放这里而不是 FMLLoadCompleteEvent —— 数据生成（runData）
-        // 不会触发后者，那样这条路径就只在正式游戏里才被走到、没法验证。
         event.enqueueWork(AttributeCapHandler::applyCapRelief);
     }
 
@@ -126,9 +124,7 @@ public class Minegenshin {
     public void onServerStopping(ServerStoppingEvent event) {
         DecayCounterService.shutdown();
         LOGGER.info("DecayCounter Worker stopped");
-        // 清掉飘字合并台账：里面按目标 UUID 存状态，停机后没有保留价值
         DamageNumberThrottle.clear();
-        // 队伍扫描的每刻快照会持有 ServerLevel 引用，换世界前清掉
         ReactionPriorityCalculator.clearSnapshots();
     }
 }

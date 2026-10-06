@@ -1,8 +1,8 @@
-package com.linweiyun.genshin.core.character.polearm.test;
+package com.linweiyun.genshin.core.character.claymore.sandrone;
 
 import com.linweiyun.genshin.config.character.LinweiyunAttributeConfig;
+import com.linweiyun.genshin.core.character.claymore.ClaymoreCharacter;
 import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
-import com.linweiyun.genshin.core.character.polearm.PolearmCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
@@ -14,46 +14,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * 测试用长柄角色 <b>test</b>（UUID {@code 135009}）。
- *
- * <p>这是一个「骨架角色」：所有数值、资源、技能逻辑<b>全部照抄林薇云</b>
- * （见 {@link TestResources} / {@link TestSkillLogic}），
- * 目的是给 Photon 特效接线提供一个可控的落脚点 —— 改特效时不用去动任何一个正式角色。
- *
- * <table border="1">
- *   <caption>与林薇云的差异</caption>
- *   <tr><th>项</th><th>林薇云</th><th>test</th></tr>
- *   <tr><td>武器分类</td><td>全武器类（六形态）</td><td><b>长柄</b>（{@link PolearmCharacter}）</td></tr>
- *   <tr><td>UUID</td><td>105001</td><td><b>135009</b></td></tr>
- *   <tr><td>资源 id</td><td>linweiyun</td><td>test（模型/贴图/动画仍指向林薇云的目录）</td></tr>
- *   <tr><td>其它</td><td colspan="2">星级 / 元素 / 突破属性 / 冷却 / 充能 / 属性成长表 全部相同</td></tr>
- * </table>
- *
- * <p><b>资源</b>：{@code assets/minegenshin/character/test/} 目前不存在，
- * 所以 {@link TestResources#RENDER_DATA} 显式复用林薇云的模型 / 贴图 / 动画路径 ——
- * 这也是项目里「缺项就回退到兜底角色」那条规则的显式写法。
- * 以后给 test 做了自己的素材，只要把 {@code TestResources} 里那三行换成
- * {@code "character/test/test.geo.json"} 之类的路径即可，其它代码一行都不用动。
- */
-public class TestCharacter extends PolearmCharacter {
+public class SandroneCharacter extends ClaymoreCharacter {
     /** 资源目录名 / {@code CharacterRenderRepository} 的 key / 动画登记表的 key。 */
-    public static final String ID = "test";
+    public static final String ID = "sandrone";
     /** 角色 UUID。 */
-    public static final int UID = 135009;
+    public static final int UID = 125001;
 
-    public TestCharacter() {
+    public SandroneCharacter() {
         super(
                 UID,
                 5,
-                Component.translatable("character.name.test"),
+                Component.translatable("character.name.sandrone"),
                 ModElements.ANEMO.getId().toString(),
                 CharacterAscendAttribute.ATK,
                 400,
                 400,
                 80.0F,
                 ID,
-                TestCharacter.statGrowthMap()
+                SandroneCharacter.statGrowthMap()
         );
         this.skill = new TestSkill();
         CharacterRenderRepository.register(TestResources.RENDER_DATA);

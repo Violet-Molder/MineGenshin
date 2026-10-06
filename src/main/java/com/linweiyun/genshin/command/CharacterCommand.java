@@ -2,7 +2,7 @@ package com.linweiyun.genshin.command;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
+import com.linweiyun.genshin.core.character.ModCharacters;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.mojang.brigadier.Command;

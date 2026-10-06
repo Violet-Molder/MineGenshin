@@ -4,11 +4,12 @@ package com.linweiyun.genshin.client.render.character;
 
 import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterAppearanceOptionBones;
+import com.linweiyun.genshin.client.render.character.appearance.CharacterBoneVisibility;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterFaceBones;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterPropBones;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterPuppetBones;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
+import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
@@ -75,6 +76,7 @@ public final class FirstPersonCharacterRenderer {
 
    private static void render(LocalPlayer player, String charId, CharacterRenderData data, FirstPersonAnims firstPerson, RenderHandEvent event) {
       CharacterRenderDispatcher.RenderTarget target = CharacterRenderDispatcher.targetFor(player, charId, data);
+      PGCharacter current = CharacterHelper.getCurrentCharacter(player);
       if (target != null) {
          FirstPersonAnims.FirstPersonCamera camera = firstPerson.camera() == null ? FirstPersonAnims.FirstPersonCamera.DEFAULT : firstPerson.camera();
          float scale = camera.scale() <= 0.0F ? 1.0F : camera.scale() * data.bodyScale();
@@ -116,7 +118,7 @@ public final class FirstPersonCharacterRenderer {
                         CharacterFaceBones.updaterFor(player),
                         CharacterRenderDispatcher.combine(
                            CharacterPuppetBones.updaterFor(player),
-                           CharacterAppearanceOptionBones.updaterFor(player, CharacterHelper.getCurrentCharacter(player))
+                           CharacterBoneVisibility.forCharacter(current).weaponUpdater(player, current)
                         )
                      )
                   )

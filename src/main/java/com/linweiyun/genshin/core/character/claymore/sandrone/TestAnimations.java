@@ -1,4 +1,4 @@
-package com.linweiyun.genshin.core.character.polearm.test;
+package com.linweiyun.genshin.core.character.claymore.sandrone;
 
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
 import com.linweiyun.genshin.core.system.combat.animation.config.LocomotionAnims;

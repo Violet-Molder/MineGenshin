@@ -7,6 +7,7 @@ import net.neoforged.neoforge.common.ModConfigSpec.Builder;
 public class CharacterConfig {
    public static void register(Builder builder) {
       CharacterXpConfig.register(builder);
+      CharacterSystemConfig.register(builder);
       ShenheConfig.register(builder);
       ColumbinaConfig.register(builder);
       ArlecchinoConfig.register(builder);

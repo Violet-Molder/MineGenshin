@@ -1,15 +1,9 @@
-package com.linweiyun.genshin.core.character.polearm.test;
+package com.linweiyun.genshin.core.character.claymore.sandrone;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.talent.SkillBase;
 import net.minecraft.world.entity.player.Player;
 
-/**
- * test 的招式表 —— 只做转发，实现全在 {@link TestSkillLogic}。
- *
- * <p>数值、段数、判定范围全部照抄林薇云（她那份又是照抄申鹤的），
- * 见 {@code LinweiyunSkillLogic} 的类注释。
- */
 public class TestSkill extends SkillBase {
 
     /** 普攻段数：与动作数据的 ComboData 段数一致。 */

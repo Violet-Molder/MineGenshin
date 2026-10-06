@@ -2,7 +2,7 @@ package com.linweiyun.genshin.core.attachment;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
-import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
+import com.linweiyun.genshin.core.character.ModCharacters;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;

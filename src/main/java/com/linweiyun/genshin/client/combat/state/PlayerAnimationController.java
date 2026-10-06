@@ -9,6 +9,7 @@ import com.geckolib.animation.RawAnimation.Stage;
 import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationPoint;
 import com.geckolib.animation.state.AnimationTest;
+import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -221,6 +222,15 @@ public final class PlayerAnimationController {
    @Nullable
    private static RawAnimation pickLocomotion(Player player, LocomotionAnims loco, boolean isMoving, double movedX, double movedY, double movedZ) {
       RawAnimation picked = pickLocomotionRaw(player, loco, isMoving, movedX, movedY, movedZ);
+      // 疾跑片段：不是每个模型都有「sprint」这条。有就播 sprint，没有就退回 run，
+      // 别让冲刺一走直接退成 idle。
+      String sprintName = targetName(picked);
+      if (sprintName != null && sprintName.equals(targetName(loco.sprint())) && !AnimationAvailability.existsFor(player, sprintName)) {
+         String runName = targetName(loco.run());
+         if (runName != null && AnimationAvailability.existsFor(player, runName)) {
+            picked = loco.run();
+         }
+      }
       return existingOrIdle(player, loco, picked);
    }
 
@@ -311,6 +321,9 @@ public final class PlayerAnimationController {
                   return loco.crouchWalk();
                } else if (player.isSprinting()) {
                   transientState.wasRunning = true;
+                  return loco.sprint();
+               } else if (isRunLocomotion(player)) {
+                  transientState.wasRunning = true;
                   return loco.run();
                } else {
                   transientState.wasRunning = false;
@@ -351,6 +364,24 @@ public final class PlayerAnimationController {
 
    private static boolean isFlying(Player player) {
       return player.isFallFlying() ? true : player instanceof LocalPlayer && player.getAbilities().flying;
+   }
+
+   /** 当前是不是「原神模式」（只有原神模式里才区分走/跑/疾跑三档移速）。 */
+   private static boolean isInGenshinMode(Player player) {
+      return player.hasData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT)
+         && Boolean.TRUE.equals(player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT));
+   }
+
+   /** 原神模式下走到「走」（慢速）档：move 慢、动画播 walk。 */
+   private static boolean isWalkLocked(Player player) {
+      return isInGenshinMode(player)
+         && player.hasData(AttachmentRegistration.WALK_MODE_ATTACHMENT)
+         && Boolean.TRUE.equals(player.getData(AttachmentRegistration.WALK_MODE_ATTACHMENT));
+   }
+
+   /** 原神模式下走到「跑」档：动画播 run；非原神模式一律回原版走路（walk）。 */
+   private static boolean isRunLocomotion(Player player) {
+      return isInGenshinMode(player) && !isWalkLocked(player);
    }
 
    /**

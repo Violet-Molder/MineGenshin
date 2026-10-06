@@ -12,12 +12,9 @@ import com.geckolib.renderer.base.GeoRenderState;
 import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
 import com.linweiyun.genshin.client.combat.state.AnimationStateSync;
 import com.linweiyun.genshin.client.combat.state.BodyYawSync;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterAppearanceBones;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterAppearanceOptionBones;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterFaceBones;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterPropBones;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterPuppetBones;
+import com.linweiyun.genshin.client.render.character.appearance.*;
 import com.linweiyun.genshin.config.PerformanceConfig;
+import com.linweiyun.genshin.config.character.CharacterSystemConfig;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -225,6 +222,11 @@ public final class CharacterRenderDispatcher {
          return false;
       }
 
+      // 总门禁：角色 Geo 关闭时不走 Geo 渲染，回退到原版玩家模型。
+      if (!CharacterSystemConfig.loadCharacterGeo()) {
+         return false;
+      }
+
       String charId = CharacterHelper.getActiveCharacterId(player);
       if (charId != null && !charId.isEmpty()) {
          CharacterRenderData data = CharacterRenderRepository.get(charId);
@@ -292,8 +294,9 @@ public final class CharacterRenderDispatcher {
       BoneUpdater<GeoRenderState> propUpdater = CharacterPropBones.updaterFor(player);
       BoneUpdater<GeoRenderState> faceUpdater = CharacterFaceBones.updaterFor(player);
       BoneUpdater<GeoRenderState> puppetUpdater = CharacterPuppetBones.updaterFor(player);
-      BoneUpdater<GeoRenderState> weaponUpdater = CharacterAppearanceOptionBones.updaterFor(player, character);
-      BoneUpdater<GeoRenderState> boneUpdater = combine(combine(appearanceUpdater, propUpdater), combine(combine(faceUpdater, puppetUpdater), weaponUpdater));
+      BoneUpdater<GeoRenderState> physicsUpdater = CharacterBonePhysics.forCharacter(character).clothUpdater(player, character);
+      BoneUpdater<GeoRenderState> weaponUpdater = CharacterBoneVisibility.forCharacter(character).weaponUpdater(player, character);
+      BoneUpdater<GeoRenderState> boneUpdater = combine(combine(combine(appearanceUpdater, propUpdater), combine(combine(faceUpdater, puppetUpdater), weaponUpdater)), physicsUpdater);
       BoneUpdater<GeoRenderState> submitUpdater = boneUpdater;
       if (PerformanceConfig.DEBUG_DISABLE_BONE_UPDATERS != null && (Boolean)PerformanceConfig.DEBUG_DISABLE_BONE_UPDATERS.get()) {
          submitUpdater = null;

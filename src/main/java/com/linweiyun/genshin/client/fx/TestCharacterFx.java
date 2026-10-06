@@ -5,8 +5,8 @@ import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import com.linweiyun.genshin.client.render.character.AttachmentHelper;
 import com.linweiyun.genshin.client.render.character.WeaponAnchorCache;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
-import com.linweiyun.genshin.core.character.polearm.test.TestAnimations;
-import com.linweiyun.genshin.core.character.polearm.test.TestCharacter;
+import com.linweiyun.genshin.core.character.claymore.sandrone.TestAnimations;
+import com.linweiyun.genshin.core.character.claymore.sandrone.SandroneCharacter;
 import com.linweiyun.genshin.core.character.talent.SkillCastHooks;
 import com.lowdragmc.photon.client.fx.EntityEffectExecutor;
 import com.lowdragmc.photon.client.fx.FX;
@@ -195,7 +195,7 @@ public final class TestCharacterFx {
      */
     public static boolean isTestCharacterActive(Player player) {
         return AttachmentHelper.isGenshinMode(player)
-                && TestCharacter.ID.equals(CharacterHelper.getActiveCharacterId(player));
+                && SandroneCharacter.ID.equals(CharacterHelper.getActiveCharacterId(player));
     }
 
     /** <b>范例 3 的判定</b>：当前动作状态是不是普攻。 */

@@ -32,6 +32,7 @@ public class KeyInputHandler {
    private static boolean wasArtifactKey2Down = false;
    private static boolean wasConfigKeyDown = false;
    private static boolean wasWishKeyDown = false;
+   private static boolean wasWalkToggleKeyDown = false;
 
    @SubscribeEvent
    public static void onKeyInput(Post event) {
@@ -51,6 +52,12 @@ public class KeyInputHandler {
             }
 
             wasWishKeyDown = isWishDown;
+            boolean isWalkToggleDown = ((KeyMapping)KeyMappingRegistry.WALK_TOGGLE_KEY.get()).isDown();
+            if (isWalkToggleDown && !wasWalkToggleKeyDown && !plunging) {
+               NetworkManager.setWalkModeToggleToServer();
+            }
+
+            wasWalkToggleKeyDown = isWalkToggleDown;
             boolean isGDown = ((KeyMapping)KeyMappingRegistry.G_KEY.get()).isDown();
             if (isGDown && !wasGKeyDown && !plunging) {
                NetworkManager.setGenshinModeToServer(!isInGenshinMode);

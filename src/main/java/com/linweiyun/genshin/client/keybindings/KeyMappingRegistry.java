@@ -72,6 +72,7 @@ public class KeyMappingRegistry {
       () -> new KeyMapping("key.minegenshin.artifact_equip_screen_key_2", Type.KEYSYM, 78, CATEGORY)
    );
    public static final Lazy<KeyMapping> CONFIG_SCREEN_KEY = Lazy.of(() -> new KeyMapping("key.minegenshin.config_key", Type.KEYSYM, 75, CATEGORY));
+   public static final Lazy<KeyMapping> WALK_TOGGLE_KEY = Lazy.of(() -> new KeyMapping("key.minegenshin.walk_toggle", Type.KEYSYM, 90, CATEGORY));
 
    private static boolean isInGenshinMode(LocalPlayer player) {
       return player.hasData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT) && (Boolean)player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT);
@@ -93,6 +94,7 @@ public class KeyMappingRegistry {
       event.register((KeyMapping)ARTIFACT_EQUIP_SCREEN_KEY.get());
       event.register((KeyMapping)ARTIFACT_EQUIP_SCREEN_KEY_2.get());
       event.register((KeyMapping)CONFIG_SCREEN_KEY.get());
+      event.register((KeyMapping)WALK_TOGGLE_KEY.get());
    }
 
    @SubscribeEvent

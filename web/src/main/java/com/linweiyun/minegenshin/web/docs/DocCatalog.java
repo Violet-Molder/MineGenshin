@@ -27,6 +27,8 @@ public final class DocCatalog {
             // 渲染与特效：Blaze3D / GeckoLib / Photon2 的完整链路
             new Doc("rendering-photon2-reference", "Minecraft 26.2 渲染与 Photon2 完全参考", "docs/rendering-photon2-reference.md", "渲染与特效"),
             new Doc("rendering-photon2", "渲染与 Photon2 特效", "docs/rendering-and-photon2.md", "渲染与特效"),
+            // 扩展框架：项目依赖的第三方框架怎么用
+            new Doc("ldlib2-node-graph", "LDLib2 节点图工具包", "docs/ldlib2-node-graph.md", "扩展框架"),
             // 现有深入文档
             new Doc("graphics-matrix-notes", "图形学学习笔记：4×4 变换矩阵", "web/src/main/resources/static/graphics-matrix-notes.html", "图形学学习笔记"),
             new Doc("entity-development", "实体开发文档", "web/src/main/resources/static/entity-development.html", "深入文档"),

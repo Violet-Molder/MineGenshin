@@ -10,7 +10,7 @@ import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.linweiyun.genshin.core.system.registry.register.ModCharacters;
+import com.linweiyun.genshin.core.character.ModCharacters;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;

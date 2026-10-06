@@ -191,6 +191,25 @@ public class NetworkManager {
       RPCPacketDistributor.rpcToServer("genshinModeRPCPacket", new Object[]{isGenshinMode});
    }
 
+   @RPCPacket("walkModeToggleRPCPacket")
+   public static void walkModeToggleRPCPacket(RPCSender sender) {
+      if (!sender.isServer()) {
+         ServerPlayer player = sender.asPlayer();
+         if (player == null) {
+            return;
+         }
+
+         boolean walkMode = !player.getData(AttachmentRegistration.WALK_MODE_ATTACHMENT);
+         player.setData(AttachmentRegistration.WALK_MODE_ATTACHMENT.get(), walkMode);
+         player.sendSystemMessage(Component.translatable(
+                 walkMode ? "message.minegenshin.walk_mode_on" : "message.minegenshin.walk_mode_off"));
+      }
+   }
+
+   public static void setWalkModeToggleToServer() {
+      RPCPacketDistributor.rpcToServer("walkModeToggleRPCPacket", new Object[0]);
+   }
+
    @RPCPacket("playerCharactersRPCPacket")
    public static void playerCharactersRPCPacket(RPCSender sender, CompoundTag data) {
       if (sender.isServer()) {

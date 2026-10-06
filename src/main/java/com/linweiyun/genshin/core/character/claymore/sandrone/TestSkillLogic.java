@@ -1,4 +1,4 @@
-package com.linweiyun.genshin.core.character.polearm.test;
+package com.linweiyun.genshin.core.character.claymore.sandrone;
 
 import com.linweiyun.genshin.config.character.LinweiyunTalentConfig;
 import com.linweiyun.genshin.content.entities.ModEntities;
@@ -28,19 +28,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * test 的技能逻辑 —— <b>照抄林薇云</b>（数值表复用 {@link LinweiyunTalentConfig}）。
- *
- * <p>与 {@code LinweiyunSkillLogic} 唯一的差别是<b>多了一步通知</b>：
- * 客户端那一份执行完之后调 {@link SkillCastHooks#fire}，
- * 让客户端表现层（也就是 Photon 特效）有机会接上 —— 见
- * {@code TestCharacterFx#onSkillCast}。
- *
- * <p>为什么放在客户端分支里而不是服务端：招式本体两端各跑一份
- * （{@code SkillBase.buildActionSet} 把 {@code elementalSkill} 挂在 ActionSet 的
- * {@code onActiveStart} 上，而 ActionSet 两端都有）。特效只属于客户端，
- * 放在服务端还得再发一次包，没必要。
- */
 final class TestSkillLogic {
 
     /** 战技点按前冲的距离（格）与持续刻数 —— 照抄林薇云 / 申鹤。 */
