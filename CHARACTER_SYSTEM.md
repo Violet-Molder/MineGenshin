@@ -3134,12 +3134,13 @@ public String resolve(String stateName, boolean isActionState) {
 
 **规则**：**以第三人称动画为底，只替换手臂 / 躯干 / 头那几根**；长度和特效轨道原样保留。
 
-现成的工具（`tools/merge-fp-anims.ps1`）就是干这个的 —— 它把第三人称动画整份拷过来，
+现成的工具（本机 `像素原神\tools\` 下的 `merge-fp-anims.ps1`，已移出仓库）就是干这个的 —— 它把第三人称动画整份拷过来，
 再用 fp 文件里写的那几根覆盖掉，长度取两者较大值：
 
 ```powershell
 # 本机执行策略禁止直接跑 .ps1，用 Invoke-Expression 绕过
-$code = Get-Content -Raw tools\merge-fp-anims.ps1
+# 工具已移出仓库，放在本机 像素原神\tools\minegenshin-repo-20261006\tools\ 下
+$code = Get-Content -Raw "G:\AI\Codex\Skill\像素原神\tools\minegenshin-repo-20261006\tools\merge-fp-anims.ps1"
 Invoke-Expression $code
 ```
 

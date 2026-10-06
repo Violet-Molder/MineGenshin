@@ -65,6 +65,8 @@ logs/
 /src/main/resources/assets/minegenshin/geo/
 
 ### 本机排查用的散件：本地留着查代码，不进仓库 ###
+# 一次性处理脚本：本机工具目录自己留档，仓库里一律不进、不追踪
+tools/
 # 反编译出来的几个原版类，只拿来对着看（Screen / Player / GoalSelector …）
 /net/
 # javac 参数文件（@文件包住一整行超长 classpath，机器相关）
