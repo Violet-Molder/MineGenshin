@@ -171,7 +171,7 @@ public class ThunderCloudEntity extends AreaEntity {
 
         // 每个 tick 扫描范围内所有实体，累积水/雷附着贡献者（只添加不删除）
         for (LivingEntity target : targets) {
-            StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
+            StatusContainer container = ElementalAttachments.container(target);
             if (container == null) continue;
 
             ElementalAttachmentInstance hydro = ElectroChargedReaction.findElement(container, ModElements.HYDRO.get());
@@ -231,7 +231,7 @@ public class ThunderCloudEntity extends AreaEntity {
     }
 
     private boolean targetHasHydroAndElectro(LivingEntity target) {
-        StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
+        StatusContainer container = ElementalAttachments.container(target);
         if (container == null) return false;
 
         ElementalAttachmentInstance hydro = ElectroChargedReaction.findElement(container, ModElements.HYDRO.get());
@@ -242,7 +242,7 @@ public class ThunderCloudEntity extends AreaEntity {
     }
 
     public void dealLunarDamage(LivingEntity target, ServerLevel level) {
-        StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
+        StatusContainer container = ElementalAttachments.container(target);
         if (container == null) return;
 
         ElementalAttachmentInstance hydro = ElectroChargedReaction.findElement(container, ModElements.HYDRO.get());

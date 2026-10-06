@@ -243,7 +243,7 @@ public class LargeCryoSlime extends TeyvatMonster implements ElementalCreature, 
 
     /** 给自己挂弱冰附着。 */
     private void applySelfCryoAura() {
-        StatusContainer container = this.getData(ElementalAttachments.CONTAINER);
+        StatusContainer container = ElementalAttachments.container(this);
         if (container == null) {
             return;
         }

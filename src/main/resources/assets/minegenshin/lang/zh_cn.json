@@ -6,7 +6,6 @@
   "character.name.sandrone": "测试角色",
   "character.name.columbina": "哥伦比娅",
   "character.name.vesna": "薇斯娜",
-
   "minegenshin.configuration.section.minegenshin.character.toml": "角色配置",
   "minegenshin.configuration.section.minegenshin.character.toml.title": "角色配置",
   "minegenshin.configuration.section.minegenshin.world.text.color.toml": "世界文本颜色配置",
@@ -15,7 +14,6 @@
   "minegenshin.configuration.section.minegenshin.entity.toml.title": "实体配置",
   "minegenshin.configuration.section.minegenshin.performance.toml": "性能配置",
   "minegenshin.configuration.section.minegenshin.performance.toml.title": "性能配置",
-
   "minegenshin.configuration.performance.damage_number_merge": "合并密集伤害数字",
   "minegenshin.configuration.performance.damage_number_merge_gap_ms": "合并间隔（毫秒）",
   "minegenshin.configuration.performance.damage_number_flood_window_ms": "洪水判定窗口（毫秒）",
@@ -35,7 +33,6 @@
   "minegenshin.configuration.performance.render_optimize_gpu_skinning_under_shaders": "光影下仍用 GPU 蒙皮（默认关，排查用）：光影按程序身份挑着色器，认不出我们的顶点格式时就落进通用兜底程序，画出来是错的，所以检测到光影包时自动让位给 CPU 蒙皮。",
   "minegenshin.configuration.performance.hot_path_log_throttle": "热路径日志限频",
   "minegenshin.configuration.performance.hot_path_log_max_per_second": "热路径日志每秒上限",
-
   "minegenshin.configuration.slime.attack-desire": "攻击欲望倍率（乘在所有技能概率上）",
   "minegenshin.configuration.slime.collide-range": "撞击触发距离（也是接近停下的距离）",
   "minegenshin.configuration.slime.shard-count": "冰刺枚数",
@@ -47,21 +44,18 @@
   "minegenshin.configuration.slime.shield-restore-seconds": "失盾后开始补盾的等待（秒）",
   "minegenshin.configuration.slime.shield-idle-restore-seconds": "多久没挨打就开始补盾（秒）",
   "minegenshin.configuration.slime.shield-cast-seconds": "补盾抬手时长（秒）",
-
   "minegenshin.configuration.section.minegenshin.weapon.toml": "武器配置",
   "minegenshin.configuration.section.minegenshin.weapon.toml.title": "武器配置",
   "minegenshin.configuration.section.minegenshin.artifact.toml": "圣遗物配置",
   "minegenshin.configuration.section.minegenshin.artifact.toml.title": "圣遗物配置",
   "minegenshin.configuration.section.minegenshin.reaction.toml": "元素反应配置",
   "minegenshin.configuration.section.minegenshin.reaction.toml.title": "元素反应配置",
-
   "minegenshin.configuration.levelUpExp": "升级经验",
   "minegenshin.configuration.5star": "五星",
   "minegenshin.configuration.4star": "四星",
   "minegenshin.configuration.3star": "三星",
   "minegenshin.configuration.2star": "二星",
   "minegenshin.configuration.1star": "一星",
-
   "minegenshin.configuration.attribute": "角色基础属性",
   "minegenshin.configuration.hp": "生命值上限",
   "minegenshin.configuration.atk": "攻击值",
@@ -79,12 +73,10 @@
   "minegenshin.configuration.cyro-bonus": "冰元素伤害加成",
   "minegenshin.configuration.geo-bonus": "岩元素伤害加成",
   "minegenshin.configuration.physical-bonus": "物理伤害加成",
-
   "minegenshin.configuration.talent": "角色天赋",
   "minegenshin.configuration.normal-attack": "普通攻击",
   "minegenshin.configuration.elemental-skill": "元素技能",
   "minegenshin.configuration.elemental-burst": "元素爆发",
-
   "minegenshin.configuration.nab1": "一段伤害",
   "minegenshin.configuration.nab2": "二段伤害",
   "minegenshin.configuration.nab3": "三段伤害",
@@ -92,7 +84,6 @@
   "minegenshin.configuration.nab5": "五段伤害",
   "minegenshin.configuration.nab6": "六段伤害",
   "minegenshin.configuration.nab7": "七段伤害",
-
   "minegenshin.configuration.nap1": "一段伤害升级加成",
   "minegenshin.configuration.nap2": "二段伤害升级加成",
   "minegenshin.configuration.nap3": "三段伤害升级加成",
@@ -100,26 +91,21 @@
   "minegenshin.configuration.nap5": "五段伤害升级加成",
   "minegenshin.configuration.nap6": "六段伤害升级加成",
   "minegenshin.configuration.nap7": "七段伤害升级加成",
-
   "minegenshin.configuration.shenhe": "申鹤",
-
   "minegenshin.configuration.shehe-press-damage": "点按技能伤害",
   "minegenshin.configuration.shehe-press-per-level": "点按技能伤害升级加成",
   "minegenshin.configuration.shehe-hold-damage": "长按技能伤害",
   "minegenshin.configuration.shehe-hold-per-level": "长按技能伤害升级加成",
   "minegenshin.configuration.shehe-dmg-bonus": "伤害值提升",
   "minegenshin.configuration.shehe-dmg-bonus-per-level": "伤害值提升升级加成",
-
   "minegenshin.configuration.shehe-burst-skill-damage": "技能伤害",
   "minegenshin.configuration.shehe-burst-skill-damage-per-level": "技能伤害升级加成",
   "minegenshin.configuration.shehe-burst-res-decrease": "抗性降低",
   "minegenshin.configuration.shehe-burst-res-decrease-per-level": "抗性降低升级加成",
   "minegenshin.configuration.shehe-burst-dot": "持续伤害",
   "minegenshin.configuration.shehe-burst-dot-per-level": "持续伤害升级加成",
-
   "minegenshin.configuration.columbina": "哥伦比娅",
   "minegenshin.configuration.arlecchino": "阿蕾奇诺",
-
   "minegenshin.configuration.elemental-color": "元素",
   "minegenshin.configuration.elemental.physical_color": "物理",
   "minegenshin.configuration.elemental.pyro_color": "火元素",
@@ -129,23 +115,17 @@
   "minegenshin.configuration.elemental.anemo_color": "风元素",
   "minegenshin.configuration.elemental.cyro_color": "冰元素",
   "minegenshin.configuration.elemental.geo_color": "岩元素",
-
   "minegenshin.configuration.reaction-color": "元素反应",
   "minegenshin.configuration.reaction.melt": "融化",
   "minegenshin.configuration.reaction.vaporize": "蒸发",
   "minegenshin.configuration.reaction.electro_charged": "感电",
-
   "minegenshin.configuration.spawn-level": "实体生成等级",
   "minegenshin.configuration.entity.spawn.level.calculation-mode": "等级计算模式",
   "minegenshin.configuration.entity.spawn.level.calculation-radius": "等级计算半径",
-
   "minegenshin.configuration.hp.base.coefficient": "生命基础系数",
-
   "minegenshin.configuration.weaponXp": "武器升级经验",
   "minegenshin.configuration.ascension": "突破奖励",
-
   "minegenshin.configuration.level-coefficient": "等级系数",
-
   "minegenshin.configuration.tier1": "第一档",
   "minegenshin.configuration.tier2": "第二档",
   "minegenshin.configuration.tier3": "第三档",
@@ -163,22 +143,17 @@
   "minegenshin.configuration.ascend5": "突破5",
   "minegenshin.configuration.ascend6": "突破6",
   "minegenshin.configuration.ascend7": "突破7",
-
-
   "minegenshin.configuration.mainStat": "主词条",
   "minegenshin.configuration.artifact-stat-weight": "词条生成权重",
   "minegenshin.configuration.artifact-sands": "时之沙",
   "minegenshin.configuration.artifact-goblet": "空之杯",
   "minegenshin.configuration.artifact-circlet": "理之冠",
-
   "minegenshin.configuration.subStat": "副词条",
-
   "minegenshin.configuration.reaction-amplifying": "增幅反应",
   "minegenshin.configuration.reaction-melt": "融化反应-正",
   "minegenshin.configuration.reaction-melt-negative": "融化反应-负",
   "minegenshin.configuration.reaction-vaporize": "蒸发反应",
   "minegenshin.configuration.reaction-vaporize-negative": "蒸发反应-负",
-
   "minegenshin.configuration.reaction-fusion": "剧变反应",
   "minegenshin.configuration.reaction-superconduct": "超导反应",
   "minegenshin.configuration.reaction-swirl": "扩散反应",
@@ -189,7 +164,6 @@
   "minegenshin.configuration.reaction-bloom": "绽放反应",
   "minegenshin.configuration.reaction-hyper-bloom": "超绽放",
   "minegenshin.configuration.reaction-burgeon": "烈绽放",
-
   "minegenshin.configuration.attack.base.coefficient": "攻击基础系数",
   "minegenshin.configuration.attribute-cap-relief": "属性上限放宽",
   "minegenshin.configuration.character_stat_scale": "角色属性倍率（计入玩家）",
@@ -438,14 +412,11 @@
   "minegenshin.configuration.tier7": "第七档",
   "minegenshin.configuration.tier8": "第八档",
   "minegenshin.configuration.title": "原神配置",
-
-
   "artifact.type.flower": "生之花",
   "artifact.type.plume": "死之羽",
   "artifact.type.sands": "时之沙",
   "artifact.type.goblet": "空之杯",
   "artifact.type.circlet": "理之冠",
-
   "artifact_set.effect.2pc": "2件套",
   "artifact_set.effect.4pc": "4件套",
   "artifact_set.crimson_witch": "炽烈的炎之魔女",
@@ -462,19 +433,16 @@
   "artifact.desc.crimson_witch.sands": "曾经梦想烧尽世间魔物的魔女佩戴的时计\n。其中流淌着的是魔女献给火焰的岁月。",
   "artifact.desc.crimson_witch.goblet": "曾经梦想烧尽世间魔物的炎之魔女留下的\n流火之甕。瓶中火永不熄灭，一如其人。",
   "artifact.desc.crimson_witch.circlet": "曾经梦想烧尽世间魔物的炎之魔女曾经戴\n过的帽子。宽大的帽檐能遮挡她的视线。",
-
   "artifact.desc.tenacity_of_the_millelith.flower": "以金箔制成的精致花朵。象征了其主人所\n获得的功勋与荣誉。",
   "artifact.desc.tenacity_of_the_millelith.plume": "在仪仗场合佩戴的鹰翎，用以向外人显明\n璃月港的威严与决心。",
   "artifact.desc.tenacity_of_the_millelith.sands": "外观朴素的计时道具，在战乱的时代，一\n度是千岩军的制式装备。",
   "artifact.desc.tenacity_of_the_millelith.goblet": "千岩军用以盟誓的金爵，依旧残留着丝丝\n酒香",
   "artifact.desc.tenacity_of_the_millelith.circlet": "年代久远的华丽头盔，洗净尘沙后依旧明\n亮如新。",
-
   "artifact.desc.scarlet_proof.flower": "颜色鲜红的花饰。象征如火的荣光。",
   "artifact.desc.scarlet_proof.plume": "颜色鲜红的毛笔。赠与最年轻的血液。",
   "artifact.desc.scarlet_proof.sands": "颜色鲜红的怀表。记录着一场对谈的时限\n。",
   "artifact.desc.scarlet_proof.goblet": "颜色鲜红的酒瓶。祝你不知道里面装过什\n么。",
   "artifact.desc.scarlet_proof.circlet": "颜色鲜红的头盔。但愿保护过谁。",
-
   "item.minegenshin.primogem": "原石",
   "item.minegenshin.sweet_madame": "甜甜花酿鸡",
   "item.minegenshin.crimson_flower": "魔女的炎之花",
@@ -492,15 +460,10 @@
   "item.minegenshin.tenacity_sands": "金铜时晷",
   "item.minegenshin.tenacity_goblet": "盟誓金爵",
   "item.minegenshin.tenacity_circlet": "将帅兜鍪",
-
-
   "itemGroup.minegenshin.foodGroup": "像素原神-食物",
   "itemGroup.minegenshin.regularItemGroup": "像素原神-常规物品",
-
   "entity.minegenshin.large_cryo_slime": "大型冰史莱姆",
   "entity.minegenshin.ice_block": "冰块",
-
-
   "attribute.minegenshin.max_hp": "生命值上限",
   "attribute.minegenshin.atk": "攻击力",
   "attribute.minegenshin.def": "防御力",
@@ -534,7 +497,6 @@
   "attribute.minegenshin.poise_max": "韧性上限",
   "attribute.minegenshin.super_armor": "霸体强度",
   "attribute.minegenshin.weight": "重量",
-
   "message.minegenshin.wish.draw_character": "恭喜！您抽到了新的角色：%s",
   "message.minegenshin.wish.owned_character": "恭喜！您抽到了角色：%s, 不过您已经拥有该角色了，因此我们将奖励为您替换为：%sx3",
   "message.minegenshin.wish.draw_item": "恭喜, 您抽到了: %sx%s",
@@ -542,21 +504,17 @@
   "message.minegenshin.wish.no_reward": "很抱歉，您没有抽到任何奖品。",
   "message.minegenshin.wish.constellation_up": "恭喜！您抽到了角色：%s，命座提升至 %s 命",
   "message.minegenshin.wish.constellation_max_compensation": "该角色已满命，本次祈愿改为补偿一整套圣遗物：%s",
-
   "constellation.minegenshin.vesna.1.desc": "巡风列装模式下，薇斯娜至多可以施放四次最高境界的翔风剑，而非三次，且每次进入巡风列装模式后，首次施放最高境界的翔风剑不消耗「剑气」。此外，薇斯娜在巡风列装模式下造成的星扩散反应伤害提升20%。",
   "constellation.minegenshin.vesna.2.desc": "突破天赋「仪典·春之行列」获得强化：薇斯娜进入巡风列装模式时，会获得最大层数的整肃；拥有最大层数的整肃时，薇斯娜的攻击力提升40%。解锁需要先获得突破天赋「仪典·春之行列」。",
   "constellation.minegenshin.vesna.1.applied": "命座 1 生效：巡风列装下最高境界翔风剑 4 次 / 首次免剑气 / 星扩散伤害 +20%",
   "constellation.minegenshin.vesna.2.applied": "命座 2 生效：进入巡风列装获得满层整肃 / 满层时攻击力 +40%",
   "message.minegenshin.constellation.set": "已将 %s 的命座设为 %s 命",
   "message.minegenshin.constellation.invalid": "命座只能是 0~6",
-
   "item.minegenshin.beyond_the_chrysalis": "蝶变",
   "item.minegenshin.beyond_the_chrysalis.passive": "装备者每次施放元素战技或元素爆发时，\n按顺序获得以下效果之一：\n· 忠忱之风：暴击伤害提升56%，持续10秒；\n· 叛弃之风：造成的星扩散反应伤害提升36%，持续10秒；\n· 丰获之风：恢复5点元素能量，每4秒至多触发一次。\n装备者退场时移除这些效果，并重置顺序。",
-
   "item.minegenshin.hymn_of_the_maelstrom": "漩流颂歌",
   "item.minegenshin.hymn_of_the_maelstrom.passive": "·装备者治疗加成提升4%;\n进行治疗时，装备者获得「告真的蜜酿」\n效果：生命值提升4%，且基于装备者\n生命值上限超过40000的部分，每1000\n点生命值上限都会使队伍中自己的当前场\n上角色的攻击力提升0.4%，通过这种方 \n式至多提升8%。该效果持续10秒，至多 \n叠加三层。\n·队伍中附近的角色触发冻结反应或星扩\n散反应后的5秒内，上述效果中生命值上 \n限与攻击力提升的效果额外提升75%。 \n·装备者处于队伍后台时，依然能触发上\n述效果。",
   "character.name.vodyanitsa": "沃雅妮莎",
-
   "effect.minegenshin.pyro_infusion": "火元素附魔",
   "effect.minegenshin.hydro_infusion": "水元素附魔",
   "effect.minegenshin.anemo_infusion": "风元素附魔",
@@ -564,8 +522,6 @@
   "effect.minegenshin.dendro_infusion": "草元素附魔",
   "effect.minegenshin.cyro_infusion": "冰元素附魔",
   "effect.minegenshin.geo_infusion": "岩元素附魔",
-
-
   "effect.minegenshin.pyro_about": "火元素附着",
   "effect.minegenshin.hydro_about": "水元素附着",
   "effect.minegenshin.anemo_about": "风元素附着",
@@ -573,9 +529,7 @@
   "effect.minegenshin.dendro_about": "草元素附着",
   "effect.minegenshin.cyro_about": "冰元素附着",
   "effect.minegenshin.geo_about": "岩元素附着",
-
   "effect.minegenshin.frozen": "元素反应：冻结",
-
   "key.minegenshin.attack": "普通攻击",
   "key.minegenshin.g_mode": "切换原神模式",
   "key.minegenshin.v_mode": "切换角色",
@@ -591,9 +545,7 @@
   "key.minegenshin.config_key": "角色配置",
   "key.minegenshin.walk_toggle": "走/跑切换",
   "button.tutorial.one": "一",
-
   "item.minegenshin.dark_fragment": "漆黑碎片",
-
   "reaction.minegenshin.melt": "融化",
   "reaction.minegenshin.vaporize": "蒸发",
   "reaction.minegenshin.shattered": "碎冰",
@@ -617,13 +569,11 @@
   "reaction.minegenshin.stellar_swirl_ice": "星扩散",
   "reaction.minegenshin.stellar_conduce_electro": "星超导",
   "reaction.minegenshin.stellar_conduce_ice": "星超导",
-
   "gui.minegenshin.character_select.deploy": "出战",
   "gui.minegenshin.character_select.recall": "换下",
   "gui.minegenshin.character_select.swap": "更换",
   "gui.minegenshin.character_select.sort_star": "按星级排序",
   "gui.minegenshin.character_select.sort_level": "按等级排序",
-
   "gui.minegenshin.ascension.title": "突破",
   "gui.minegenshin.ascension.adventure_rank": "冒险等级: %s",
   "gui.minegenshin.ascension.adventure_exp": "冒险阅历: %s / %s",
@@ -649,7 +599,6 @@
   "gui.minegenshin.ascension.char_exp_empty": "角色经验: - / -",
   "gui.minegenshin.ascension.char_level_empty": "角色等级: -",
   "gui.minegenshin.ascension.no_character": "当前没有选中角色",
-
   "gui.minegenshin.artifact_equip.flower": "生之花",
   "gui.minegenshin.artifact_equip.plume": "死之羽",
   "gui.minegenshin.artifact_equip.sands": "时之沙",
@@ -670,7 +619,6 @@
   "gui.minegenshin.artifact_equip.level_format": "等级: +%s",
   "gui.minegenshin.artifact_equip.exp_format": "经验: %s / %s",
   "gui.minegenshin.artifact_equip.exp_max": "经验: 已满级",
-
   "gui.minegenshin.backpack.organize": "整理",
   "gui.minegenshin.backpack.category.weapons": "武器",
   "gui.minegenshin.backpack.category.artifacts": "圣遗物",
@@ -684,18 +632,15 @@
   "gui.minegenshin.backpack.sort_star": "按星级排序",
   "gui.minegenshin.backpack.sort_level": "按等级排序",
   "gui.minegenshin.backpack.sort_set": "按套装排序",
-
   "gui.minegenshin.backpack.equipped_by": "【已装备 · %s】",
   "gui.minegenshin.backpack.equipped": "【已装备】",
   "gui.minegenshin.backpack.level_format": "等级: +%s",
   "gui.minegenshin.backpack.no_selection": "未选中物品",
   "gui.minegenshin.backpack.take_out": "取出",
   "gui.minegenshin.backpack.detail": "详情",
-
   "key.minegenshin.combo_stage": "§e段 %s/%s",
   "key.minegenshin.charged_attack": "§c重击",
   "key.minegenshin.switched_character": "已切换到角色 %s",
-
   "message.minegenshin.no_alive_character": "队伍中没有生命值大于0的角色，无法开启原神模式",
   "message.minegenshin.walk_mode_on": "已切换为「走」模式（移动变慢）",
   "message.minegenshin.walk_mode_off": "已切换为「跑」模式",
@@ -705,10 +650,6 @@
   "message.minegenshin.character_exp_low": "经验等级不足30级，无法进行角色突破",
   "message.minegenshin.no_character_selected": "当前没有选中角色",
   "message.minegenshin.character_not_max_level": "角色未达到当前突破阶段最大等级，无法突破",
-  "message.minegenshin.advice_book_low": "没有可用的经验书（安猛的经验 / 冒险家的经验 / 大英雄的经验），无法升级",
-  "message.minegenshin.artifact_max_level": "该圣遗物已满级",
-  "message.minegenshin.constellation_max": "该角色已满命",
-  "message.minegenshin.constellation_up_success": "命座突破成功！当前 %s 命",
   "message.minegenshin.advice_book_low": "No usable EXP book (Wanderer's Advice / Adventurer's Experience / Hero's Wit)",
   "message.minegenshin.artifact_max_level": "This artifact is already at max level",
   "message.minegenshin.constellation_max": "This character is already at max constellation",
@@ -742,7 +683,6 @@
   "message.minegenshin.world_already_invaded": "提瓦特世界已经入侵！",
   "message.minegenshin.world_invasion_activated": "提瓦特世界入侵已激活！",
   "message.minegenshin.world_invasion_broadcast": "提瓦特的力量降临于此世...",
-
   "command.minegenshin.primogem.get": "%s 当前拥有 %s 原石",
   "command.minegenshin.primogem.set": "已将 %s 的原石设置为 %s",
   "command.minegenshin.primogem.add": "已为 %s 添加 %s 原石，当前拥有 %s 原石",
@@ -751,13 +691,10 @@
   "command.minegenshin.character.add_success": "已为 %s 添加角色 [%s]",
   "command.minegenshin.character.not_owned": "目标玩家没有该角色",
   "command.minegenshin.character.remove_success": "已从 %s 移除角色 [%s]",
-
   "item.minegenshin.weapon.refinement_rank": "精炼等阶 %s",
-
   "item.minegenshin.wanderers_advice": "流浪者的经验",
   "item.minegenshin.adventurers_experience": "冒险家的经验",
   "item.minegenshin.heros_wit": "大英雄的经验",
-
   "gui.minegenshin.character_config.title": "申鹤 · 角色配置",
   "gui.minegenshin.character_config.hint": "左键拖动模型转视角，滚轮缩放；按 %s 关闭",
   "gui.minegenshin.character_config.no_character": "当前没有出战角色",
@@ -880,7 +817,6 @@
   "gui.minegenshin.character_equip.info_constellation": "命之座",
   "gui.minegenshin.character_equip.model": "模型",
   "gui.minegenshin.character_equip.no_model": "该角色还没有登记渲染数据（模型 / 贴图 / 动画）",
-
   "gui.minegenshin.character_equip.view_only": "仅查看：当前操控的不是这位角色，装备改动已停用",
   "gui.minegenshin.character_equip.orb_drag_hint": "拖动角色四周的圣遗物可以挪位置，点其中一枚进入更换",
   "gui.minegenshin.character_equip.change": "更换",
@@ -941,7 +877,6 @@
   "gui.minegenshin.character_equip.talent.kind.burst": "元素爆发",
   "gui.minegenshin.character_equip.talent.kind.passive1": "固有天赋 · 壹",
   "gui.minegenshin.character_equip.talent.kind.passive2": "固有天赋 · 贰",
-
   "gui.minegenshin.character_equip.talent.shenhe.normal.name": "普通攻击 · 踏辰摄斗",
   "gui.minegenshin.character_equip.talent.shenhe.normal.desc": "普通攻击：进行至多五段的连续枪击。重击：消耗一定体力，向前方突进，对路径上的敌人造成伤害。下落攻击：从空中下坠冲击地面，攻击下落路径上的敌人，并在落地时造成范围伤害。",
   "gui.minegenshin.character_equip.talent.shenhe.skill.name": "元素战技 · 仰灵威召将役咒",
@@ -952,7 +887,6 @@
   "gui.minegenshin.character_equip.talent.shenhe.passive1.desc": "处于「神女遣灵真诀」的领域中的当前场上角色，冰元素伤害加成提高 15%。（角色突破等级 1 解锁）",
   "gui.minegenshin.character_equip.talent.shenhe.passive2.name": "固有天赋 · 缚灵通真法印",
   "gui.minegenshin.character_equip.talent.shenhe.passive2.desc": "申鹤施放「仰灵威召将役咒」后，将使附近的队伍中所有角色获得如下效果：点按：元素战技和元素爆发造成的伤害提高 15%，持续 10 秒；长按：普通攻击、重击和下落攻击造成的伤害提高 15%，持续 15 秒。（角色突破等级 4 解锁）",
-
   "gui.minegenshin.character_equip.constellation.shenhe.1.name": "心斋",
   "gui.minegenshin.character_equip.constellation.shenhe.1.desc": "「仰灵威召将役咒」的可使用次数增加 1 次。",
   "gui.minegenshin.character_equip.constellation.shenhe.2.name": "定蒙",
@@ -964,6 +898,10 @@
   "gui.minegenshin.character_equip.constellation.shenhe.5.name": "化神",
   "gui.minegenshin.character_equip.constellation.shenhe.5.desc": "「神女遣灵真诀」的技能等级提高 3 级。至多提升至 15 级。",
   "gui.minegenshin.character_equip.constellation.shenhe.6.name": "忘玄",
-  "gui.minegenshin.character_equip.constellation.shenhe.6.desc": "角色通过普通攻击与重击伤害触发「冰翎」的效果时，将不再会减少「冰翎」的生效次数。"
-
+  "gui.minegenshin.character_equip.constellation.shenhe.6.desc": "角色通过普通攻击与重击伤害触发「冰翎」的效果时，将不再会减少「冰翎」的生效次数。",
+  "minegenshin.configuration.section.minegenshin.poise.toml": "韧性配置",
+  "minegenshin.configuration.section.minegenshin.poise.toml.title": "韧性配置",
+  "minegenshin.configuration.poise.freeze_force_break": "冻结直接破韧",
+  "minegenshin.configuration.poise.reaction_poise": "反应自带削韧",
+  "minegenshin.configuration.poise.block_hardness_multiplier": "方块韧性换算倍率"
 }

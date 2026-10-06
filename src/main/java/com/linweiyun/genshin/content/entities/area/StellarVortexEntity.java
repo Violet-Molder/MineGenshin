@@ -298,7 +298,7 @@ public class StellarVortexEntity extends AreaEntity {
             ModDamageSource source = ModDamageSource.from(spec, iceSourcePlayer);
             target.hurtServer(level, source, 0f);
 
-            StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
+            StatusContainer container = ElementalAttachments.container(target);
             ElementalAttachmentHelper.attach(
                     target, container, ModElements.CYRO.get(),
                     AttachmentSource.SPECIAL,

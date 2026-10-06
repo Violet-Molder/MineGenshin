@@ -50,8 +50,8 @@ public class PlayerDeathCloneHandler {
         dstChar.getPartyCharacterUUIDs().addAll(srcChar.getPartyCharacterUUIDs());
         dstChar.setCurrentCharacterIndex(srcChar.getCurrentCharacterIndex());
 
-        StatusContainer dstStatus = entity.getData(ElementalAttachments.CONTAINER);
-        StatusContainer srcStatus = original.getData(ElementalAttachments.CONTAINER);
+        StatusContainer dstStatus = ElementalAttachments.container(entity);
+        StatusContainer srcStatus = ElementalAttachments.container(original);
         dstStatus.clear();
         for (var inst : srcStatus.getAll()) {
             dstStatus.add(inst.copy());

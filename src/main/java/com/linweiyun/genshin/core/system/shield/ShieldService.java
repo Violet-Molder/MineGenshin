@@ -192,7 +192,7 @@ public final class ShieldService {
 
     /** 把某个元素从身上彻底移除（会触发 {@code onDetach}，例如解除冻结/减速）。 */
     private static void purgeAttachment(LivingEntity entity, GenshinElement element) {
-        StatusContainer container = entity.getData(ElementalAttachments.CONTAINER);
+        StatusContainer container = ElementalAttachments.container(entity);
         if (container == null) {
             return;
         }
@@ -436,7 +436,7 @@ public final class ShieldService {
 
     /** 身上有没有能反应的非瞬发元素（给「风/岩要不要参与」这类判断复用）。 */
     public static boolean hasReactiveAura(LivingEntity entity) {
-        StatusContainer container = entity.getData(ElementalAttachments.CONTAINER);
+        StatusContainer container = ElementalAttachments.container(entity);
         if (container == null) {
             return false;
         }

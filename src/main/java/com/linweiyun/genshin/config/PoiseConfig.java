@@ -35,6 +35,13 @@ public class PoiseConfig {
     public static ModConfigSpec.BooleanValue REACTION_POISE;
 
     /**
+     * 方块韧性：硬度换算倍率。
+     *
+     * <p>实际韧性 = 硬度 × 179 × 本值。默认 <b>3</b>；调大 = 方块更耐打。
+     */
+    public static ModConfigSpec.DoubleValue BLOCK_HARDNESS_MULTIPLIER;
+
+    /**
      * 读一个开关。
      *
      * <p>这两个开关都在「每次冻结 / 每次反应伤害」的热路径上，而配置对象在
@@ -46,6 +53,15 @@ public class PoiseConfig {
             return value == null || value.get();
         } catch (RuntimeException e) {
             return true;
+        }
+    }
+
+    /** 读一个数值；配置还没建好（或读失败）时用 fallback。 */
+    public static double value(@Nullable ModConfigSpec.DoubleValue value, double fallback) {
+        try {
+            return value == null ? fallback : value.get();
+        } catch (RuntimeException e) {
+            return fallback;
         }
     }
 
@@ -62,6 +78,13 @@ public class PoiseConfig {
                 .translation("minegenshin.configuration.poise.reaction_poise")
                 .comment("反应自带削韧与冲击：超载 90/击飞、扩散 130、感电 130…（见 ReactionPoiseTable）。关掉只去掉反应额外削的那一笔")
                 .define("poise", true);
+        builder.pop();
+
+        builder.push("block");
+        BLOCK_HARDNESS_MULTIPLIER = builder
+                .translation("minegenshin.configuration.poise.block_hardness_multiplier")
+                .comment("方块韧性换算倍率：实际韧性 = 硬度 × 179 × 本值。默认 3，调大 = 方块更耐打")
+                .defineInRange("hardness-multiplier", 3.0D, 0.0D, 1000.0D);
         builder.pop();
     }
 }

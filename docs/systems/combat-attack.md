@@ -87,3 +87,14 @@
 | 方块打不出元素 | `ElementalAttackSweep` 的三道门禁依次是：只在服务端、**只在原神模式**、角色元素非空（物理系不附着）；此外方块还要在 `BlockElementRules` 里登记过才会收这个元素，且必须落在这一招的攻击距离内。非原神模式、物理系角色、未登记方块都不会有元素 |
 | 技能自己注册了攻击监听 | 违反项目约定，应改为在动作关键 tick 或 attack 系统入口里处理 |
 | 专用服务器崩溃 | `core`/`content` 侧引用了客户端类（飘字是唯一允许跨到客户端的地方，且必须走 RPC） |
+
+## 26.2.0.2 变更：攻击统一入口
+
+新增 `ElibAttackPipeline`（elementlib），一次「攻击动作」包含对空、方块左键、实体左键与动作伤害点：
+
+- `ActionState.fireDamagePoint` 每个伤害点 dispatch 一次（方块附着走这里，替代原 `ElementalAttackSweep` 调用）；
+- 方块左键来自 `BlockStateAttackMixin` 注入的 `BlockBehaviour.BlockStateBase#attack`，每次有效交互一次；
+- 实体附着仍在 `DirectDamagePipeline`，但容器已走模块层；
+- 本模组通过 `ElementLibBridge` 注入「仅原神模式」门禁，并关掉 lib 的默认桥与实体附着。
+
+详见 `docs/systems/module-system.md`。

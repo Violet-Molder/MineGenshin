@@ -193,7 +193,7 @@ public class MobHealthBarHud {
             double distance = Math.sqrt(relX * relX + relY * relY + relZ * relZ);
 
             // 元素附着独立于战斗状态
-            StatusContainer container = living.getData(ElementalAttachments.CONTAINER);
+            StatusContainer container = ElementalAttachments.peekContainer(living);
             boolean hasElements = container != null && hasActiveElements(container, living);
 
             boolean inCombat = teyvat.isInCombat();

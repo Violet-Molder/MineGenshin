@@ -26,7 +26,7 @@ public class StatusAccessor {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     public static StatusContainer of(LivingEntity entity) {
-        return entity.getData(ElementalAttachments.CONTAINER);
+        return ElementalAttachments.container(entity);
     }
 
     public static StatusContainer of(BlockEntity blockEntity) {

@@ -1,6 +1,10 @@
 package com.linweiyun.genshin.content.entities.misc;
 
 import com.linweiyun.genshin.content.entities.ModEntities;
+import com.linweiyun.genshin.core.element.ModElements;
+import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -312,15 +316,18 @@ public class IceBlockProjectile extends Entity {
                 SoundEvents.GLASS_BREAK, SoundSource.HOSTILE, 1.0F, 0.9F);
         level.sendParticles(ParticleTypes.SNOWFLAKE, at.x, at.y, at.z, 24, 1.0D, 0.8D, 1.0D, 0.05D);
 
-        DamageSource source = this.caster != null
-                ? this.caster.damageSources().mobAttack(this.caster)
-                : level.damageSources().generic();
+        ModDamageSpec spec = ModDamageSpec.builder(AttackType.MONSTER, ModElements.CYRO.get())
+                .multiplier(0.0f)
+                .flatBonus(IMPACT_DAMAGE)
+                .elementAmount(0.0f)
+                .build();
+        ModDamageSource source = ModDamageSource.from(spec, this.caster != null ? this.caster : this);
         AABB area = AABB.ofSize(at, IMPACT_SIZE_XZ * 2.0D, IMPACT_SIZE_Y * 2.0D, IMPACT_SIZE_XZ * 2.0D);
         for (LivingEntity victim : level.getEntitiesOfClass(LivingEntity.class, area)) {
             if (victim == this.caster || !victim.isAlive()) {
                 continue;
             }
-            victim.hurtServer(level, source, IMPACT_DAMAGE);
+            victim.hurtServer(level, source, 0f);
         }
 
         this.discard();

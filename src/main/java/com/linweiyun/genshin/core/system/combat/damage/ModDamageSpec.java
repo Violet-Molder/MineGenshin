@@ -235,7 +235,9 @@ public class ModDamageSpec {
                     WeaponPoiseTable.weaponOf(attacker), this.attackType);
             base = Float.isNaN(weaponBase) ? defaultPoise(this.attackType) : weaponBase;
         }
-        return base * this.hitPoiseCoefficient;
+        float value = base * this.hitPoiseCoefficient;
+        com.linweiyun.genshin.core.system.poise.HitPoiseDamage.report(value);
+        return value;
     }
 
     /**

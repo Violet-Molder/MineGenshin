@@ -271,7 +271,7 @@ public class SwirlReaction extends ElementalReaction {
             nearby.hurtServer(level, dmgSource, 0f);
             DamageIndicatorFactory.reaction(nearby, type());
 
-            StatusContainer nearbyContainer = nearby.getData(ElementalAttachments.CONTAINER);
+            StatusContainer nearbyContainer = ElementalAttachments.container(nearby);
             if (nearbyContainer != null) {
                 EntityHost nearbyHost = EntityHost.of(nearby);
                 // 扩散把元素「再挂」到旁边的人身上，走的是同一个宿主入口：
