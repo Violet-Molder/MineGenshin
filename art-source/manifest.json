@@ -1,0 +1,399 @@
+{
+  "generated_at": "2026-09-29T03:02:29+00:00",
+  "entries": [
+    {
+      "path": "src/main/resources/assets/minegenshin/character/arlecchino/textures/avatar.png",
+      "original_size": [
+        263,
+        319
+      ],
+      "original_kb": 110.4,
+      "new_size": [
+        263,
+        319
+      ],
+      "new_kb": 19.9,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/arlecchino/textures/avatar_hud.png",
+      "original_size": [
+        320,
+        320
+      ],
+      "original_kb": 103.6,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 7.7,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/arlecchino/textures/pose_already.png",
+      "original_size": [
+        1500,
+        2000
+      ],
+      "original_kb": 1016.0,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 48.9,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/arlecchino/textures/pose_prepare.png",
+      "original_size": [
+        1500,
+        2000
+      ],
+      "original_kb": 1458.6,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 62.1,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/columbina/textures/avatar.png",
+      "original_size": [
+        261,
+        319
+      ],
+      "original_kb": 129.8,
+      "new_size": [
+        261,
+        319
+      ],
+      "new_kb": 19.4,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/columbina/textures/avatar_hud.png",
+      "original_size": [
+        960,
+        960
+      ],
+      "original_kb": 282.3,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 10.9,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/columbina/textures/pose_already.png",
+      "original_size": [
+        1280,
+        1650
+      ],
+      "original_kb": 1057.6,
+      "new_size": [
+        993,
+        1280
+      ],
+      "new_kb": 57.4,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/columbina/textures/pose_prepare.png",
+      "original_size": [
+        1280,
+        1650
+      ],
+      "original_kb": 1314.7,
+      "new_size": [
+        993,
+        1280
+      ],
+      "new_kb": 65.4,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/linweiyun/textures/avatar.png",
+      "original_size": [
+        412,
+        500
+      ],
+      "original_kb": 257.1,
+      "new_size": [
+        316,
+        384
+      ],
+      "new_kb": 27.7,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/linweiyun/textures/avatar_hud.png",
+      "original_size": [
+        500,
+        500
+      ],
+      "original_kb": 261.5,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 15.6,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/linweiyun/textures/pose_already.png",
+      "original_size": [
+        2400,
+        3200
+      ],
+      "original_kb": 4729.0,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 125.9,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/linweiyun/textures/pose_prepare.png",
+      "original_size": [
+        2400,
+        3200
+      ],
+      "original_kb": 4729.0,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 125.9,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/raiden_shogun/textures/avatar.png",
+      "original_size": [
+        310,
+        369
+      ],
+      "original_kb": 160.9,
+      "new_size": [
+        310,
+        369
+      ],
+      "new_kb": 25.5,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/raiden_shogun/textures/avatar_hud.png",
+      "original_size": [
+        320,
+        320
+      ],
+      "original_kb": 109.8,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 12.2,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/raiden_shogun/textures/pose_already.png",
+      "original_size": [
+        1501,
+        2000
+      ],
+      "original_kb": 941.0,
+      "new_size": [
+        961,
+        1280
+      ],
+      "new_kb": 86.2,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/raiden_shogun/textures/pose_prepare.png",
+      "original_size": [
+        1501,
+        2000
+      ],
+      "original_kb": 1506.4,
+      "new_size": [
+        961,
+        1280
+      ],
+      "new_kb": 130.8,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/shenhe/textures/avatar.png",
+      "original_size": [
+        263,
+        319
+      ],
+      "original_kb": 98.7,
+      "new_size": [
+        263,
+        319
+      ],
+      "new_kb": 15.4,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/shenhe/textures/avatar_hud.png",
+      "original_size": [
+        320,
+        320
+      ],
+      "original_kb": 87.4,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 5.6,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/shenhe/textures/pose_already.png",
+      "original_size": [
+        1500,
+        2000
+      ],
+      "original_kb": 1267.5,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 62.6,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/shenhe/textures/pose_prepare.png",
+      "original_size": [
+        1500,
+        2000
+      ],
+      "original_kb": 1648.6,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 75.0,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vesna/textures/avatar.png",
+      "original_size": [
+        412,
+        500
+      ],
+      "original_kb": 257.1,
+      "new_size": [
+        316,
+        384
+      ],
+      "new_kb": 27.7,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vesna/textures/avatar_hud.png",
+      "original_size": [
+        500,
+        500
+      ],
+      "original_kb": 261.5,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 15.6,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vesna/textures/pose_already.png",
+      "original_size": [
+        2400,
+        3200
+      ],
+      "original_kb": 4729.0,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 125.9,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vesna/textures/pose_prepare.png",
+      "original_size": [
+        2400,
+        3200
+      ],
+      "original_kb": 4729.0,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 125.9,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vodyanitsa/textures/avatar.png",
+      "original_size": [
+        949,
+        1149
+      ],
+      "original_kb": 1191.3,
+      "new_size": [
+        317,
+        384
+      ],
+      "new_kb": 17.6,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vodyanitsa/textures/avatar_hud.png",
+      "original_size": [
+        1000,
+        1000
+      ],
+      "original_kb": 1204.2,
+      "new_size": [
+        256,
+        256
+      ],
+      "new_kb": 15.9,
+      "colors": 64
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vodyanitsa/textures/pose_already.png",
+      "original_size": [
+        1500,
+        2000
+      ],
+      "original_kb": 1806.9,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 74.6,
+      "colors": 96
+    },
+    {
+      "path": "src/main/resources/assets/minegenshin/character/vodyanitsa/textures/pose_prepare.png",
+      "original_size": [
+        1500,
+        2000
+      ],
+      "original_kb": 1806.9,
+      "new_size": [
+        960,
+        1280
+      ],
+      "new_kb": 74.6,
+      "colors": 96
+    }
+  ],
+  "total_original_mb": 36.38,
+  "total_new_mb": 1.44
+}
