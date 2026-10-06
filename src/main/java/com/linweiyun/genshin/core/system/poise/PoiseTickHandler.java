@@ -1,6 +1,5 @@
 package com.linweiyun.genshin.core.system.poise;
 
-import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -29,7 +28,7 @@ public final class PoiseTickHandler {
         if (living.level().isClientSide()) {
             return;
         }
-        if (!living.hasData(AttachmentRegistration.POISE.get())) {
+        if (PoiseService.peek(living) == null) {
             return;
         }
         PoiseService.tick(living);

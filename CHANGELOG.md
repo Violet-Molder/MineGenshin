@@ -6,6 +6,32 @@
 
 ---
 
+## 26.2.0.2 — 2026-10-06（兼容版本）
+
+本版把元素与韧性收进 elementlib 的通用模块层，并新增方块韧性。
+版本命名从这里改为「MC 版本 + mod 版本」；本版为兼容版本，旧存档仍可读。
+
+### 新增
+
+- 韧性注册为模块 `minegenshin:toughness`（实体 / 角色）；方块韧性为 `minegenshin:block_toughness`；
+- 方块韧性：原神模式左键交互一次扣一笔削韧，归零按钻石镐等价破坏（`BlockDropsEvent` 可取消）；
+  换算 `韧性 = 硬度 × 179`（石头 268.5，大剑两刀消耗 80%），`-1` / 硬度 ≤ 0 / 水与岩浆不参与；
+- 表现：复用原版裂纹，按已消耗比例推进；
+- 文档 `docs/systems/module-system.md`。
+
+### 变更
+
+- 元素容器搬进模块层：实体 `elementlib:modules`、方块 `elementlib:chunk_modules`、角色 `PGCharacterData.moduleContainer`；
+- 攻击收口到 `ElibAttackPipeline`：动作伤害点、方块左键、实体左键走同一个入口；
+- 依赖 elementlib `26.2.0.4`（联调期走本地开发仓库）。
+
+### 兼容
+
+- 旧 `elementlib:status_container` 与 `chunk_elements` 数据按格迁移，只读不写；
+- 旧 `minegenshin:status_container`（PGCharacterData 字段）首次访问时迁移进模块容器。
+
+---
+
 ## 1.0.7 — 2026-09-28（内部版本）
 
 本版只有文档与文档站：新增一篇按 26.2 源码逐条核过的「渲染 + Photon2」参考，

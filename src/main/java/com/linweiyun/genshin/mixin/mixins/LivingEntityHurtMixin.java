@@ -131,6 +131,11 @@ public class LivingEntityHurtMixin {
         ModDamageSpec spec = modSource.getSpec();
         PGCharacter attackerCharacter = spec.getAttackerCharacter();
         GenshinElement element = spec.getElement();
+        // 方块附着：带元素的伤害都顺手留给落点周围的环境（领域持续伤害、下落攻击等都走这里）
+        com.linweiyun.genshin.core.system.combat.attack.DamageBlockAttack.onElementalDamage(
+                level, target, source.getEntity(), element,
+                com.linweiyun.elementlib.core.system.about.AttachmentProfile.forAmount(spec.getElementAmount()),
+                spec.getElementAmount());
         float finalDamage = HurtEntityHelper.calculateFinalModDamage(
                 modSource, attackerCharacter, target);
 

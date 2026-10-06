@@ -6,7 +6,6 @@
   "character.name.sandrone": "Test",
   "character.name.columbina": "Columbina",
   "character.name.vesna": "Vesna",
-
   "minegenshin.configuration.section.minegenshin.character.toml": "Character Config",
   "minegenshin.configuration.section.minegenshin.character.toml.title": "Character Config",
   "minegenshin.configuration.section.minegenshin.world.text.color.toml": "World Text Color Config",
@@ -15,7 +14,6 @@
   "minegenshin.configuration.section.minegenshin.entity.toml.title": "Entity Config",
   "minegenshin.configuration.section.minegenshin.performance.toml": "Performance Config",
   "minegenshin.configuration.section.minegenshin.performance.toml.title": "Performance Config",
-
   "minegenshin.configuration.performance.damage_number_merge": "Merge Rapid Damage Numbers",
   "minegenshin.configuration.performance.damage_number_merge_gap_ms": "Merge Gap (ms)",
   "minegenshin.configuration.performance.damage_number_flood_window_ms": "Flood Window (ms)",
@@ -35,7 +33,6 @@
   "minegenshin.configuration.performance.render_optimize_gpu_skinning_under_shaders": "GPU skinning under shader packs (off by default, troubleshooting only): shader packs pick programs by identity and fall back to a generic program for vertex formats they do not recognize, which draws our geometry incorrectly. GPU skinning therefore steps aside for CPU skinning whenever a shader pack is active.",
   "minegenshin.configuration.performance.hot_path_log_throttle": "Throttle Hot-Path Logging",
   "minegenshin.configuration.performance.hot_path_log_max_per_second": "Hot-Path Logs Per Second",
-
   "minegenshin.configuration.slime.attack-desire": "Attack Desire Multiplier (applied to all skill chances)",
   "minegenshin.configuration.slime.collide-range": "Collide Trigger Range (also the approach stop distance)",
   "minegenshin.configuration.slime.shard-count": "Ice Shard Count",
@@ -47,21 +44,18 @@
   "minegenshin.configuration.slime.shield-restore-seconds": "Delay Before Restoring Shield After Break (s)",
   "minegenshin.configuration.slime.shield-idle-restore-seconds": "Idle Time Before Restoring Shield (s)",
   "minegenshin.configuration.slime.shield-cast-seconds": "Shield Cast Duration (s)",
-
   "minegenshin.configuration.section.minegenshin.weapon.toml": "Weapon Config",
   "minegenshin.configuration.section.minegenshin.weapon.toml.title": "Weapon Config",
   "minegenshin.configuration.section.minegenshin.artifact.toml": "Artifact Config",
   "minegenshin.configuration.section.minegenshin.artifact.toml.title": "Artifact Config",
   "minegenshin.configuration.section.minegenshin.reaction.toml": "Reaction Config",
   "minegenshin.configuration.section.minegenshin.reaction.toml.title": "Reaction Config",
-
   "minegenshin.configuration.levelUpExp": "Level Up Exp",
   "minegenshin.configuration.1star": "1-Star",
   "minegenshin.configuration.2star": "2-Star",
   "minegenshin.configuration.3star": "3-Star",
   "minegenshin.configuration.4star": "4-Star",
   "minegenshin.configuration.5star": "5-Star",
-
   "minegenshin.configuration.attribute": "Character Base Attributes",
   "minegenshin.configuration.hp": "Max HP",
   "minegenshin.configuration.atk": "ATK",
@@ -79,12 +73,10 @@
   "minegenshin.configuration.cyro-bonus": "Cyro Bonus",
   "minegenshin.configuration.geo-bonus": "Geo Bonus",
   "minegenshin.configuration.physical-bonus": "Physical Bonus",
-
   "minegenshin.configuration.talent": "Character Talent",
   "minegenshin.configuration.normal-attack": "Normal Attack",
   "minegenshin.configuration.elemental-skill": "Elemental Skill",
   "minegenshin.configuration.elemental-burst": "Elemental Burst",
-
   "minegenshin.configuration.nab1": "First Combat",
   "minegenshin.configuration.nab2": "Second Combat",
   "minegenshin.configuration.nab3": "Third Combat",
@@ -92,7 +84,6 @@
   "minegenshin.configuration.nab5": "Fifth Combat",
   "minegenshin.configuration.nab6": "Sixth Combat",
   "minegenshin.configuration.nab7": "Seventh Combat",
-
   "minegenshin.configuration.nap1": "First Combat Per Level Up",
   "minegenshin.configuration.nap2": "Second Combat Per Level Up",
   "minegenshin.configuration.nap3": "Third Combat Per Level Up",
@@ -100,7 +91,6 @@
   "minegenshin.configuration.nap5": "Fifth Combat Per Level Up",
   "minegenshin.configuration.nap6": "Sixth Combat Per Level Up",
   "minegenshin.configuration.nap7": "Seventh Combat Per Level Up",
-
   "minegenshin.configuration.shenhe": "Shenhe",
   "minegenshin.configuration.shehe-press-damage": "Press Skill Damage",
   "minegenshin.configuration.shehe-press-per-level": "Press Skill Damage Per Level Up",
@@ -108,18 +98,14 @@
   "minegenshin.configuration.shehe-hold-per-level": "Hold Skill Damage Per Level Up",
   "minegenshin.configuration.shehe-dmg-bonus": "DMG Bonus",
   "minegenshin.configuration.shehe-dmg-bonus-per-level": "DMG Bonus Per Level Up",
-
   "minegenshin.configuration.shehe-burst-skill-damage": "Skill Damage",
   "minegenshin.configuration.shehe-burst-skill-damage-per-level": "Skill DMG Per Level Up",
   "minegenshin.configuration.shehe-burst-res-decrease": "RES Decrease",
   "minegenshin.configuration.shehe-burst-res-decrease-per-level": "RES Decrease Per Level Up",
   "minegenshin.configuration.shehe-burst-dot": "DoT",
   "minegenshin.configuration.shehe-burst-dot-per-level": "DoT Per Level Up",
-
   "minegenshin.configuration.columbina": "Columbina",
   "minegenshin.configuration.arlecchino": "Arlecchino",
-
-
   "minegenshin.configuration.elemental-color": "Elemental Color",
   "minegenshin.configuration.elemental.physical_color": "Physical Color",
   "minegenshin.configuration.elemental.pyro_color": "Pyro Color",
@@ -129,23 +115,17 @@
   "minegenshin.configuration.elemental.anemo_color": "Anemo Color",
   "minegenshin.configuration.elemental.cyro_color": "Cyro Color",
   "minegenshin.configuration.elemental.geo_color": "Geo Color",
-
   "minegenshin.configuration.reaction-color": "Reaction Color",
   "minegenshin.configuration.reaction.melt": "Melt Color",
   "minegenshin.configuration.reaction.vaporize": "Vaporize Color",
   "minegenshin.configuration.reaction.electro_charged": "Electro Charged Color",
-
   "minegenshin.configuration.spawn-level": "Monster Spawn Level",
   "minegenshin.configuration.entity.spawn.level.calculation-mode": "Spawn Level Calculation Mode",
   "minegenshin.configuration.entity.spawn.level.calculation-radius": "Spawn Level Calculation Radius",
-
   "minegenshin.configuration.hp.base.coefficient": "HP Base",
-
   "minegenshin.configuration.weaponXp": "Weapon XP",
   "minegenshin.configuration.ascension": "Ascension Bonus",
-
   "minegenshin.configuration.level-coefficient": "Level Coefficient",
-
   "minegenshin.configuration.tier1": "Tier 1",
   "minegenshin.configuration.tier2": "Tier 2",
   "minegenshin.configuration.tier3": "Tier 3",
@@ -163,22 +143,17 @@
   "minegenshin.configuration.ascend5": "Ascension 5",
   "minegenshin.configuration.ascend6": "Ascension 6",
   "minegenshin.configuration.ascend7": "Ascension 7",
-
-
   "minegenshin.configuration.mainStat": "Main Stat",
   "minegenshin.configuration.artifact-stat-weight": "Stat Generate Weight",
   "minegenshin.configuration.artifact-sands": "Sands of Eon",
   "minegenshin.configuration.artifact-goblet": "Goblet of Eonothem",
   "minegenshin.configuration.artifact-circlet": "Circlet of Logos",
-
   "minegenshin.configuration.subStat": "Sub Stat",
-
   "minegenshin.configuration.reaction-amplifying": "Amplifying Reaction",
   "minegenshin.configuration.reaction-melt": "Melt",
   "minegenshin.configuration.reaction-melt-negative": "Melt Negative",
   "minegenshin.configuration.reaction-vaporize": "Vaporize",
   "minegenshin.configuration.reaction-vaporize-negative": "Vaporize Negative",
-
   "minegenshin.configuration.reaction-fusion": "Fusion Reaction",
   "minegenshin.configuration.reaction-superconduct": "Superconduct",
   "minegenshin.configuration.reaction-swirl": "Swirl",
@@ -189,13 +164,11 @@
   "minegenshin.configuration.reaction-bloom": "Bloom",
   "minegenshin.configuration.reaction-hyper-bloom": "Hyper-Bloom",
   "minegenshin.configuration.reaction-burgeon": "Burgeon",
-
   "artifact.type.flower": "Flower of Life",
   "artifact.type.plume": "Plume of Death",
   "artifact.type.sands": "Sands of Eon",
   "artifact.type.goblet": "Goblet of Eonothem",
   "artifact.type.circlet": "Circlet of Logos",
-
   "artifact_set.effect.2pc": "2-Piece Set",
   "artifact_set.effect.4pc": "4-Piece Set",
   "artifact_set.crimson_witch": "Crimson Witch of Flames",
@@ -212,19 +185,16 @@
   "artifact.desc.crimson_witch.sands": "A timepiece worn by the witch \nwho dreamt of burning away all \nthe demons in the world. The years\nthe witch dedicated to the flames \nflow within.",
   "artifact.desc.crimson_witch.goblet": "A flame-spitting urn left behind by\nthe Crimson Witch of Flames, who \nonce dreamt of burning away all \nthe demons in the world. The fire \nin the urn burns eternally, as did \nits former master.",
   "artifact.desc.crimson_witch.circlet": "A hat worn by the witch \nwho dreamt of burning away all of the \ndemons in the world. The large \nbrim blocked her sight.",
-
   "artifact.desc.tenacity_of_the_millelith.flower": "A flower made from gold leaf. It \nrepresents the glories and honors\nattained by its wearer.",
   "artifact.desc.tenacity_of_the_millelith.plume": "A falcon feather worn on \nceremonial occasions. It displays\n the dignity and resolve of Liyue \nHarbor to the outside world.",
   "artifact.desc.tenacity_of_the_millelith.sands": "A simple device for telling time, \nThis was once standard-issue for\nthe Millelith during times of war.",
   "artifact.desc.tenacity_of_the_millelith.goblet": "A golden cup used by the Millelith \nto take their oaths. Still bears the \nlovely scent of wine.",
   "artifact.desc.tenacity_of_the_millelith.circlet": "A splendorous helmet from ages\npast. Clean the dust away and it \nwill look brand-new once more.",
-
   "artifact.desc.scarlet_proof.flower": "A bright red flower ornament that \nsymbolizes blazing glory.",
   "artifact.desc.scarlet_proof.plume": "A bright red quill pen, granted to \nthe youngest blood.",
   "artifact.desc.scarlet_proof.sands": "A bright red pocket watch marking \nthe time allotted for a \nconversation.",
   "artifact.desc.scarlet_proof.goblet": "A bright red wine bottle. May you \nnever learn what's been in it.",
   "artifact.desc.scarlet_proof.circlet": "A bright red helmet. Hopefully it\nhas, once upon a time, protected\nsomeone.",
-
   "item.minegenshin.primogem": "Primogem",
   "item.minegenshin.sweet_madame": "Sweet Madame",
   "item.minegenshin.crimson_flower": "Witch's Flower of Blaze",
@@ -242,16 +212,10 @@
   "item.minegenshin.tenacity_sands": "Orichalceous Time-Dial",
   "item.minegenshin.tenacity_goblet": "Noble's Pledging Vessel",
   "item.minegenshin.tenacity_circlet": "General's Ancient Helm",
-
-
-
-
   "itemGroup.minegenshin.foodGroup": "Minegenshin-Foods",
   "itemGroup.minegenshin.regularItemGroup": "Minegenshin-Regular Item",
-
   "entity.minegenshin.large_cryo_slime": "Large Cryo Slime",
   "entity.minegenshin.ice_block": "Ice Block",
-
   "attribute.minegenshin.max_hp": "Max HP",
   "attribute.minegenshin.atk": "ATK",
   "attribute.minegenshin.def": "DEF",
@@ -285,11 +249,6 @@
   "attribute.minegenshin.poise_max": "Max Poise",
   "attribute.minegenshin.super_armor": "Super Armor",
   "attribute.minegenshin.weight": "Weight",
-
-
-
-
-
   "message.minegenshin.wish.draw_character": "Congratulations, you have drawn a new character:%s",
   "message.minegenshin.wish.owned_character": "Congratulations, you have drawn the character: %s, but you already possess this role. It will be replaced with: %sx3",
   "message.minegenshin.wish.draw_item": "Congratulations, you have drawn: %sx%s",
@@ -297,20 +256,17 @@
   "message.minegenshin.wish.no_reward": "I'm sorry, you didn't win any reward",
   "message.minegenshin.wish.constellation_up": "Congratulations! You drew %s, constellation raised to %s",
   "message.minegenshin.wish.constellation_max_compensation": "That character is already at max constellation, so this wish grants a full artifact set instead: %s",
-
   "constellation.minegenshin.vesna.1.desc": "While in Windrider mode, Vesna can cast the highest-tier Xiangfeng Sword four times instead of three, and the first highest-tier Xiangfeng Sword after each entry costs no Sword Qi. Also, Stellar Swirl reaction damage dealt in Windrider mode is increased by 20%.",
   "constellation.minegenshin.vesna.2.desc": "Ascension talent 'Rite of the Spring Procession' is enhanced: entering Windrider mode grants the maximum stacks of Decree; while at maximum stacks, Vesna's ATK is increased by 40%. Requires the ascension talent to be unlocked.",
   "constellation.minegenshin.vesna.1.applied": "Constellation 1 active: four tier-3 Xiangfeng Swords / first one free / Stellar Swirl +20%",
   "constellation.minegenshin.vesna.2.applied": "Constellation 2 active: Windrider entry grants max Decree / ATK +40% at max stacks",
   "message.minegenshin.constellation.set": "Set %s's constellation to %s",
   "message.minegenshin.constellation.invalid": "Constellation must be between 0 and 6",
-
   "item.minegenshin.beyond_the_chrysalis": "Beyond the Chrysalis",
   "item.minegenshin.beyond_the_chrysalis.passive": "After the equipper casts an Elemental Skill or Burst, they gain one of the following effects in order:\n- Wind of Loyalty: CRIT DMG +56% for 10s;\n- Wind of Renunciation: Stellar Swirl reaction DMG +36% for 10s;\n- Wind of Harvest: restores 5 Elemental Energy, at most once every 4s.\nThese effects are removed and the order is reset when the equipper leaves the field.",
   "item.minegenshin.hymn_of_the_maelstrom": "Hymn of the Maelstrom",
   "item.minegenshin.hymn_of_the_maelstrom.passive": "The equipper gains Healing Bonus +4%.\nWhenever the equipper performs a heal (including while off-field), they gain one stack of Honeyed Truth Mead:\n- the equipper's Max HP +4% per stack, up to 3 stacks;\n- the current on-field character simultaneously gains ATK: computed from the equipper's Max HP after the previous stack, +0.4% for every 1000 points above 40000 (up to 8% per stack), then multiplied by the current number of stacks.\nEach stack lasts 10s; re-triggering refreshes the duration and adds a stack (tracked per recipient).\nWithin 5s after any nearby party member triggers Frozen or Stellar Swirl, both the Max HP and the ATK bonuses above are increased by 75%.",
   "character.name.vodyanitsa": "Vodyanitsa",
-
   "effect.minegenshin.pyro_infusion": "Pyro Infusion",
   "effect.minegenshin.hydro_infusion": "Hydro Infusion",
   "effect.minegenshin.anemo_infusion": "Anemo Infusion",
@@ -318,8 +274,6 @@
   "effect.minegenshin.dendro_infusion": "Dendro Infusion",
   "effect.minegenshin.cyro_infusion": "Cyro Infusion",
   "effect.minegenshin.geo_infusion": "Geo Infusion",
-
-
   "effect.minegenshin.pyro_about": "About Pyro",
   "effect.minegenshin.hydro_about": "About Hydro",
   "effect.minegenshin.anemo_about": "About Anemo",
@@ -327,11 +281,8 @@
   "effect.minegenshin.dendro_about": "About Dendro",
   "effect.minegenshin.cyro_about": "About Cyro",
   "effect.minegenshin.geo_about": "About Geo",
-
   "effect.minegenshin.frozen": "Elemental Reaction: Frozen",
-
-  "key.categories.minegenshin" : "Minegenshin",
-
+  "key.categories.minegenshin": "Minegenshin",
   "key.minegenshin.attack": "Normal Attack",
   "key.minegenshin.g_mode": "Switch GenshinImpact Mode",
   "key.minegenshin.v_mode": "Switch Character",
@@ -347,30 +298,22 @@
   "key.minegenshin.config_key": "Character Config",
   "key.minegenshin.walk_toggle": "Walk/Run Toggle",
   "button.tutorial.one": "One",
-
   "item.minegenshin.dark_fragment": "Dark Fragment",
-
-
-
   "minegenshin.configuration.weapon.xp.5star": "5-Star Weapon XP per Level",
   "minegenshin.configuration.weapon.xp.4star": "4-Star Weapon XP per Level",
   "minegenshin.configuration.weapon.xp.3star": "3-Star Weapon XP per Level",
-
   "minegenshin.configuration.weapon.ascension.5star": "5-Star Ascension ATK Bonus",
   "minegenshin.configuration.weapon.ascension.4star": "4-Star Ascension ATK Bonus",
   "minegenshin.configuration.weapon.ascension.3star": "3-Star Ascension ATK Bonus",
   "minegenshin.configuration.weapon.ascension.2star": "2-Star Ascension ATK Bonus",
   "minegenshin.configuration.weapon.ascension.1star": "1-Star Ascension ATK Bonus",
-
   "minegenshin.configuration.weapon.substat.multiplier": "Sub-stat Level Multiplier Table (Lv.1,5,10,...,90)",
-
   "minegenshin.configuration.weapon.substat.crit_rate": "Sub-stat: Crit Rate",
   "minegenshin.configuration.weapon.substat.crit_dmg": "Sub-stat: Crit DMG",
   "minegenshin.configuration.weapon.substat.energy_recharge": "Sub-stat: Energy Recharge",
   "minegenshin.configuration.weapon.substat.atk_percent": "Sub-stat: ATK%",
   "minegenshin.configuration.weapon.substat.physical_percent": "Sub-stat: Physical DMG%",
   "minegenshin.configuration.weapon.substat.elemental_mastery": "Sub-stat: Elemental Mastery",
-
   "minegenshin.configuration.weapon.mainstat.tier41": "Tier41 - Base ATK Before Ascension",
   "minegenshin.configuration.weapon.mainstat.tier42": "Tier42 - Base ATK Before Ascension",
   "minegenshin.configuration.weapon.mainstat.tier44": "Tier44 - Base ATK Before Ascension",
@@ -380,7 +323,6 @@
   "minegenshin.configuration.weapon.mainstat.tier40": "Tier40 - Base ATK Before Ascension",
   "minegenshin.configuration.weapon.mainstat.tier33": "Tier33 - Base ATK Before Ascension",
   "minegenshin.configuration.weapon.mainstat.tier23": "Tier23 - Base ATK Before Ascension",
-
   "minegenshin.configuration.weapon.growth.tier41": "Tier41 - Growth Per Level per Interval",
   "minegenshin.configuration.weapon.growth.tier42": "Tier42 - Growth Per Level per Interval",
   "minegenshin.configuration.weapon.growth.tier44": "Tier44 - Growth Per Level per Interval",
@@ -388,9 +330,6 @@
   "minegenshin.configuration.weapon.growth.tier38": "Tier38 - Growth Per Level per Interval",
   "minegenshin.configuration.weapon.growth.tier39": "Tier39 - Growth Per Level per Interval",
   "minegenshin.configuration.weapon.growth.tier40": "Tier40 - Growth Per Level per Interval",
-
-
-
   "minegenshin.configuration.level.0t1": "Lv.0 -> Lv.1",
   "minegenshin.configuration.level.1t2": "Lv.1 -> Lv.2",
   "minegenshin.configuration.level.2t3": "Lv.2 -> Lv.3",
@@ -481,7 +420,6 @@
   "minegenshin.configuration.level.87t88": "Lv.87 -> Lv.88",
   "minegenshin.configuration.level.88t89": "Lv.88 -> Lv.89",
   "minegenshin.configuration.level.89t90": "Lv.89 -> Lv.90",
-
   "minegenshin.configuration.level.1": "Lv.1",
   "minegenshin.configuration.level.2": "Lv.2",
   "minegenshin.configuration.level.3": "Lv.3",
@@ -578,7 +516,6 @@
   "minegenshin.configuration.level.88": "Lv.88",
   "minegenshin.configuration.level.89": "Lv.89",
   "minegenshin.configuration.level.90": "Lv.90",
-
   "minegenshin.configuration.attack.base.coefficient": "ATK Base Coefficient",
   "minegenshin.configuration.attribute-cap-relief": "Attribute Cap Relief",
   "minegenshin.configuration.character_stat_scale": "Character Stat Scale (into player)",
@@ -641,7 +578,6 @@
   "minegenshin.configuration.tier7": "Tier 7",
   "minegenshin.configuration.tier8": "Tier 8",
   "minegenshin.configuration.title": "MineGenshin Config",
-
   "reaction.minegenshin.melt": "Melt",
   "reaction.minegenshin.vaporize": "Vaporize",
   "reaction.minegenshin.shattered": "Shattered",
@@ -665,13 +601,11 @@
   "reaction.minegenshin.stellar_swirl_ice": "Stellar Swirl",
   "reaction.minegenshin.stellar_conduce_electro": "Stellar Conduce",
   "reaction.minegenshin.stellar_conduce_ice": "Stellar Conduce",
-
   "gui.minegenshin.character_select.deploy": "Deploy",
   "gui.minegenshin.character_select.recall": "Recall",
   "gui.minegenshin.character_select.swap": "Swap",
   "gui.minegenshin.character_select.sort_star": "Sort by Star",
   "gui.minegenshin.character_select.sort_level": "Sort by Level",
-
   "gui.minegenshin.ascension.title": "Ascension",
   "gui.minegenshin.ascension.adventure_rank": "Adventurer Rank: %s",
   "gui.minegenshin.ascension.adventure_exp": "Adventurer EXP: %s / %s",
@@ -697,7 +631,6 @@
   "gui.minegenshin.ascension.char_exp_empty": "Character EXP: - / -",
   "gui.minegenshin.ascension.char_level_empty": "Character Level: -",
   "gui.minegenshin.ascension.no_character": "No character selected",
-
   "gui.minegenshin.artifact_equip.flower": "Flower of Life",
   "gui.minegenshin.artifact_equip.plume": "Plume of Death",
   "gui.minegenshin.artifact_equip.sands": "Sands of Eon",
@@ -718,7 +651,6 @@
   "gui.minegenshin.artifact_equip.level_format": "Level: +%s",
   "gui.minegenshin.artifact_equip.exp_format": "EXP: %s / %s",
   "gui.minegenshin.artifact_equip.exp_max": "EXP: MAX",
-
   "gui.minegenshin.backpack.organize": "Organize",
   "gui.minegenshin.backpack.category.weapons": "Weapons",
   "gui.minegenshin.backpack.category.artifacts": "Artifacts",
@@ -732,18 +664,15 @@
   "gui.minegenshin.backpack.sort_star": "Sort by Star",
   "gui.minegenshin.backpack.sort_level": "Sort by Level",
   "gui.minegenshin.backpack.sort_set": "Sort by Set",
-
   "gui.minegenshin.backpack.equipped_by": "[Equipped by %s]",
   "gui.minegenshin.backpack.equipped": "[Equipped]",
   "gui.minegenshin.backpack.level_format": "Level: +%s",
   "gui.minegenshin.backpack.no_selection": "No item selected",
   "gui.minegenshin.backpack.take_out": "Take Out",
   "gui.minegenshin.backpack.detail": "Details",
-
   "key.minegenshin.combo_stage": "§eStage %s/%s",
   "key.minegenshin.charged_attack": "§cCharged Attack",
   "key.minegenshin.switched_character": "Switched to %s",
-
   "message.minegenshin.no_alive_character": "No party members with HP > 0, cannot enable Genshin mode",
   "message.minegenshin.walk_mode_on": "Switched to Walk mode (slower)",
   "message.minegenshin.walk_mode_off": "Switched to Run mode",
@@ -786,7 +715,6 @@
   "message.minegenshin.world_already_invaded": "Teyvat world has already invaded!",
   "message.minegenshin.world_invasion_activated": "Teyvat world invasion activated!",
   "message.minegenshin.world_invasion_broadcast": "The power of Teyvat descends upon this world...",
-
   "command.minegenshin.primogem.get": "%s currently has %s Primogems",
   "command.minegenshin.primogem.set": "Set %s's Primogems to %s",
   "command.minegenshin.primogem.add": "Added %s Primogems to %s, now has %s",
@@ -795,13 +723,10 @@
   "command.minegenshin.character.add_success": "Added character [%s] to %s",
   "command.minegenshin.character.not_owned": "Target player does not own this character",
   "command.minegenshin.character.remove_success": "Removed character [%s] from %s",
-
   "item.minegenshin.weapon.refinement_rank": "Refinement Rank %s",
-
   "item.minegenshin.wanderers_advice": "Wanderer's Advice",
   "item.minegenshin.adventurers_experience": "Adventurer's Experience",
   "item.minegenshin.heros_wit": "Hero's Wit",
-
   "gui.minegenshin.character_config.title": "Shenhe · Character Config",
   "gui.minegenshin.character_config.hint": "Drag to orbit, scroll to zoom; press %s to close",
   "gui.minegenshin.character_config.no_character": "No character is deployed right now",
@@ -888,7 +813,6 @@
   "gui.minegenshin.character_config.talent.lwy-burst-dot": "Burst · DoT",
   "gui.minegenshin.character_config.talent.shehe-burst-dot-per-level": "Burst · DoT Per Level",
   "gui.minegenshin.character_config.talent.lwy-burst-dot-per-level": "Burst · DoT Per Level",
-
   "gui.minegenshin.character_equip.title": "Character Info",
   "gui.minegenshin.character_equip.hint": "Drag the model to rotate, scroll to zoom; click an avatar to switch, press %s to close",
   "gui.minegenshin.character_equip.page.stats": "Stats",
@@ -925,7 +849,6 @@
   "gui.minegenshin.character_equip.info_constellation": "Constellation",
   "gui.minegenshin.character_equip.model": "Model",
   "gui.minegenshin.character_equip.no_model": "No render data registered for this character",
-
   "gui.minegenshin.character_equip.view_only": "View only: you are not controlling this character, so equipment changes are disabled",
   "gui.minegenshin.character_equip.orb_drag_hint": "Drag the artifacts around the character to move them; click one to change it",
   "gui.minegenshin.character_equip.change": "Change",
@@ -986,7 +909,6 @@
   "gui.minegenshin.character_equip.talent.kind.burst": "Elemental Burst",
   "gui.minegenshin.character_equip.talent.kind.passive1": "Passive Talent 1",
   "gui.minegenshin.character_equip.talent.kind.passive2": "Passive Talent 2",
-
   "gui.minegenshin.character_equip.talent.shenhe.normal.name": "Normal Attack: Dawnstar Piercer",
   "gui.minegenshin.character_equip.talent.shenhe.normal.desc": "Normal Attack: Performs up to 5 consecutive spear strikes. Charged Attack: Consumes a certain amount of Stamina to lunge forward, dealing damage to enemies along the way. Plunging Attack: Plunges from mid-air to strike the ground below, damaging enemies along the path and dealing AoE DMG upon impact.",
   "gui.minegenshin.character_equip.talent.shenhe.skill.name": "Elemental Skill: Spring Spirit Summoning",
@@ -997,7 +919,6 @@
   "gui.minegenshin.character_equip.talent.shenhe.passive1.desc": "An active character within the field created by Divine Maiden's Deliverance gains 15% Cryo DMG Bonus. (Unlocked at Ascension 1)",
   "gui.minegenshin.character_equip.talent.shenhe.passive2.name": "Spirit Communion Seal",
   "gui.minegenshin.character_equip.talent.shenhe.passive2.desc": "After Shenhe uses Spring Spirit Summoning, she will grant all nearby party members the following effects: Press: Elemental Skill and Elemental Burst DMG increased by 15% for 10s. Hold: Normal, Charged, and Plunging Attack DMG increased by 15% for 15s. (Unlocked at Ascension 4)",
-
   "gui.minegenshin.character_equip.constellation.shenhe.1.name": "Clarity of Heart",
   "gui.minegenshin.character_equip.constellation.shenhe.1.desc": "Spring Spirit Summoning can be used 1 more time.",
   "gui.minegenshin.character_equip.constellation.shenhe.2.name": "Centered Spirit",
@@ -1009,5 +930,10 @@
   "gui.minegenshin.character_equip.constellation.shenhe.5.name": "Divine Attainment",
   "gui.minegenshin.character_equip.constellation.shenhe.5.desc": "Increase the Level of Divine Maiden's Deliverance by 3. Maximum upgrade level is 15.",
   "gui.minegenshin.character_equip.constellation.shenhe.6.name": "Mystical Abandon",
-  "gui.minegenshin.character_equip.constellation.shenhe.6.desc": "When characters trigger Icy Quill's effects using Normal and Charged Attack DMG, it does not count toward the Trigger Quota."
+  "gui.minegenshin.character_equip.constellation.shenhe.6.desc": "When characters trigger Icy Quill's effects using Normal and Charged Attack DMG, it does not count toward the Trigger Quota.",
+  "minegenshin.configuration.section.minegenshin.poise.toml": "Poise Config",
+  "minegenshin.configuration.section.minegenshin.poise.toml.title": "Poise Config",
+  "minegenshin.configuration.poise.freeze_force_break": "Freeze Breaks Poise",
+  "minegenshin.configuration.poise.reaction_poise": "Reactions Deal Poise",
+  "minegenshin.configuration.poise.block_hardness_multiplier": "Block Toughness Multiplier"
 }

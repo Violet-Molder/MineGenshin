@@ -5,6 +5,9 @@ import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
+import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.status.StatusAccessor;
 import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
 import com.linweiyun.elementlib.core.system.about.AttachmentSource;
@@ -112,43 +115,17 @@ public final class IceMistField {
                 new Vec3(field.center.x, field.center.y + height / 2.0D, field.center.z),
                 RADIUS * 2.0D, height, RADIUS * 2.0D);
 
-        float damage = field.attackDamage * DAMAGE_MULTIPLIER;
+        ModDamageSpec spec = ModDamageSpec.builder(AttackType.MONSTER, ModElements.CYRO.get())
+                .multiplier(DAMAGE_MULTIPLIER)
+                .elementAmount(AttachmentProfile.WEAK.getBaseQuantity())
+                .build();
+        ModDamageSource source = ModDamageSource.from(spec, field.caster);
         for (LivingEntity victim : field.level.getEntitiesOfClass(LivingEntity.class, area)) {
             if (victim == field.caster || !victim.isAlive()) {
                 continue;
             }
-            // 原版伤害源：怪物的伤害由 LivingEntityHurtMixin 按攻击力换算，
-            // 所以这里传的是「原版攻击力 × 倍率」，最终伤害会变成 ATK × 倍率。
-            victim.hurtServer(field.level, field.caster.damageSources().mobAttack(field.caster), damage);
-            attachChillToActiveCharacter(field.level, victim);
+            victim.hurtServer(field.level, source, 0f);
         }
-    }
-
-    /**
-     * 给玩家的<b>场上角色</b>挂弱冰附着。
-     *
-     * <p>挂在角色的容器上而不是玩家身上：这样切人之后是「另一个角色」的附着，
-     * 切回来只要没掉就还在。
-     */
-    private static void attachChillToActiveCharacter(ServerLevel level, LivingEntity victim) {
-        if (!(victim instanceof Player player)) {
-            return;
-        }
-        if (!player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT)) {
-            return;
-        }
-        PlayerCharactersAttachment attachment =
-                player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
-        if (attachment == null) {
-            return;
-        }
-        PGCharacter current = attachment.getCurrentCharacter();
-        if (current == null) {
-            return;
-        }
-        StatusContainer container = StatusAccessor.of(current.getData());
-        ElementalAttachmentHelper.attach(player, container, ModElements.CYRO.get(),
-                AttachmentSource.SPECIAL, AttachmentProfile.WEAK);
     }
 
     /** 一片正在生效的冰雾。 */

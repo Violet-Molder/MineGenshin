@@ -1,6 +1,10 @@
 package com.linweiyun.genshin.content.entities.teyvat.monster.slime;
 
 import com.linweiyun.genshin.config.entity.MobBehaviorConfig;
+import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.content.skill_node.GroundMarker;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -176,13 +180,16 @@ public class CryoSlimeSlamGoal extends CryoSlimeSkillGoal {
         Vec3 center = this.slime.position();
         AABB area = AABB.ofSize(new Vec3(center.x, center.y + 1.0D, center.z),
                 SLAM_RADIUS * 2.0D, 3.0D, SLAM_RADIUS * 2.0D);
-        float damage = this.slime.attackDamageValue() * SLAM_MULTIPLIER;
+        ModDamageSpec spec = ModDamageSpec.builder(AttackType.MONSTER, ModElements.CYRO.get())
+                .multiplier(SLAM_MULTIPLIER)
+                .elementAmount(0.0f)
+                .build();
+        ModDamageSource source = ModDamageSource.from(spec, this.slime);
         for (LivingEntity victim : serverLevel.getEntitiesOfClass(LivingEntity.class, area)) {
             if (victim == this.slime || !victim.isAlive()) {
                 continue;
             }
-            victim.hurtServer(serverLevel,
-                    this.slime.damageSources().mobAttack(this.slime), damage);
+            victim.hurtServer(serverLevel, source, 0f);
         }
         this.slime.resetCombat();
     }

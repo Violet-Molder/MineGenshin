@@ -38,7 +38,11 @@ public final class CharacterHost implements ElementalHost {
 
     @Override
     public StatusContainer container() {
-        return isValid() ? character.getData().getStatusContainer() : null;
+        if (!isValid()) {
+            return null;
+        }
+        return character.getData().getModuleContainer().ensure(
+                com.linweiyun.elementlib.core.module.ElibModuleTypes.ELEMENT);
     }
 
     @Override

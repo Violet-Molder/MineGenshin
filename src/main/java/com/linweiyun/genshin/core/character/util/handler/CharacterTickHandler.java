@@ -70,6 +70,13 @@ public class CharacterTickHandler {
         if (player.onGround()) {
             // 砸到地面：结算这一下，状态结束
             character.performPlungingAttack(player);
+            // 下落攻击落地：把元素留给落点周围的环境（没砸到实体时也要附着）
+            if (player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                com.linweiyun.genshin.core.system.combat.attack.DamageBlockAttack.onElementalDamage(
+                        serverLevel, player, player, character.getElemental(),
+                        com.linweiyun.elementlib.core.system.about.AttachmentProfile.WEAK,
+                        com.linweiyun.elementlib.core.system.about.AttachmentProfile.WEAK.getBaseQuantity());
+            }
             PlungeState.end(player);
         } else if (player.isInWater() || player.onClimbable()
                 || player.getAbilities().flying || player.isFallFlying() || player.isSpectator()) {

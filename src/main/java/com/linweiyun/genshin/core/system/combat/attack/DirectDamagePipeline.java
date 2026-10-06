@@ -21,9 +21,16 @@ import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
 import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.shield.ShieldService.AttachDecision;
+import com.linweiyun.genshin.content.entities.teyvat.TeyvatLiving;
 import com.linweiyun.elementlib.api.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElibAttackAction;
+import com.linweiyun.elementlib.api.ElibAttackOutcome;
+import com.linweiyun.elementlib.api.ElibAttackTrigger;
+import com.linweiyun.elementlib.core.system.attack.ElibAttackPipeline;
 import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import com.linweiyun.elementlib.core.system.about.AttachContext;
 import com.linweiyun.elementlib.core.system.about.AttachResult;
 
@@ -62,7 +69,15 @@ final class DirectDamagePipeline {
         }
 
         // ── ⓪ 基础伤害区 ──
-        float baseDamage = hasAttacker ? DamageZones.baseDamage(attacker, spec) : 0f;
+        // 基础伤害区：角色走属性面板；提瓦特生物（没有 PGCharacter）按它的攻击力 × 技能倍率
+        float baseDamage;
+        if (hasAttacker) {
+            baseDamage = DamageZones.baseDamage(attacker, spec);
+        } else {
+            float attack = sourceEntity instanceof TeyvatLiving teyvat
+                    ? teyvat.getEntityStats().attack() : 0f;
+            baseDamage = attack * spec.getAtkMultiplier() + spec.getFlatDamageBonus();
+        }
 
         // ── ① 衰减 ──
         DecayResult decayResult = DecayResult.NONE;
@@ -127,8 +142,21 @@ final class DirectDamagePipeline {
                     hasAttacker ? gameTime : 0L,
                     damageSource.getEntity(),
                     spec.getElementAmount() * elementCoefficient);
-            AttachResult attachResult = ElementalAttachmentHelper.attach(
-                    host, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile, attachContext);
+            // 统一攻击入口：实体目标精确走 dispatchOn；门禁没过（例如非玩家来源）才回退直连附着
+            Entity actionAttacker = damageSource.getEntity() != null ? damageSource.getEntity() : target;
+            ElibAttackAction attackAction = new ElibAttackAction(
+                    actionAttacker, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile,
+                    ElibAttackTrigger.ENTITY, "damage",
+                    target.getEyePosition(), Vec3.ZERO, 1.0, gameTime,
+                    hasAttacker ? CharacterKeys.keyOf(attacker) : null,
+                    spec.getPoiseDamage(attacker), spec.getElementAmount(), null);
+            ElibAttackOutcome outcome = ElibAttackPipeline.dispatchOn(attackAction, target,
+                    spec.getElementAmount() * elementCoefficient);
+            AttachResult attachResult = outcome.attachResultOf(target);
+            if (attachResult == null) {
+                attachResult = ElementalAttachmentHelper.attach(
+                        host, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile, attachContext);
+            }
             if (!attachResult.attached()) {
                 // 宿主拒收这次附着 → 反应同样不发生。
                 // 「没挂上去就没有反应」是附着与反应之间的唯一顺序约束；先手元素保留 = 共存。

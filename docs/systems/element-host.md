@@ -260,3 +260,14 @@ BlockElementMigrations.register(state -> state.is(MY_BLOCK.get()),
 | 方块吃元素但整个服务器卡顿 | 迁移里做了重活，或每 tick 提交/同步整 chunk 元素表 —— `commit` 幂等化、去掉 `.sync()`、改成集中式推进之后不应再出现 |
 | 免疫的怪还是掉血 | 免疫走 `isImmuneToElementDamage`（按**主元素**比较）；只在 `hurtServer` 里削伤害不走这条轴 |
 | 新增方块后核心代码还是要改 | 说明迁移写进了 `BlockElementHelper` 而不是 `BlockElementMigrations` 注册表 |
+
+## 26.2.0.2 变更：宿主升级为模块
+
+元素容器的存取从「附件 `elementlib:status_container` / `ChunkBlockElements.containers`」搬进了通用模块层：
+
+- 实体：附件 `elementlib:modules`，元素是其中的 `elementlib:element` 模块；
+- 方块：区块 `elementlib:chunk_modules` 的持久区；水位仍留在旧附件上；
+- 角色：`PGCharacterData.moduleContainer`；
+- `ElementalAttachments.container(...)` 与 `BlockElementStore` 已是模块入口的兼容壳，旧存档首次访问时按格迁移。
+
+宿主种类与统一查询见 `docs/systems/module-system.md`。

@@ -9,6 +9,8 @@ import com.linweiyun.genshin.content.effect.character.CharacterEffectContainer;
 import com.linweiyun.genshin.content.items.artifact.inventory.AllWeaponArtifactInventory;
 import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
 import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.module.ElibModuleContainer;
+import com.linweiyun.elementlib.core.module.ElibModuleTypes;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearance;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearanceData;
 import com.linweiyun.genshin.core.network.NetworkManager;
@@ -100,6 +102,8 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
    protected List<Integer> skillCoolList;
    @Persisted(key = "status_container")
    private StatusContainer statusContainer = new StatusContainer();
+   @Persisted(key = "module_container")
+   private ElibModuleContainer moduleContainer = new ElibModuleContainer();
    @Persisted(key = "owner_uuid")
    private UUID ownerUUID;
    @Persisted(key = "artifact_inventory")
@@ -892,7 +896,19 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
 
    @Generated
    public StatusContainer getStatusContainer() {
-      return this.statusContainer;
+      return getModuleContainer().ensure(ElibModuleTypes.ELEMENT);
+   }
+
+   /** 角色模块容器；旧 statusContainer 首次访问时迁进来。 */
+   public ElibModuleContainer getModuleContainer() {
+      if (moduleContainer == null) {
+         moduleContainer = new ElibModuleContainer();
+      }
+      if (!moduleContainer.has(ElibModuleTypes.ELEMENT)
+              && statusContainer != null && !statusContainer.isEmpty()) {
+         moduleContainer.put(statusContainer);
+      }
+      return moduleContainer;
    }
 
    @Generated

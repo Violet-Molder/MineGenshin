@@ -480,3 +480,21 @@ Levitate.field(owner, range, 2.5, 60);           // 范围内全部能抬的一�
     守卫者的激光束（伤害在 `Guardian.aiStep`）、幻翼的俯冲循环、末影人的入水传送；
 13. **`poise_max` 还没有人真的去写**：属性与读取链路都已就位，但没有怪物属性表 /
     副本逻辑去给「不同环境下的同一只怪」配不同的上限。
+
+## 26.2.0.2 变更：韧性模块化 + 方块韧性
+
+- 实体/角色韧性改为模块 `minegenshin:toughness`，数据对象仍是 `PoiseState`；
+  `PoiseService.get/peek/push` 走 `ElibModuleHosts`，对外行为不变；
+- 方块韧性是新模块 `minegenshin:block_toughness`，存在区块瞬态区：
+  左键点方块按当前武器普攻削韧扣一笔；动作系统伤害点（普攻 / 重击 / 下坠 / 战技 / 爆发）
+  按这一下实际算出来的削韧值扣（技能写过 `withPoiseDamage` 就用技能的值）；同一格同一刻只算一笔；
+  归零按「钻石镐等价」破坏（掉落判定走 `BlockDropsEvent`，可被取消）；
+- 换算：基础值 = 硬度 × 179（大剑两刀消耗石头 80%），再乘配置倍率
+  `minegenshin/poise.toml → block.hardness-multiplier`（默认 3）；
+- 判定时机：按**附着 / 迁移之前**的方块状态算这一下的韧性 —— 水在冻结前是流体、不参与，
+  所以冰元素打水面只结冰，不会顺手把冻出来的浮冰打碎；
+- 不参与：显式 `-1`、硬度 ≤ 0、空气、所有流体（水、岩浆、其它模组的 `LiquidBlock`）；
+- 浮冰（`minecraft:frosted_ice`）照常参与，不管它是冻结反应生成的还是别的来源；
+- 表现：复用原版裂纹（`destroyBlockProgress`），进度按已消耗比例推进。
+
+模块层说明见 `docs/systems/module-system.md`。

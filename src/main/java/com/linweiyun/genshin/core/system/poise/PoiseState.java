@@ -3,6 +3,9 @@ package com.linweiyun.genshin.core.system.poise;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.utils.PersistedParser;
+import com.linweiyun.elementlib.core.module.ElibModuleData;
+import com.linweiyun.elementlib.core.module.ElibModuleType;
+import com.linweiyun.genshin.core.system.toughness.ToughnessTypes;
 import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -34,7 +37,13 @@ import net.minecraft.network.codec.StreamCodec;
  * <p>⚠️ NeoForge 的附件是「原地改对象不算改」—— 改完必须由 {@link PoiseService} 调一次
  * {@code setData} 推给客户端，否则客户端永远拿旧值。
  */
-public class PoiseState implements IPersistedSerializable {
+public class PoiseState implements IPersistedSerializable, ElibModuleData {
+
+    /** 这份数据属于韧性模块。 */
+    @Override
+    public ElibModuleType<?> type() {
+        return ToughnessTypes.TOUGHNESS;
+    }
 
     /** 当前攒到的削韧值。 */
     @Persisted(key = "value")

@@ -2,9 +2,20 @@ package com.linweiyun.genshin.core.system.combat.action;
 
 import com.linweiyun.genshin.core.system.combat.action.data.ActionStep;
 import com.linweiyun.genshin.core.system.combat.action.data.Hit;
+import com.linweiyun.elementlib.api.ElibAttackAction;
+import com.linweiyun.elementlib.api.ElibAttackTrigger;
+import com.linweiyun.elementlib.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.attack.ElibAttackPipeline;
 import com.linweiyun.genshin.core.system.combat.attack.ElementalAttackSweep;
+import net.minecraft.server.level.ServerLevel;
 import com.linweiyun.genshin.core.system.poise.HitPoise;
+import com.linweiyun.genshin.core.system.poise.HitPoiseDamage;
 import com.linweiyun.genshin.core.system.poise.HitImpact;
+import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
+import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
 import com.linweiyun.genshin.core.system.performance.HotPathLog;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -138,30 +149,62 @@ public class ActionState {
      * 所以客户端这一份状态机跑过去不会有任何副作用。
      */
     private void fireDamagePoint(int hitIndex) {
-        try {
-            int attached = ElementalAttackSweep.forAction(context.player, context.character, definition);
-            if (attached > 0) {
-                // 多段招式的每一段命中都会走这里：高频攻击时节流（见 HotPathLog）
-                if (HotPathLog.allow(LOGGER, "elemental-attack-sweep", "元素战技扫方块")) {
-                    LOGGER.info("[ElementalAttackSweep] kind={} 附着方块数={} tick={}",
-                            definition.kind, attached, tickCount);
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("[ElementalAttackSweep] 方块附着抛异常 kind={} tick={}",
-                    definition.kind, tickCount, e);
-        }
-
         // 这一下是哪个伤害点：把 Hit.poise 挂出来，技能里新建的 ModDamageSpec 会自动读走它
         // （见 HitPoise）。成对 push/restore，异常也复原，不会串到下一下。
-        float previousPoise = HitPoise.push(hitPoiseCoefficient(hitIndex));
+        float hitCoefficient = hitPoiseCoefficient(hitIndex);
+        float previousPoise = HitPoise.push(hitCoefficient);
         ImpactLevel previousImpact = HitImpact.push(hitImpact(hitIndex));
+        HitPoiseDamage.reset();
         try {
             fire(definition.getOnActiveStart());
         } finally {
             HitPoise.restore(previousPoise);
             HitImpact.restore(previousImpact);
         }
+
+        // 攻击统一入口：元素附着 + 这一下的实际削韧（技能写过就用技能的，没写用武器表兜底）
+        if (!(context.player.level() instanceof ServerLevel) || definition.kind == ActionKind.DODGE) {
+            return;
+        }
+        try {
+            GenshinElement element = context.character == null ? null : context.character.getElemental();
+            double reach = definition.step != null
+                    ? Math.max(2.5, definition.step.effectiveAttackRange())
+                    : 2.5;
+            float poise = HitPoiseDamage.current();
+            if (Float.isNaN(poise)) {
+                poise = defaultPoise(hitCoefficient);
+            }
+            ElibAttackPipeline.dispatch(ElibAttackAction.of(context.player, element,
+                    ElibAttackTrigger.ACTION_DAMAGE_POINT, AttachmentSource.NORMAL_ATTACK,
+                    AttachmentProfile.WEAK, reach).withPoise(poise));
+        } catch (Exception e) {
+            LOGGER.error("[ElibAttack] 攻击管线抛异常 kind={} tick={}", definition.kind, tickCount, e);
+        }
+    }
+
+    /** 没写过显式削韧时的兜底：武器表（拿不到落攻击类型表）× 这一段的系数。 */
+    private float defaultPoise(float hitCoefficient) {
+        AttackType attackType = attackTypeOf(definition.kind);
+        if (attackType == null) {
+            return 0f;
+        }
+        float base = WeaponPoiseTable.basePoise(WeaponPoiseTable.weaponOf(context.character), attackType);
+        if (Float.isNaN(base)) {
+            base = ModDamageSpec.defaultPoise(attackType);
+        }
+        return base * (hitCoefficient > 0f ? hitCoefficient : 1f);
+    }
+
+    private static AttackType attackTypeOf(ActionKind kind) {
+        return switch (kind) {
+            case NORMAL_ATTACK -> AttackType.NORMAL_ATTACK;
+            case CHARGED_ATTACK -> AttackType.CHARGED_ATTACK;
+            case PLUNGING_ATTACK -> AttackType.PLUNGING_ATTACK;
+            case ELEMENTAL_SKILL_TAP, ELEMENTAL_SKILL_HOLD -> AttackType.ELEMENTAL_SKILL;
+            case ELEMENTAL_BURST -> AttackType.ELEMENTAL_BURST;
+            default -> null;
+        };
     }
 
     /** 第 {@code hitIndex} 个伤害点的削韧系数；越界或没有 hits 就是基准 1.0。 */

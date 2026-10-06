@@ -4,6 +4,10 @@ import com.linweiyun.genshin.content.attribute.AttributeContainer;
 import com.linweiyun.genshin.content.attribute.AttributeInstance;
 import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
+import com.linweiyun.elementlib.core.module.ElibModuleContainer;
+import com.linweiyun.elementlib.core.module.ElibModuleHost;
+import com.linweiyun.elementlib.core.module.ElibModuleHosts;
+import com.linweiyun.genshin.core.system.toughness.ToughnessTypes;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.system.control.ControlService;
@@ -91,13 +95,24 @@ public final class PoiseService {
      * 服务端自己看得到新数值，客户端永远拿的是旧值（血条下面那条削韧条就画不出来）。
      */
     private static void push(LivingEntity entity, PoiseState state) {
-        entity.setData(AttachmentRegistration.POISE.get(), state);
+        ElibModuleHost host = ElibModuleHosts.of(entity);
+        if (host == null) {
+            return;
+        }
+        ElibModuleContainer container = host.container();
+        if (container == null) {
+            return;
+        }
+        container.put(state);
+        host.commit(container);
     }
 
     // ==================== 存取 ====================
 
     public static PoiseState get(LivingEntity entity) {
-        return entity.getData(AttachmentRegistration.POISE.get());
+        ElibModuleHost host = ElibModuleHosts.of(entity);
+        PoiseState state = host == null ? null : host.ensure(ToughnessTypes.TOUGHNESS);
+        return state != null ? state : new PoiseState();
     }
 
     /**
@@ -106,7 +121,8 @@ public final class PoiseService {
      */
     @Nullable
     public static PoiseState peek(LivingEntity entity) {
-        return entity.hasData(AttachmentRegistration.POISE.get()) ? get(entity) : null;
+        ElibModuleHost host = ElibModuleHosts.of(entity);
+        return host == null ? null : host.get(ToughnessTypes.TOUGHNESS);
     }
 
     public static boolean isBroken(LivingEntity entity) {
