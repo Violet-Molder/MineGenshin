@@ -1,28 +1,31 @@
 package com.linweiyun.genshin.core.system.combat.attack;
 
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
+import com.linweiyun.genshin.core.character.util.CharacterKeys;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.system.about.ElementalAttachable;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
-import com.linweiyun.genshin.core.system.about.host.EntityHost;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachable;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
+import com.linweiyun.elementlib.core.system.about.host.EntityHost;
 import com.linweiyun.genshin.core.system.combat.damage.CombatMath;
 import com.linweiyun.genshin.core.system.combat.damage.DamageTrace;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.combat.decay.DecayCounterManager;
-import com.linweiyun.genshin.core.system.combat.decay.DecayResult;
-import com.linweiyun.genshin.core.system.combat.decay.IDecayCounterHolder;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionManager;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayCounterManager;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayResult;
+import com.linweiyun.elementlib.core.system.combat.decay.DecaySpec;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReactionManager;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.shield.ShieldService.AttachDecision;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 import net.minecraft.world.entity.LivingEntity;
-import com.linweiyun.genshin.core.system.about.AttachContext;
-import com.linweiyun.genshin.core.system.about.AttachResult;
+import com.linweiyun.elementlib.core.system.about.AttachContext;
+import com.linweiyun.elementlib.core.system.about.AttachResult;
 
 /**
  * <b>直伤管线</b> —— 角色技能打出来的那一下。
@@ -64,11 +67,12 @@ final class DirectDamagePipeline {
         // ── ① 衰减 ──
         DecayResult decayResult = DecayResult.NONE;
         if (spec.hasDecayTag()) {
-            IDecayCounterHolder holder = (IDecayCounterHolder) target;
-            DecayCounterManager manager = holder.getDecayCounterManager();
+            DecayCounterManager manager = ElementalAttachments.decayCounter(target);
             long currentTick = target.level().getGameTime();
-            manager.getOrCreateCounter(sourceEntity, attacker, spec, currentTick);
-            decayResult = manager.processHit(sourceEntity, attacker, spec, currentTick);
+            String characterKey = hasAttacker ? CharacterKeys.keyOf(attacker) : null;
+            DecaySpec decaySpec = new DecaySpec(spec.getDecayTag(), spec.getEffectiveDecayGroup());
+            manager.getOrCreateCounter(sourceEntity, characterKey, decaySpec, currentTick);
+            decayResult = manager.processHit(sourceEntity, characterKey, decaySpec, currentTick);
         }
         float elementCoefficient = decayResult.getElementCoefficient();
 
@@ -119,10 +123,9 @@ final class DirectDamagePipeline {
         if (canAttach && host != null) {
             long gameTime = target.level().getGameTime();
             AttachContext attachContext = AttachContext.attack(
-                    hasAttacker ? attacker : null,
+                    hasAttacker ? CharacterKeys.keyOf(attacker) : null,
                     hasAttacker ? gameTime : 0L,
                     damageSource.getEntity(),
-                    spec,
                     spec.getElementAmount() * elementCoefficient);
             AttachResult attachResult = ElementalAttachmentHelper.attach(
                     host, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile, attachContext);
@@ -139,8 +142,8 @@ final class DirectDamagePipeline {
                 reactionResult != null && reactionResult.isReacted() ? reactionResult.getReactionType() : null;
         trace.head("反应", reactionType == null ? "无" : reactionType);
 
-        boolean amplifying = reactionType == ElementalReactionType.MELT
-                || reactionType == ElementalReactionType.VAPORIZE;
+        boolean amplifying = ModReactionTypes.is(reactionType, ModReactionTypes.MELT)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.VAPORIZE);
 
         // ── ④ 乘区 ──
         DamageZones.CritRoll critRoll = DamageZones.rollCrit(attacker, spec);

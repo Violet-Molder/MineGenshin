@@ -8,12 +8,12 @@ import com.linweiyun.genshin.content.entities.teyvat.TeyvatFriendly;
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatHostile;
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatLiving;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.linweiyun.genshin.core.system.about.FrozenDecayState;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.about.FrozenDecayState;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.poise.PoiseService;
@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
 
 @EventBusSubscriber(value = Dist.CLIENT)
 public class MobHealthBarHud {
@@ -192,7 +193,7 @@ public class MobHealthBarHud {
             double distance = Math.sqrt(relX * relX + relY * relY + relZ * relZ);
 
             // 元素附着独立于战斗状态
-            StatusContainer container = living.getData(AttachmentRegistration.CONTAINER);
+            StatusContainer container = living.getData(ElementalAttachments.CONTAINER);
             boolean hasElements = container != null && hasActiveElements(container, living);
 
             boolean inCombat = teyvat.isInCombat();

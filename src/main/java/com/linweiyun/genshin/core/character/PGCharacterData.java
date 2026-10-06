@@ -8,7 +8,7 @@ import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectContainer;
 import com.linweiyun.genshin.content.items.artifact.inventory.AllWeaponArtifactInventory;
 import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearance;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearanceData;
 import com.linweiyun.genshin.core.network.NetworkManager;

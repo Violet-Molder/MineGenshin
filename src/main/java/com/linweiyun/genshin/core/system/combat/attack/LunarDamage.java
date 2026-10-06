@@ -8,7 +8,7 @@ import com.linweiyun.genshin.core.system.combat.damage.CombatMath;
 import com.linweiyun.genshin.core.system.combat.damage.DamageTrace;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * <b>月曜反应管线</b>（月感电 / 月绽放 / 月结晶）。
@@ -46,7 +47,7 @@ final class LunarDamage {
         DamageTrace trace = DamageTrace.start("月曜反应");
         if (DamageTrace.active()) {
             trace.headAttack(spec.getAttackType(), ModElements.ELECTRO.get());
-            trace.head("反应", ElementalReactionType.LUNAR_CHARGED);
+            trace.head("反应", ModReactionTypes.LUNAR_CHARGED.get());
             trace.headEntities(attacker, target,
                     attackerCharacter == null ? null : attackerCharacter.getName());
         }
@@ -73,7 +74,7 @@ final class LunarDamage {
         float baseBoost = base * (1f + spec.getLunarBaseBonus()) + spec.getLunarBaseFlat();
 
         float multiplier = spec.getAtkMultiplier();
-        float emBonus = DamageZones.emBonus(character, ElementalReactionType.LUNAR_CHARGED);
+        float emBonus = DamageZones.emBonus(character, ModReactionTypes.LUNAR_CHARGED.get());
         float rawResistance = DamageZones.rawResistance(ModElements.ELECTRO.get(), target,
                 AttackerResolver.resolveCharacter(target));
         float resistanceZone = CombatMath.resistanceZone(rawResistance);
@@ -147,7 +148,7 @@ final class LunarDamage {
     static Result calculatePerCharacter(PGCharacter character, int level, LivingEntity target) {
         double levelCoefficient = DamageZones.levelCoefficient(level);
         double multiplier = ReactionConfig.LUNAR_CHARGED_MULT.get();
-        float emBonus = DamageZones.emBonus(character, ElementalReactionType.LUNAR_CHARGED);
+        float emBonus = DamageZones.emBonus(character, ModReactionTypes.LUNAR_CHARGED.get());
         float rawResistance = DamageZones.rawResistance(ModElements.ELECTRO.get(), target,
                 AttackerResolver.resolveCharacter(target));
         DamageZones.CritRoll critRoll = DamageZones.rollCrit(character);

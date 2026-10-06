@@ -2,14 +2,14 @@ package com.linweiyun.genshin.core.system.reaction;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.catalyst.columbina.Columbina;
 import com.linweiyun.genshin.core.character.util.capability.IStellarStateHolder;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.performance.TickSnapshot;
 import net.minecraft.server.level.ServerLevel;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -24,41 +24,6 @@ import java.util.List;
 public class ReactionPriorityCalculator {
 
     private static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
-
-    /** 未登记在默认顺序表里的主元素统一排到最后（比表内任何下标都大）。 */
-    public static final int UNKNOWN_PRIORITY = 50;
-
-    /**
-     * 默认反应优先级顺序 —— <b>唯一真相</b>。
-     *
-     * <p>后手元素与各先手元素反应时，按先手元素（主元素）在本表里的下标从小到大排序；
-     * 索引越靠前的先手元素越先被反应消耗。表内没有的元素排到 {@link #UNKNOWN_PRIORITY}。
-     */
-    private static final GenshinElement[] DEFAULT_ORDER = {
-            ModElements.ANEMO.get(), ModElements.CYRO.get(), ModElements.ELECTRO.get(),
-            ModElements.HYDRO.get(), ModElements.FROZEN.get(), ModElements.PYRO.get(),
-            ModElements.DENDRO.get(), ModElements.AGGRAVATE.get(), ModElements.GEO.get()
-    };
-
-    /**
-     * 算一个反应的具体优先级 —— 只看先手（目标身上已有）元素的主元素排在顺序表里的位置。
-     *
-     * <p>注册时手填了非负 {@code basePriority} 的反应不走这里；只有填 -1（表示「用默认顺序」）
-     * 的反应才会调用本方法，目前是月感电。
-     *
-     * @param defenderElement 先手附着的元素（目标身上已有的那一个）
-     */
-    public static int computeFor(GenshinElement defenderElement) {
-        return priorityOf(defenderElement.getMainElement());
-    }
-
-    /** 主元素在默认顺序表里的下标；不在表内返回 {@link #UNKNOWN_PRIORITY}。 */
-    public static int priorityOf(GenshinElement mainElement) {
-        for (int i = 0; i < DEFAULT_ORDER.length; i++) {
-            if (DEFAULT_ORDER[i] == mainElement) return i;
-        }
-        return UNKNOWN_PRIORITY;
-    }
 
     public static boolean hasFrozen(StatusContainer container) {
         for (StatusInstance inst : container.getAll()) {

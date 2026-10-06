@@ -1,10 +1,11 @@
 package com.linweiyun.genshin.core.system.about.host;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.host.ElementalHost;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;

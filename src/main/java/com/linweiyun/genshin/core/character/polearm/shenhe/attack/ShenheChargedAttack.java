@@ -1,9 +1,9 @@
 package com.linweiyun.genshin.core.character.polearm.shenhe.attack;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.AttachmentType;
+import com.linweiyun.elementlib.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;

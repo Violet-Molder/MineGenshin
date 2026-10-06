@@ -2,14 +2,14 @@ package com.linweiyun.genshin.content.entities.area;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.reaction.builtin.ElectroChargedReaction;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -24,6 +24,9 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 import java.util.*;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import com.linweiyun.genshin.core.attachment.ElementContainerQueries;
 
 public class ThunderCloudEntity extends AreaEntity {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
@@ -168,19 +171,21 @@ public class ThunderCloudEntity extends AreaEntity {
 
         // 每个 tick 扫描范围内所有实体，累积水/雷附着贡献者（只添加不删除）
         for (LivingEntity target : targets) {
-            StatusContainer container = target.getData(AttachmentRegistration.CONTAINER);
+            StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
             if (container == null) continue;
 
             ElementalAttachmentInstance hydro = ElectroChargedReaction.findElement(container, ModElements.HYDRO.get());
             ElementalAttachmentInstance electro = ElectroChargedReaction.findElement(container, ModElements.ELECTRO.get());
             if (hydro == null || electro == null || hydro.getUnit() <= 0 || electro.getUnit() <= 0) continue;
 
-            Set<PGCharacter> activeChars = container.getActiveContributors(
-                    this.level() instanceof ServerLevel sl ? sl : null,
+            ServerLevel serverLevel = this.level() instanceof ServerLevel sl ? sl : null;
+            Set<PGCharacter> activeChars = ElementContainerQueries.getActiveContributors(
+                    container, serverLevel,
                     currentTick, ModElements.HYDRO.get(), ModElements.ELECTRO.get());
             periodContributors.addAll(activeChars);
 
-            PGCharacter lastAttacher = container.getLastAttacher(currentTick,
+            PGCharacter lastAttacher = ElementContainerQueries.getLastAttacher(
+                    container, serverLevel, currentTick,
                     ModElements.HYDRO.get(), ModElements.ELECTRO.get());
             if (lastAttacher != null) {
                 lastDamageSourceChar = lastAttacher;
@@ -226,7 +231,7 @@ public class ThunderCloudEntity extends AreaEntity {
     }
 
     private boolean targetHasHydroAndElectro(LivingEntity target) {
-        StatusContainer container = target.getData(AttachmentRegistration.CONTAINER);
+        StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
         if (container == null) return false;
 
         ElementalAttachmentInstance hydro = ElectroChargedReaction.findElement(container, ModElements.HYDRO.get());
@@ -237,7 +242,7 @@ public class ThunderCloudEntity extends AreaEntity {
     }
 
     public void dealLunarDamage(LivingEntity target, ServerLevel level) {
-        StatusContainer container = target.getData(AttachmentRegistration.CONTAINER);
+        StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
         if (container == null) return;
 
         ElementalAttachmentInstance hydro = ElectroChargedReaction.findElement(container, ModElements.HYDRO.get());
@@ -255,7 +260,7 @@ public class ThunderCloudEntity extends AreaEntity {
 
         // 伤害归因 = 造成月感电反应的那一下的触发者（最近一次）
         PGCharacter triggerCharacter = resolveLunarTriggerCharacter();
-        ModDamageSpec spec = ModDamageSpec.lunar(ElementalReactionType.LUNAR_CHARGED);
+        ModDamageSpec spec = ModDamageSpec.lunar(ModReactionTypes.LUNAR_CHARGED.get());
         if (triggerCharacter != null) {
             spec = spec.withAttackerCharacter(triggerCharacter);
         }

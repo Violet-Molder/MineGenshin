@@ -5,7 +5,7 @@ import com.linweiyun.genshin.content.entities.teyvat.monster.TeyvatMonster;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.CombatEntityAccessor;
 import com.linweiyun.genshin.core.system.combat.damage.CombatMath;

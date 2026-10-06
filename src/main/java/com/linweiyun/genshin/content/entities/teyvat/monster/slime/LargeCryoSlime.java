@@ -16,13 +16,13 @@ import com.linweiyun.genshin.content.entities.ai.goal.LeapSmashGoal;
 import com.linweiyun.genshin.content.entities.teyvat.ElementalCreature;
 import com.linweiyun.genshin.content.entities.teyvat.monster.TeyvatMonster;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
-import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementHelper;
 import com.linweiyun.genshin.core.system.shield.ShieldProfiles;
 import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.shield.ShieldState;
@@ -44,6 +44,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathType;
 import org.jetbrains.annotations.Nullable;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
 
 /**
  * <b>大型冰史莱姆</b>（Large Cryo Slime）—— 元素生物，带冰元素护盾。
@@ -242,7 +243,7 @@ public class LargeCryoSlime extends TeyvatMonster implements ElementalCreature, 
 
     /** 给自己挂弱冰附着。 */
     private void applySelfCryoAura() {
-        StatusContainer container = this.getData(AttachmentRegistration.CONTAINER);
+        StatusContainer container = this.getData(ElementalAttachments.CONTAINER);
         if (container == null) {
             return;
         }

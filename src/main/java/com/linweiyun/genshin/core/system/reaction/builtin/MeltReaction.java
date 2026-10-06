@@ -1,17 +1,17 @@
 package com.linweiyun.genshin.core.system.reaction.builtin;
 
 import com.linweiyun.genshin.config.reaction.ReactionConfig;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.linweiyun.genshin.core.system.about.block.BlockElementRules;
-import com.linweiyun.genshin.core.system.about.block.BlockElementStore;
-import com.linweiyun.genshin.core.system.about.host.BlockHost;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.api.ElementalReactionType;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementRules;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementStore;
+import com.linweiyun.elementlib.core.system.about.host.BlockHost;
 import net.minecraft.world.level.block.state.BlockState;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -32,7 +32,7 @@ public class MeltReaction extends ElementalReaction {
     private static float getDominantMultiplier() { return (float) ReactionConfig.MELT.get(); }
     private static float getSubmissiveMultiplier() { return (float) ReactionConfig.MELT_NEGATIVE.get(); }
 
-    public MeltReaction(ElementalReactionType type,
+    public MeltReaction(java.util.function.Supplier<ElementalReactionType> type,
                         String elementAId, String elementBId,
                         float ratioA, float ratioB, int basePriority) {
         super(type, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -50,7 +50,7 @@ public class MeltReaction extends ElementalReaction {
         float totalDefenderQty = sumMainElementQuantity(ctx, defenderTarget);
 
         if (totalDefenderQty <= 0f) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float attackerQty = ctx.attackerUnit();
@@ -73,7 +73,7 @@ public class MeltReaction extends ElementalReaction {
         float multiplier = dominant ? getDominantMultiplier() : getSubmissiveMultiplier();
         float consumedAttacker = attackerIsA ? consumedA : consumedB;
 
-        return ReactionResult.builder(reactionType)
+        return ReactionResult.builder(type())
                 .reacted()
                 .consumedAttacker(consumedAttacker)
                 .consumedDefender(attackerIsA ? consumedB : consumedA)
@@ -138,6 +138,6 @@ public class MeltReaction extends ElementalReaction {
     /** 方块上的形态变化（水结冰 / 冰化水）不显示文字；生物身上照常。 */
     @Override
     public boolean showsIndicator(ReactionContext context) {
-        return !(context.targetHost() instanceof com.linweiyun.genshin.core.system.about.host.BlockHost);
+        return !(context.targetHost() instanceof com.linweiyun.elementlib.core.system.about.host.BlockHost);
     }
 }

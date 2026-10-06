@@ -1,18 +1,18 @@
 package com.linweiyun.genshin.core.system.reaction.builtin;
 
 import com.linweiyun.genshin.content.items.weapon.catalyst.HymnTheMaelstrom;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
@@ -49,7 +49,7 @@ public class FreezeReaction extends ElementalReaction {
      *   elementB = CYRO （冰，消耗 ratioB=1 份）
      *   消耗比 ratioA:ratioB = 1:1 → 同时消耗，无克制方
      */
-    public FreezeReaction(ElementalReactionType type,
+    public FreezeReaction(java.util.function.Supplier<ElementalReactionType> type,
                           String elementAId, String elementBId,
                           float ratioA, float ratioB, int basePriority) {
         super(type, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -125,7 +125,7 @@ public class FreezeReaction extends ElementalReaction {
         float totalDefenderUnit = sumConsumable(ctx.targetContainer(), defenderTarget);
 
         if (totalDefenderUnit <= 0f) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float attackerQty = ctx.attackerUnit();
@@ -180,9 +180,9 @@ public class FreezeReaction extends ElementalReaction {
             // 生成物 FROZEN 也是「附着」，所以同样走统一入口：宿主筛查照问、覆盖规则照走。
             // 用 attachInternal —— 反应内部产生的附着不再回头触发反应（否则会递归）。
             AttachmentProfile frozenProfile = new AttachmentProfile(frozenQty, 1.0f, 0.0f, 999.0f);
-            com.linweiyun.genshin.core.system.about.host.ElementalHost frozenHost = ctx.targetHost();
+            com.linweiyun.elementlib.core.system.about.host.ElementalHost frozenHost = ctx.targetHost();
             if (frozenHost == null && ctx.targetEntity() != null) {
-                frozenHost = com.linweiyun.genshin.core.system.about.host.EntityHost.of(ctx.targetEntity());
+                frozenHost = com.linweiyun.elementlib.core.system.about.host.EntityHost.of(ctx.targetEntity());
             }
             if (frozenHost != null) {
                 ElementalAttachmentHelper.attachInternal(
@@ -219,7 +219,7 @@ public class FreezeReaction extends ElementalReaction {
         float defenderConsumedQty = attackerIsA ? consumedB : consumedA;
         GenshinElement defenderElementConsumed = attackerIsA ? elB : elA;
 
-        return ReactionResult.builder(reactionType)
+        return ReactionResult.builder(type())
                 .reacted()
                 .consumedAttacker(consumedAttacker)
                 .consumedDefender(defenderConsumedQty)
@@ -229,6 +229,6 @@ public class FreezeReaction extends ElementalReaction {
     /** 方块上的形态变化（水结冰 / 冰化水）不显示文字；生物身上照常。 */
     @Override
     public boolean showsIndicator(ReactionContext context) {
-        return !(context.targetHost() instanceof com.linweiyun.genshin.core.system.about.host.BlockHost);
+        return !(context.targetHost() instanceof com.linweiyun.elementlib.core.system.about.host.BlockHost);
     }
 }

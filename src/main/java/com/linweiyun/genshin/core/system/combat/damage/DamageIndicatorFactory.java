@@ -1,13 +1,13 @@
 package com.linweiyun.genshin.core.system.combat.damage;
 
 import com.linweiyun.genshin.config.WorldTextColorConfig;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.network.DamageIndicatorRpc;
 import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
 import com.linweiyun.genshin.core.system.performance.DamageNumberThrottle;
 import com.linweiyun.genshin.core.system.performance.DamageTextColorCache;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 /**
  * 伤害飘字工厂 —— 所有飘字的统一入口。
  *
@@ -63,13 +64,21 @@ public final class DamageIndicatorFactory {
     }
 
     public static int getColorForReaction(ElementalReactionType type) {
-        return switch (type) {
-            case ELECTRO_CHARGED, LUNAR_CHARGED -> colorOf(WorldTextColorConfig.ELECTRO_CHARGED_COLOR);
-            case SWIRL -> colorOf(WorldTextColorConfig.SWIRL_COLOR);
-            case FROZEN -> colorOf(WorldTextColorConfig.FROZEN_COLOR);
-            case STELLAR_SWIRL_WIND, STELLAR_SWIRL_ICE -> colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
-            default -> colorOf(WorldTextColorConfig.VAPORIZE_COLOR);
-        };
+        if (ModReactionTypes.is(type, ModReactionTypes.ELECTRO_CHARGED)
+                || ModReactionTypes.is(type, ModReactionTypes.LUNAR_CHARGED)) {
+            return colorOf(WorldTextColorConfig.ELECTRO_CHARGED_COLOR);
+        }
+        if (ModReactionTypes.is(type, ModReactionTypes.SWIRL)) {
+            return colorOf(WorldTextColorConfig.SWIRL_COLOR);
+        }
+        if (ModReactionTypes.is(type, ModReactionTypes.FROZEN)) {
+            return colorOf(WorldTextColorConfig.FROZEN_COLOR);
+        }
+        if (ModReactionTypes.is(type, ModReactionTypes.STELLAR_SWIRL_WIND)
+                || ModReactionTypes.is(type, ModReactionTypes.STELLAR_SWIRL_ICE)) {
+            return colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
+        }
+        return colorOf(WorldTextColorConfig.VAPORIZE_COLOR);
     }
 
     public static int getLunarTopColor() {
@@ -228,7 +237,7 @@ public final class DamageIndicatorFactory {
     public static void reaction(LivingEntity target, ElementalReactionType type, Options options) {
         if (type == null) return;
         int color = getColorForReaction(type);
-        spawnRaw(target, null, type.getDisplayName(), color, color, Style.REACTION, options);
+        spawnRaw(target, null, type.getTranslationKey(), color, color, Style.REACTION, options);
     }
 
     public static void reaction(LivingEntity target, Entity attacker, ElementalReactionType type) {
@@ -238,7 +247,7 @@ public final class DamageIndicatorFactory {
     public static void reaction(LivingEntity target, Entity attacker, ElementalReactionType type, Options options) {
         if (type == null) return;
         int color = getColorForReaction(type);
-        spawnRaw(target, attacker, type.getDisplayName(), color, color, Style.REACTION, options);
+        spawnRaw(target, attacker, type.getTranslationKey(), color, color, Style.REACTION, options);
     }
 
     public static void reactionCustom(LivingEntity target, ElementalReactionType type, int color) {
@@ -247,7 +256,7 @@ public final class DamageIndicatorFactory {
 
     public static void reactionCustom(LivingEntity target, ElementalReactionType type, int color, Options options) {
         if (type == null) return;
-        spawnRaw(target, null, type.getDisplayName(), color, color, Style.REACTION, options);
+        spawnRaw(target, null, type.getTranslationKey(), color, color, Style.REACTION, options);
     }
 
     public static void reactionGradient(LivingEntity target, ElementalReactionType type, int topColor, int bottomColor) {
@@ -256,7 +265,7 @@ public final class DamageIndicatorFactory {
 
     public static void reactionGradient(LivingEntity target, ElementalReactionType type, int topColor, int bottomColor, Options options) {
         if (type == null) return;
-        spawnRaw(target, null, type.getDisplayName(), topColor, bottomColor, Style.REACTION, options);
+        spawnRaw(target, null, type.getTranslationKey(), topColor, bottomColor, Style.REACTION, options);
     }
 
     // =====================================================================
@@ -362,7 +371,7 @@ public final class DamageIndicatorFactory {
                 centerX, centerY, centerZ, BROADCAST_RADIUS,
                 centerX, centerY, centerZ,
                 centerX, centerY, centerZ,
-                type.getDisplayName(),
+                type.getTranslationKey(),
                 color, color,
                 (byte) Style.REACTION.ordinal(),
                 false,
@@ -563,7 +572,7 @@ public final class DamageIndicatorFactory {
     public static void lunarReactionGradient(LivingEntity target, ElementalReactionType type, Options options) {
         if (type == null) return;
         int topColor = getLunarTopColor();
-        spawnRawInternal(target, null, type.getDisplayName(),
+        spawnRawInternal(target, null, type.getTranslationKey(),
                 topColor, WHITE, Style.REACTION, options, true);
     }
 
@@ -618,7 +627,7 @@ public final class DamageIndicatorFactory {
     public static void stellarWindReactionGradient(LivingEntity target, ElementalReactionType type, Options options) {
         if (type == null) return;
         int bottomColor = colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
-        spawnRawInternal(target, null, type.getDisplayName(),
+        spawnRawInternal(target, null, type.getTranslationKey(),
                 WHITE, bottomColor, Style.REACTION, options, true);
     }
 
@@ -629,7 +638,7 @@ public final class DamageIndicatorFactory {
     public static void stellarIceReactionGradient(LivingEntity target, ElementalReactionType type, Options options) {
         if (type == null) return;
         int bottomColor = colorOf(WorldTextColorConfig.STELLAR_BOTTOM_ICE_COLOR);
-        spawnRawInternal(target, null, type.getDisplayName(),
+        spawnRawInternal(target, null, type.getTranslationKey(),
                 WHITE, bottomColor, Style.REACTION, options, true);
     }
 }

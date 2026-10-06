@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.client.performance;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;

@@ -5,15 +5,15 @@ import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.performance.HotPathLog;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.content.entities.ModEntities;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
@@ -25,11 +25,14 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import com.linweiyun.genshin.core.character.util.CharacterKeys;
+import com.linweiyun.genshin.core.attachment.ElementContainerQueries;
 
 public class LunarChargedReaction extends ElementalReaction {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
 
-    public LunarChargedReaction(ElementalReactionType type,
+    public LunarChargedReaction(java.util.function.Supplier<ElementalReactionType> type,
                                  String elementAId, String elementBId,
                                  float ratioA, float ratioB, int basePriority) {
         super(type, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -49,22 +52,22 @@ public class LunarChargedReaction extends ElementalReaction {
                 ctx.targetContainer(), ModElements.ELECTRO.get());
 
         if (hydroInst == null || electroInst == null) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         if (hydroInst.getUnit() <= 0 || electroInst.getUnit() <= 0) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         LivingEntity target = ctx.targetEntity();
         if (!(target.level() instanceof ServerLevel level)) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         // 从目标实体的 StatusContainer 获取所有活跃的水/雷附着角色
         long gameTime = level.getGameTime();
-        Set<PGCharacter> activeContributors = ctx.targetContainer().getActiveContributors(
-                level, gameTime, ModElements.HYDRO.get(), ModElements.ELECTRO.get());
+        Set<PGCharacter> activeContributors = ElementContainerQueries.getActiveContributors(
+                ctx.targetContainer(), level, gameTime, ModElements.HYDRO.get(), ModElements.ELECTRO.get());
         List<PGCharacter> contributorList = new ArrayList<>(activeContributors);
 
         ThunderCloudEntity existingCloud = findExistingCloud(target);
@@ -97,9 +100,9 @@ public class LunarChargedReaction extends ElementalReaction {
             }
         }
 
-        DamageIndicatorFactory.lunarReactionGradient(target, ElementalReactionType.LUNAR_CHARGED);
+        DamageIndicatorFactory.lunarReactionGradient(target, ModReactionTypes.LUNAR_CHARGED.get());
 
-        return ReactionResult.builder(reactionType).reacted()
+        return ReactionResult.builder(type()).reacted()
                 .consumedAttacker(ctx.attackerUnit()).consumedDefender(0).build();
     }
 
@@ -124,9 +127,9 @@ public class LunarChargedReaction extends ElementalReaction {
      * 解析不出来就返回 {@code null}，调用方退化回旧行为（不会 NPE）。
      */
     private static PGCharacter resolveTriggerCharacter(ReactionContext ctx) {
-        if (ctx.damageSpec() != null) {
-            PGCharacter fromSpec = ctx.damageSpec().getAttackerCharacter();
-            if (fromSpec != null) return fromSpec;
+        if (ctx.attackerEntity() != null && ctx.attackerEntity().level() instanceof ServerLevel level) {
+            PGCharacter fromKey = CharacterKeys.resolve(level, ctx.sourceKey());
+            if (fromKey != null) return fromKey;
         }
         if (ctx.attackerEntity() instanceof Player player) {
             PlayerCharactersAttachment att = player.getData(

@@ -33,7 +33,7 @@ import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.linweiyun.genshin.core.character.util.config.ICharacterConfigUI;
 import com.linweiyun.genshin.core.character.util.config.CharacterConfigPage;
 import com.linweiyun.genshin.core.character.talent.TalentUpgradeCost;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;

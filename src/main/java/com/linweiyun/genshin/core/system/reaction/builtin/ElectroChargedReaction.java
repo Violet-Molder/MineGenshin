@@ -1,12 +1,16 @@
 package com.linweiyun.genshin.core.system.reaction.builtin;
 
-import com.linweiyun.genshin.core.attachment.StatusContainer;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.linweiyun.genshin.core.system.reaction.*;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.core.system.reaction.ElectroChargedTickState;
+import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import org.slf4j.Logger;
@@ -15,7 +19,7 @@ public class ElectroChargedReaction extends ElementalReaction {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
     public static final float CONSUME_PER_TRIGGER = 0.4f;
 
-    public ElectroChargedReaction(ElementalReactionType type,
+    public ElectroChargedReaction(java.util.function.Supplier<ElementalReactionType> type,
                                   String elementAId, String elementBId,
                                   float ratioA, float ratioB, int basePriority) {
         super(type, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -33,14 +37,14 @@ public class ElectroChargedReaction extends ElementalReaction {
         ElementalAttachmentInstance electroInst = findElement(ctx.targetContainer(), ModElements.ELECTRO.get());
 
         if (hydroInst == null || electroInst == null) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float hydroBefore = hydroInst.getUnit();
         float electroBefore = electroInst.getUnit();
 
         if (hydroBefore <= 0 || electroBefore <= 0) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float consumedHydro = Math.min(CONSUME_PER_TRIGGER, hydroBefore);
@@ -53,7 +57,7 @@ public class ElectroChargedReaction extends ElementalReaction {
         state.setContainer(ctx.targetContainer());
         state.onActiveTrigger(ctx.attackerEntity(), ctx.targetEntity());
 
-        return ReactionResult.builder(reactionType)
+        return ReactionResult.builder(type())
                 .reacted()
                 .consumedAttacker(ctx.attackerUnit())
                 .consumedDefender(0)

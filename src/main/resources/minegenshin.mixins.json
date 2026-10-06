@@ -13,8 +13,6 @@
     "FileToIdConverterRedirectMixin",
     "FrostedIceMixin",
     "IceBlockMeltGuardMixin",
-    "LivingEntityDecayMixin",
-    "LivingEntityElementalMixin",
     "LivingEntityHurtMixin",
     "LivingEntityTeyvatMixin",
     "MagmaCubeResistanceMixin",

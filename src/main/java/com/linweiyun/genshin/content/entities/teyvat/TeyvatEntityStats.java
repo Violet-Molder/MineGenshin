@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.content.entities.teyvat;
 
 import com.linweiyun.genshin.content.attribute.AttributeContainer;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;

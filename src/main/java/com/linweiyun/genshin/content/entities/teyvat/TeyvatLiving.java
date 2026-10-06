@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.content.entities.teyvat;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.control.Controllable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;

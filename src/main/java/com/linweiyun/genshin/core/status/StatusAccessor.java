@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.status;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.linweiyun.genshin.core.system.registry.register.ModStatusDataComponents;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -12,6 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.slf4j.Logger;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
 
 /**
  * 宿主访问器 —— 四种现有载体 → StatusContainer（写入统一走 ElementalHost 入口）
@@ -25,11 +26,11 @@ public class StatusAccessor {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
     public static StatusContainer of(LivingEntity entity) {
-        return entity.getData(AttachmentRegistration.CONTAINER);
+        return entity.getData(ElementalAttachments.CONTAINER);
     }
 
     public static StatusContainer of(BlockEntity blockEntity) {
-        return blockEntity.getData(AttachmentRegistration.CONTAINER);
+        return blockEntity.getData(ElementalAttachments.CONTAINER);
     }
 
     public static StatusContainer of(PGCharacterData data) {
@@ -50,7 +51,7 @@ public class StatusAccessor {
      */
     public static StatusContainer of(ServerLevel level, BlockPos pos) {
         // 走宿主层的只读入口（不建容器、不补自附着、不落盘）—— 见 element-host.md 的读写纪律
-        StatusContainer stored = com.linweiyun.genshin.core.system.about.host.BlockHost.of(level, pos).peekContainer();
+        StatusContainer stored = com.linweiyun.elementlib.core.system.about.host.BlockHost.of(level, pos).peekContainer();
         return stored == null ? StatusContainer.EMPTY : stored.copy();
     }
 }

@@ -2,7 +2,7 @@ package com.linweiyun.genshin.client.render.entity;
 
 import com.linweiyun.genshin.config.WorldTextColorConfig;
 import com.linweiyun.genshin.content.entities.misc.ElementalOrb;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.SubmitNodeCollector;

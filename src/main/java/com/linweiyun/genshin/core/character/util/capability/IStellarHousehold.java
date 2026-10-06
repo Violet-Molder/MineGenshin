@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.core.character.util.capability;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import org.jetbrains.annotations.Nullable;
 

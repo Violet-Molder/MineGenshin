@@ -1,8 +1,9 @@
 package com.linweiyun.genshin.core.system.reaction;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -54,11 +55,15 @@ public enum StellarGlimmerBranch {
         if (reactionType == null) {
             return null;
         }
-        return switch (reactionType) {
-            case STELLAR_SWIRL_WIND, STELLAR_SWIRL_ICE -> SWIRL;
-            case STELLAR_CONDUCE_ELECTRO, STELLAR_CONDUCE_ICE -> CONDUCE;
-            default -> null;
-        };
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_ICE)) {
+            return SWIRL;
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
+            return CONDUCE;
+        }
+        return null;
     }
 
     /** 这条反应是不是星烁反应（星扩散或星超导）。 */
@@ -73,10 +78,12 @@ public enum StellarGlimmerBranch {
      * 超导同理（雷 / 冰）。
      */
     public static GenshinElement damageElementOf(@Nullable ElementalReactionType reactionType) {
-        return switch (reactionType == null ? ElementalReactionType.STELLAR_SWIRL_WIND : reactionType) {
-            case STELLAR_SWIRL_WIND -> ModElements.ANEMO.get();
-            case STELLAR_CONDUCE_ELECTRO -> ModElements.ELECTRO.get();
-            default -> ModElements.CYRO.get();
-        };
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)) {
+            return ModElements.ANEMO.get();
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)) {
+            return ModElements.ELECTRO.get();
+        }
+        return ModElements.CYRO.get();
     }
 }

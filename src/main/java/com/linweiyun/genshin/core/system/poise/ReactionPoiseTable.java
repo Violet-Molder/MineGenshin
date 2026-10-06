@@ -5,13 +5,14 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.control.ControlRequest;
 import com.linweiyun.genshin.core.system.control.ControlService;
 import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * <b>反应自带的削韧与冲击</b> —— 文献「角色数据-反应」那张 23 行表的代码化。
@@ -74,40 +75,40 @@ public final class ReactionPoiseTable {
      */
     private static final Map<ElementalReactionType, Pair> TABLE = Map.ofEntries(
             // 超导：敌人受到的范围伤害（5米）30 削韧，冲击「击退，240，300」
-            Map.entry(ElementalReactionType.SUPERCONDUCT,
+            Map.entry(ModReactionTypes.SUPERCONDUCT.get(),
                     both(30f, ImpactLevel.custom(ImpactLevel.Hardiness.KNOCKBACK, 240f, 300f))),
             // 扩散：单体伤害 130 / 冲击 1（另有「范围伤害 30 / 冲击 1」一行，范围那一跳由扩散自己核）
-            Map.entry(ElementalReactionType.SWIRL, both(130f, ImpactLevel.ofLevel(1))),
+            Map.entry(ModReactionTypes.SWIRL.get(), both(130f, ImpactLevel.ofLevel(1))),
             // 碎冰：30 / 冲击 3
-            Map.entry(ElementalReactionType.SHATTERED, both(30f, ImpactLevel.ofLevel(3))),
+            Map.entry(ModReactionTypes.SHATTERED.get(), both(30f, ImpactLevel.ofLevel(3))),
             // 超载：90 / 冲击 5
-            Map.entry(ElementalReactionType.OVERLOAD, both(90f, ImpactLevel.ofLevel(5))),
+            Map.entry(ModReactionTypes.OVERLOAD.get(), both(90f, ImpactLevel.ofLevel(5))),
             // 感电：中心与传导都是 130 / 冲击 2
-            Map.entry(ElementalReactionType.ELECTRO_CHARGED, both(130f, ImpactLevel.ofLevel(2))),
+            Map.entry(ModReactionTypes.ELECTRO_CHARGED.get(), both(130f, ImpactLevel.ofLevel(2))),
             // 燃烧：30 / 冲击 0（对敌对角色同一行）
-            Map.entry(ElementalReactionType.BURNING, both(30f, ImpactLevel.ofLevel(0))),
+            Map.entry(ModReactionTypes.BURNING.get(), both(30f, ImpactLevel.ofLevel(0))),
             // 绽放：敌人 25 / 3，角色 5 / 0
-            Map.entry(ElementalReactionType.BLOOM, new Pair(
+            Map.entry(ModReactionTypes.BLOOM.get(), new Pair(
                     new Entry(25f, ImpactLevel.ofLevel(3)),
                     new Entry(5f, ImpactLevel.ofLevel(0)))),
             // 烈绽放：敌人 50 / 2，角色 10 / 0
-            Map.entry(ElementalReactionType.BURGEON, new Pair(
+            Map.entry(ModReactionTypes.BURGEON.get(), new Pair(
                     new Entry(50f, ImpactLevel.ofLevel(2)),
                     new Entry(10f, ImpactLevel.ofLevel(0)))),
             // 超绽放：敌人 50 / 2，角色 10 / 0
-            Map.entry(ElementalReactionType.HYPERBLOOM, new Pair(
+            Map.entry(ModReactionTypes.HYPERBLOOM.get(), new Pair(
                     new Entry(50f, ImpactLevel.ofLevel(2)),
                     new Entry(10f, ImpactLevel.ofLevel(0)))),
             // 月感电（雷暴云）：130 / 2
-            Map.entry(ElementalReactionType.LUNAR_CHARGED, both(130f, ImpactLevel.ofLevel(2))),
+            Map.entry(ModReactionTypes.LUNAR_CHARGED.get(), both(130f, ImpactLevel.ofLevel(2))),
             // 月结晶（月笼协奏）：30 / 2
-            Map.entry(ElementalReactionType.LUNAR_CRYSTALLIZE, both(30f, ImpactLevel.ofLevel(2))),
+            Map.entry(ModReactionTypes.LUNAR_CRYSTALLIZE.get(), both(30f, ImpactLevel.ofLevel(2))),
             // 星扩散（风伤）：20 / 2；「星辉风旋小 60 / 击飞 100,600」「大 80 / 击飞 100,600」
             // 是风旋那两个实体各自结算的，不走反应伤害这条线（见 StellarVortexEntity）
-            Map.entry(ElementalReactionType.STELLAR_SWIRL_WIND, both(20f, ImpactLevel.ofLevel(2))),
+            Map.entry(ModReactionTypes.STELLAR_SWIRL_WIND.get(), both(20f, ImpactLevel.ofLevel(2))),
             // 冻结消失：30 / 2。本项目冻结的直接破韧走 PoiseService.forceBreak（见 PoiseFreezeBreak），
             // 这一行留给以后真的做「解冻伤害」时用
-            Map.entry(ElementalReactionType.FROZEN, both(30f, ImpactLevel.ofLevel(2)))
+            Map.entry(ModReactionTypes.FROZEN.get(), both(30f, ImpactLevel.ofLevel(2)))
     );
 
     /*

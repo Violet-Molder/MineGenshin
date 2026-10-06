@@ -3,7 +3,7 @@ package com.linweiyun.genshin.content.entities.misc;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.PGCharacterData;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import net.minecraft.core.BlockPos;
@@ -151,7 +151,7 @@ public class ElementalOrb extends Entity {
     public GenshinElement getElement() {
         String elementId = this.getEntityData().get(DATA_ELEMENT);
         if (elementId != null && !elementId.isEmpty()) {
-            return ModRegistries.ELEMENT_REGISTRY
+            return com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
                     .get(Identifier.fromNamespaceAndPath("minegenshin", elementId))
                     .map(r -> r.value())
                     .orElse(ModElements.FYSIKOS.get());

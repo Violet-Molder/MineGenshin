@@ -10,7 +10,7 @@ import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationTest;
 import com.geckolib.util.GeckoLibUtil;
 import com.linweiyun.genshin.content.entities.teyvat.monster.TeyvatMonster;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
@@ -89,7 +89,7 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
             String[] parts = id.split(":", 2);
             if (parts.length == 2) {
                 net.minecraft.resources.Identifier identifier = net.minecraft.resources.Identifier.fromNamespaceAndPath(parts[0], parts[1]);
-                GenshinElement resolved = ModRegistries.ELEMENT_REGISTRY.get(identifier).map(r -> r.value()).orElse(null);
+                GenshinElement resolved = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.get(identifier).map(r -> r.value()).orElse(null);
                 if (resolved != null) return resolved;
             }
         }
@@ -97,7 +97,7 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
     }
     // 设置元素类型
     public void setElement(GenshinElement element) {
-        net.minecraft.resources.Identifier key = ModRegistries.ELEMENT_REGISTRY.getKey(element);
+        net.minecraft.resources.Identifier key = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.getKey(element);
         this.entityData.set(DATA_ELEMENT, key != null ? key.toString() : "minegenshin:fysikos");
     }
 

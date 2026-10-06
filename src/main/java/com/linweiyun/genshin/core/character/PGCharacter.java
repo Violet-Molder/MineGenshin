@@ -30,7 +30,7 @@ import com.linweiyun.genshin.core.character.talent.TalentBase;
 import com.linweiyun.genshin.core.character.util.config.ICharacterConfigUI;
 import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import com.linweiyun.genshin.core.character.util.type.CharacterWeaponClass;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -985,7 +985,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       } else if (this.elementalId != null && !this.elementalId.isEmpty()) {
          String[] parts = this.elementalId.split(":", 2);
          Identifier id = Identifier.fromNamespaceAndPath(parts[0], parts[1]);
-         this.elemental = ModRegistries.ELEMENT_REGISTRY.get(id).<GenshinElement>map(Reference::value).orElse(null);
+         this.elemental = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.get(id).<GenshinElement>map(Reference::value).orElse(null);
          return this.elemental;
       } else {
          return (GenshinElement)ModElements.FYSIKOS.get();

@@ -7,20 +7,18 @@ import com.linweiyun.genshin.content.items.ModItems;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.Backpack;
 import com.linweiyun.genshin.core.character.ModCharacters;
+import com.linweiyun.genshin.core.element.ElementLibBridge;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.network.NetworkManager;
-import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.combat.action.ServerTickScheduler;
-import com.linweiyun.genshin.core.system.combat.decay.DecayCounterService;
 import com.linweiyun.genshin.core.system.performance.DamageNumberThrottle;
 import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
 import com.linweiyun.genshin.core.system.registry.register.*;
 import com.lowdragmc.lowdraglib2.gui.factory.PlayerUIMenuType;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.level.ServerLevel;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
@@ -51,6 +49,7 @@ public class Minegenshin {
 
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
     public Minegenshin(IEventBus modEventBus, ModContainer modContainer) {
+        ElementLibBridge.install();
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
         modContainer.registerConfig(ModConfig.Type.COMMON, GenshinConfig.CHARACTER_SPEC, "minegenshin/character.toml");
@@ -74,6 +73,7 @@ public class Minegenshin {
         ModMobEffects.register(modEventBus);
         ModStatusDataComponents.register(modEventBus);
         ModElementalReactions.register(modEventBus);
+        ModReactionTypes.register(modEventBus);
         ArtifactSets.register(modEventBus);
         ModDataComponents.register(modEventBus);
 
@@ -82,8 +82,6 @@ public class Minegenshin {
         AttachmentRegistration.register(modEventBus);
         ModCharacterEffects.register(modEventBus);
         ModMenus.register(modEventBus);
-
-        ModStatusInstanceTypes.register(modEventBus);
 
         PlayerUIMenuType.register(
                 Identifier.fromNamespaceAndPath("minegenshin", "backpack"),
@@ -108,22 +106,17 @@ public class Minegenshin {
 
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {
-        DecayCounterService.initOnServer(event.getServer().getLevel(net.minecraft.world.level.Level.OVERWORLD));
-        LOGGER.info("DecayCounter Worker started");
+        LOGGER.info("DecayCounter Worker started (elementlib)");
     }
 
     @SubscribeEvent
     public void onServerTick(ServerTickEvent.Post event) {
         ServerTickScheduler.tick();
-        for (ServerLevel level : event.getServer().getAllLevels()) {
-            BlockElementHelper.onServerTick(level);
-        }
     }
 
     @SubscribeEvent
     public void onServerStopping(ServerStoppingEvent event) {
-        DecayCounterService.shutdown();
-        LOGGER.info("DecayCounter Worker stopped");
+        LOGGER.info("DecayCounter Worker stopped (elementlib)");
         DamageNumberThrottle.clear();
         ReactionPriorityCalculator.clearSnapshots();
     }

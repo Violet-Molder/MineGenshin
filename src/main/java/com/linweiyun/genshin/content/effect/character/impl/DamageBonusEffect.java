@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.content.effect.character.impl;
 
 import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 
 import java.util.Collections;
@@ -174,7 +174,7 @@ public class DamageBonusEffect implements ICharacterEffect {
         if (applicableElement != null) {
             // 存<b>完整注册名</b>（元素 getId() 只给 path，反查注册表需要带命名空间的键）
             net.minecraft.resources.Identifier key =
-                    com.linweiyun.genshin.core.system.registry.ModRegistries.ELEMENT_REGISTRY
+                    com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
                             .getKey(applicableElement);
             if (key != null) {
                 data.putString("dmg_element", key.toString());
@@ -205,7 +205,7 @@ public class DamageBonusEffect implements ICharacterEffect {
         java.util.Optional<String> elementKey = data.getString("dmg_element");
         if (elementKey.isPresent()) {
             try {
-                element = com.linweiyun.genshin.core.system.registry.ModRegistries.ELEMENT_REGISTRY
+                element = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
                         .get(net.minecraft.resources.Identifier.parse(elementKey.get()))
                         .map(net.minecraft.core.Holder.Reference::value)
                         .orElse(null);

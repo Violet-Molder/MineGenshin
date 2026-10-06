@@ -2,10 +2,10 @@ package com.linweiyun.genshin.content.entities.teyvat.monster;
 
 import com.linweiyun.genshin.content.entities.teyvat.ElementalCreature;
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatHostile;
-import com.linweiyun.genshin.core.element.GenshinElement;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.system.about.ElementalAttachable;
+import com.linweiyun.elementlib.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachable;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;

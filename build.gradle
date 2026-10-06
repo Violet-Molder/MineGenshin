@@ -28,6 +28,8 @@ sourceSets.main.resources {
 }
 
 repositories {
+
+    mavenCentral()
     // LDLib2
     maven { url = "https://maven.firstdark.dev/snapshots" }
     exclusiveContent {
@@ -41,6 +43,8 @@ repositories {
     }
 }
 dependencies {
+    // 元素体系前置库：元素注册、附着、状态容器、反应框架、计时计数器、方块环境元素
+    implementation("com.linweiyun.elementlib:elementlib-neoforge-${minecraft_version}:${elementlib_version}")
     implementation("com.lowdragmc.ldlib2:ldlib2-neoforge-${minecraft_version}:${ldlib2_version}")
     implementation "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolibVersion}"
     implementation("com.lowdragmc.photon:photon-neoforge-${minecraft_version}:${photon_version}") {

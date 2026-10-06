@@ -1,15 +1,15 @@
 package com.linweiyun.genshin.core.system.reaction.builtin;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.api.ElementalReactionType;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.world.entity.LivingEntity;
@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.UUID;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * 超导反应 —— 雷 + 冰，<b>剧变反应</b>。
@@ -50,7 +51,7 @@ public class SuperConductReaction extends ElementalReaction {
      */
     private static final Map<UUID, Long> lastDamageTick = BoundedLruMap.create();
 
-    public SuperConductReaction(ElementalReactionType reactionType,
+    public SuperConductReaction(java.util.function.Supplier<ElementalReactionType> reactionType,
                                 String elementAId, String elementBId,
                                 float ratioA, float ratioB, int basePriority) {
         super(reactionType, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -66,7 +67,7 @@ public class SuperConductReaction extends ElementalReaction {
         GenshinElement defenderTarget = attackerIsA ? elB : elA;
         float totalDefenderUnit = sumConsumable(context.targetContainer(), defenderTarget);
         if (totalDefenderUnit <= 0f) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float attackerUnit = context.attackerUnit();
@@ -76,7 +77,7 @@ public class SuperConductReaction extends ElementalReaction {
         float consumedA = consumed[0];
         float consumedB = consumed[1];
         if (consumedA <= 0f || consumedB <= 0f) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         consumeElementUnit(context.targetContainer(), elB, consumedB);
@@ -84,7 +85,7 @@ public class SuperConductReaction extends ElementalReaction {
 
         applyDamageOffCooldown(context);
 
-        return ReactionResult.builder(reactionType)
+        return ReactionResult.builder(type())
                 .reacted()
                 .consumedAttacker(attackerIsA ? consumedA : consumedB)
                 .consumedDefender(attackerIsA ? consumedB : consumedA)
@@ -109,7 +110,7 @@ public class SuperConductReaction extends ElementalReaction {
         lastDamageTick.put(target.getUUID(), gameTime);
 
         ModDamageSpec spec = ModDamageSpec.transformative(
-                ElementalReactionType.SUPERCONDUCT, ModElements.CYRO.get(), AttackType.SPECIAL);
+                ModReactionTypes.SUPERCONDUCT.get(), ModElements.CYRO.get(), AttackType.SPECIAL);
         ModDamageSource source = ModDamageSource.from(spec, context.attackerEntity());
         // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
         if (target.level() instanceof ServerLevel serverLevel) {

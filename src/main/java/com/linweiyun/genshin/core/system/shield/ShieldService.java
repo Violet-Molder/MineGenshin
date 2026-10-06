@@ -1,12 +1,12 @@
 package com.linweiyun.genshin.core.system.shield;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.compat.PlayerStatBridge;
@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
 
 /**
  * 护盾结算 —— 伤害与元素附着打进来时，先问盾。
@@ -191,7 +192,7 @@ public final class ShieldService {
 
     /** 把某个元素从身上彻底移除（会触发 {@code onDetach}，例如解除冻结/减速）。 */
     private static void purgeAttachment(LivingEntity entity, GenshinElement element) {
-        StatusContainer container = entity.getData(AttachmentRegistration.CONTAINER);
+        StatusContainer container = entity.getData(ElementalAttachments.CONTAINER);
         if (container == null) {
             return;
         }
@@ -435,7 +436,7 @@ public final class ShieldService {
 
     /** 身上有没有能反应的非瞬发元素（给「风/岩要不要参与」这类判断复用）。 */
     public static boolean hasReactiveAura(LivingEntity entity) {
-        StatusContainer container = entity.getData(AttachmentRegistration.CONTAINER);
+        StatusContainer container = entity.getData(ElementalAttachments.CONTAINER);
         if (container == null) {
             return false;
         }

@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.core.system.shield;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import org.jetbrains.annotations.Nullable;
 

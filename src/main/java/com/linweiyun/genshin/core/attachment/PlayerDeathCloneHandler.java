@@ -3,7 +3,7 @@ package com.linweiyun.genshin.core.attachment;
 import com.linweiyun.genshin.core.attachment.AdventurerInfoAttachment;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.server.level.ServerLevel;
@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
 
 @EventBusSubscriber
 public class PlayerDeathCloneHandler {
@@ -49,8 +50,8 @@ public class PlayerDeathCloneHandler {
         dstChar.getPartyCharacterUUIDs().addAll(srcChar.getPartyCharacterUUIDs());
         dstChar.setCurrentCharacterIndex(srcChar.getCurrentCharacterIndex());
 
-        StatusContainer dstStatus = entity.getData(AttachmentRegistration.CONTAINER);
-        StatusContainer srcStatus = original.getData(AttachmentRegistration.CONTAINER);
+        StatusContainer dstStatus = entity.getData(ElementalAttachments.CONTAINER);
+        StatusContainer srcStatus = original.getData(ElementalAttachments.CONTAINER);
         dstStatus.clear();
         for (var inst : srcStatus.getAll()) {
             dstStatus.add(inst.copy());

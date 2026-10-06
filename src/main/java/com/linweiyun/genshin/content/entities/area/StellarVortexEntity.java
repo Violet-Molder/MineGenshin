@@ -3,15 +3,15 @@ package com.linweiyun.genshin.content.entities.area;
 import com.linweiyun.genshin.config.reaction.ReactionConfig;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.content.skill_node.GatherPull;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -24,6 +24,8 @@ import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
 
 import java.util.*;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 public class StellarVortexEntity extends AreaEntity {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
@@ -296,7 +298,7 @@ public class StellarVortexEntity extends AreaEntity {
             ModDamageSource source = ModDamageSource.from(spec, iceSourcePlayer);
             target.hurtServer(level, source, 0f);
 
-            StatusContainer container = target.getData(AttachmentRegistration.CONTAINER);
+            StatusContainer container = target.getData(ElementalAttachments.CONTAINER);
             ElementalAttachmentHelper.attach(
                     target, container, ModElements.CYRO.get(),
                     AttachmentSource.SPECIAL,
@@ -355,12 +357,12 @@ public class StellarVortexEntity extends AreaEntity {
     }
 
     private static ModDamageSpec buildWindSpec(double coefficient, List<PGCharacter> contributors) {
-        return ModDamageSpec.stellarReaction(ElementalReactionType.STELLAR_SWIRL_WIND,
+        return ModDamageSpec.stellarReaction(ModReactionTypes.STELLAR_SWIRL_WIND.get(),
                 ModElements.ANEMO.get(), (float) coefficient, 0f, 0f, contributors);
     }
 
     private static ModDamageSpec buildIceSpec(double coefficient, List<PGCharacter> contributors) {
-        return ModDamageSpec.stellarReaction(ElementalReactionType.STELLAR_SWIRL_ICE,
+        return ModDamageSpec.stellarReaction(ModReactionTypes.STELLAR_SWIRL_ICE.get(),
                 ModElements.CYRO.get(), (float) coefficient, 0f, 0f, contributors);
     }
 

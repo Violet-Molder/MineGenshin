@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.content.effect.character;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
@@ -68,7 +68,7 @@ public class CharacterEffectContainer {
      * <p>和 {@code getStellarGlimmerBonus(分支)} 一样是「效果侧」的聚合：
      * 角色自己在 {@code PGCharacter.getCritDamageBonus} 里再叠一层。
      */
-    public float getCritDamageBonus(com.linweiyun.genshin.core.element.GenshinElement element,
+    public float getCritDamageBonus(com.linweiyun.elementlib.core.element.GenshinElement element,
                                     boolean stellarReaction) {
         float total = 0f;
         for (CharacterEffectInstance instance : effects) {

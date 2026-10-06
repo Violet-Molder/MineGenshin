@@ -21,15 +21,15 @@ import com.linweiyun.genshin.core.system.combat.action.ActionKind;
 import com.linweiyun.genshin.core.system.combat.action.ActionSet;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.attack.BurstLanding;
-import com.linweiyun.genshin.core.system.combat.damage.DecaySequence;
+import com.linweiyun.elementlib.core.system.combat.decay.DecaySequence;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.combat.decay.DecayGroup;
-import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
-import com.linweiyun.genshin.core.system.about.AttachmentType;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroup;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
+import com.linweiyun.elementlib.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.network.chat.Component;
@@ -39,6 +39,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * 薇斯娜的<b>技能</b>（重命名前叫 {@code VesnaTalent}）——
@@ -609,7 +610,7 @@ public class VesnaSkill extends SkillBase {
                     if (stellarSwirl) {
                         // 转成星扩散-风时用<b>同一个倍率</b>（文案里「灵剑伤害」与「灵剑星扩散伤害」同值）
                         spec = ModDamageSpec.stellarDirect(
-                                ElementalReactionType.STELLAR_SWIRL_WIND, ModElements.ANEMO.get(),
+                                ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(),
                                 elementAmount, multiplier)
                                 .withStellarBaseBonusMult(
                                         StellarGlimmer.swirlBaseBonusMult(level))

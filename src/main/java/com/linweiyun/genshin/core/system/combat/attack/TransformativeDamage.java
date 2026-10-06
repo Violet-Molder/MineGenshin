@@ -2,14 +2,15 @@ package com.linweiyun.genshin.core.system.combat.attack;
 
 import com.linweiyun.genshin.config.reaction.ReactionConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.CombatEntityAccessor;
 import com.linweiyun.genshin.core.system.combat.damage.CombatMath;
 import com.linweiyun.genshin.core.system.combat.damage.DamageTrace;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.world.entity.LivingEntity;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * <b>剧变反应管线</b> —— 超导 / 感电 / 扩散 / 碎冰这类「不吃攻击力」的反应伤害。
@@ -41,16 +42,18 @@ final class TransformativeDamage {
 
         int level = CombatEntityAccessor.getAttackerLevel(attacker, character);
         double levelCoefficient = DamageZones.levelCoefficient(level);
-        float reactionMultiplier = switch (reactionType) {
-            case ELECTRO_CHARGED -> (float) ReactionConfig.ELECTROCHARGED.get();
-            case SUPERCONDUCT -> (float) ReactionConfig.SUPERCONDUCT.get();
-            case SWIRL -> (float) ReactionConfig.SWIRL.get();
-            default -> 1.0f;
-        };
+        float reactionMultiplier = 1.0f;
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.ELECTRO_CHARGED)) {
+            reactionMultiplier = (float) ReactionConfig.ELECTROCHARGED.get();
+        } else if (ModReactionTypes.is(reactionType, ModReactionTypes.SUPERCONDUCT)) {
+            reactionMultiplier = (float) ReactionConfig.SUPERCONDUCT.get();
+        } else if (ModReactionTypes.is(reactionType, ModReactionTypes.SWIRL)) {
+            reactionMultiplier = (float) ReactionConfig.SWIRL.get();
+        }
         float emBonus = DamageZones.emBonus(character, reactionType);
         GenshinElement damageElement = spec.getElement() != null
                 ? spec.getElement()
-                : (reactionType == ElementalReactionType.ELECTRO_CHARGED
+                : (ModReactionTypes.is(reactionType, ModReactionTypes.ELECTRO_CHARGED)
                         ? ModElements.ELECTRO.get() : ModElements.FYSIKOS.get());
         float rawResistance = DamageZones.rawResistance(damageElement, target, targetCharacter);
         float resistanceZone = CombatMath.resistanceZone(rawResistance);

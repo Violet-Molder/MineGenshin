@@ -1,7 +1,8 @@
 package com.linweiyun.genshin.core.system.registry.register;
 
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
 import com.linweiyun.genshin.core.system.reaction.builtin.ElectroChargedReaction;
 import com.linweiyun.genshin.core.system.reaction.builtin.FreezeReaction;
 import com.linweiyun.genshin.core.system.reaction.builtin.LunarChargedReaction;
@@ -9,75 +10,73 @@ import com.linweiyun.genshin.core.system.reaction.builtin.MeltReaction;
 import com.linweiyun.genshin.core.system.reaction.builtin.SuperConductReaction;
 import com.linweiyun.genshin.core.system.reaction.builtin.SwirlReaction;
 import com.linweiyun.genshin.core.system.reaction.builtin.VaporizeReaction;
-import com.linweiyun.genshin.core.system.registry.ModRegistries;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+/**
+ * 本模组的元素反应 —— 注册进 elementlib 的反应注册表。
+ */
 public class ModElementalReactions {
 
-    public static final DeferredRegister<ElementalReaction> ELEMENTAL_REACTIONS = ModRegistries.ELEMENTAL_REACTIONS;
+    public static final DeferredRegister<ElementalReaction> ELEMENTAL_REACTIONS =
+            DeferredRegister.create(
+                    com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENTAL_REACTIONS_REGISTRY,
+                    Minegenshin.MOD_ID);
 
-    // 蒸发：水:火 = 1:2，水克火
     public static final DeferredHolder<ElementalReaction, VaporizeReaction> VAPORIZE = ELEMENTAL_REACTIONS.register(
             "vaporize",
             () -> new VaporizeReaction(
-                    ElementalReactionType.VAPORIZE,
+                    ModReactionTypes.VAPORIZE,
                     "minegenshin:hydro", "minegenshin:pyro",
                     1f, 2f,
                     0));
 
-    // 融化：火:冰 = 1:2，火克冰（冻通过 getMainElement 归并到 CYRO）
     public static final DeferredHolder<ElementalReaction, MeltReaction> MELT = ELEMENTAL_REACTIONS.register(
             "melt",
             () -> new MeltReaction(
-                    ElementalReactionType.MELT,
+                    ModReactionTypes.MELT,
                     "minegenshin:pyro", "minegenshin:cyro",
                     1f, 2f,
                     0));
 
-    // 冻结：水:冰 = 1:1
     public static final DeferredHolder<ElementalReaction, FreezeReaction> FREEZE = ELEMENTAL_REACTIONS.register(
             "freeze",
             () -> new FreezeReaction(
-                    ElementalReactionType.FROZEN,
+                    ModReactionTypes.FROZEN,
                     "minegenshin:hydro", "minegenshin:cyro",
                     1f, 1f,
                     0));
 
-    // 月感电：水:雷 = 1:1，拦截感电反应（需要哥伦比娅在场，优先级高于普通感电）
+    // 月感电：水:雷 = 1:1；优先级与原「默认顺序表」等价（水/雷/冰在表中的下标都在 0 与 5 之间）
     public static final DeferredHolder<ElementalReaction, LunarChargedReaction> LUNAR_CHARGED = ELEMENTAL_REACTIONS.register(
             "lunar_charged",
             () -> new LunarChargedReaction(
-                    ElementalReactionType.LUNAR_CHARGED,
+                    ModReactionTypes.LUNAR_CHARGED,
                     "minegenshin:hydro", "minegenshin:electro",
                     1f, 1f,
-                    -1));
+                    2));
 
-    // 扩散：火:风 = 1:2，风被克制（消耗比 2风:1火/水/雷/冰），剧变反应
     public static final DeferredHolder<ElementalReaction, SwirlReaction> SWIRL = ELEMENTAL_REACTIONS.register(
             "swirl",
             () -> new SwirlReaction(
-                    ElementalReactionType.SWIRL,
+                    ModReactionTypes.SWIRL,
                     ModElements.PYRO.getId().toString(), ModElements.ANEMO.getId().toString(),
                     1f, 2f,
                     5));
 
-    // 感电：水:雷 = 1:1，共存反应
     public static final DeferredHolder<ElementalReaction, ElectroChargedReaction> ELECTRO_CHARGED = ELEMENTAL_REACTIONS.register(
             "electro_charged",
             () -> new ElectroChargedReaction(
-                    ElementalReactionType.ELECTRO_CHARGED,
+                    ModReactionTypes.ELECTRO_CHARGED,
                     "minegenshin:hydro", "minegenshin:electro",
                     1f, 1f,
                     0));
 
-    // 超导：雷:冰 = 1:1，剧变反应（冰元素伤害 + 减物抗），伤害冷却 0.5s
     public static final DeferredHolder<ElementalReaction, SuperConductReaction> SUPERCONDUCT = ELEMENTAL_REACTIONS.register(
             "superconduct",
             () -> new SuperConductReaction(
-                    ElementalReactionType.SUPERCONDUCT,
+                    ModReactionTypes.SUPERCONDUCT,
                     "minegenshin:electro", "minegenshin:cyro",
                     1f, 1f,
                     0));

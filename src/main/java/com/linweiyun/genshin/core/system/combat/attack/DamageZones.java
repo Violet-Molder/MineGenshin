@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.attack;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.combat.damage.CombatEntityAccessor;
 import com.linweiyun.genshin.core.system.combat.damage.CombatMath;
 import com.linweiyun.genshin.core.system.combat.damage.DamageLabels;
@@ -10,9 +10,10 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * <b>伤害乘区</b> —— 纯计算，不碰日志。
@@ -326,15 +327,33 @@ public final class DamageZones {
      */
     public static float emBonus(PGCharacter attacker, ElementalReactionType reactionType) {
         double em = elementalMastery(attacker);
-        return switch (reactionType) {
-            case MELT, VAPORIZE -> (float) ((2.78 * em) / (em + 1400.0));
-            case OVERLOAD, SUPERCONDUCT, ELECTRO_CHARGED, SWIRL, BURNING, BLOOM, HYPERBLOOM, BURGEON,
-                 STELLAR_SWIRL_WIND, STELLAR_SWIRL_ICE, STELLAR_CONDUCE_ELECTRO, STELLAR_CONDUCE_ICE
-                    -> (float) ((16.0 * em) / (em + 2000.0));
-            case LUNAR_CHARGED, LUNAR_BLOOM, LUNAR_CRYSTALLIZE
-                    -> (float) ((6.0 * em) / (em + 2000.0));
-            default -> 0f;
-        };
+        if (reactionType == null) {
+            return 0f;
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.MELT)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.VAPORIZE)) {
+            return (float) ((2.78 * em) / (em + 1400.0));
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.LUNAR_CHARGED)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.LUNAR_BLOOM)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.LUNAR_CRYSTALLIZE)) {
+            return (float) ((6.0 * em) / (em + 2000.0));
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.OVERLOAD)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.SUPERCONDUCT)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.ELECTRO_CHARGED)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.SWIRL)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.BURNING)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.BLOOM)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.HYPERBLOOM)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.BURGEON)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_ICE)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
+            return (float) ((16.0 * em) / (em + 2000.0));
+        }
+        return 0f;
     }
 
     public static double elementalMastery(PGCharacter attacker) {

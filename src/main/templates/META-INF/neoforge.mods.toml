@@ -89,6 +89,16 @@ config="${mod_id}.iris.mixins.json"
     ordering="NONE"
     side="BOTH"
 
+# 前置库：元素体系（元素注册 / 附着 / 状态容器 / 反应框架 / 计时计数器 / 方块环境元素）。
+# AFTER：本模组排在 elementlib 之后加载；本模组只使用它的架构类，具体元素与反应效果仍由本模组提供。
+[[dependencies.${mod_id}]]
+    modId="elementlib"
+    type="required"
+    versionRange="[26.2.0.3,)"
+    ordering="BEFORE"
+    side="BOTH"
+    reason="元素体系的底层框架（附着、状态容器、反应调度、计时计数器、方块环境元素）由 elementlib 提供；本模组先加载并关闭其示范内容，再注册自己的元素。"
+
 # 软依赖：光影模组 Iris。声明出来只做两件事 —— 装了时让本模组排在它之后加载（我们的兼容混入
 # 要按它的类来注入），以及让「本模组认识光影」这件事在模组列表里可见。
 # type = "optional" 意味着【没装 Iris 完全正常】：不报缺依赖、不影响启动。

@@ -50,7 +50,7 @@ public final class ShieldProfile {
      * 这个盾是哪个元素的（决定盾条颜色等表现）。白盾/伤害盾这类没有元素的填 null。
      */
     @Nullable
-    private final com.linweiyun.genshin.core.element.GenshinElement element;
+    private final com.linweiyun.elementlib.core.element.GenshinElement element;
 
     private ShieldProfile(Builder builder) {
         this.key = builder.key;
@@ -70,7 +70,7 @@ public final class ShieldProfile {
 
     /** 盾的元素；没有就是 null（白盾）。 */
     @Nullable
-    public com.linweiyun.genshin.core.element.GenshinElement element() {
+    public com.linweiyun.elementlib.core.element.GenshinElement element() {
         return this.element;
     }
 
@@ -177,9 +177,9 @@ public final class ShieldProfile {
         private boolean immuneToChill;
         private boolean permanent = true;
         private boolean grantsSuperArmor = true;
-        private com.linweiyun.genshin.core.element.GenshinElement element;
+        private com.linweiyun.elementlib.core.element.GenshinElement element;
 
-        public Builder element(com.linweiyun.genshin.core.element.GenshinElement element) {
+        public Builder element(com.linweiyun.elementlib.core.element.GenshinElement element) {
             this.element = element;
             return this;
         }

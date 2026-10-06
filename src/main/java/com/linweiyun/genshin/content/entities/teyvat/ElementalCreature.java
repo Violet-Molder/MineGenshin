@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.content.entities.teyvat;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import net.minecraft.world.damagesource.DamageSource;

@@ -7,10 +7,10 @@ import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
 import com.linweiyun.genshin.core.sync.ISyncManagedEntity;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.DescSynced;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.lowdragmc.lowdraglib2.syncdata.storage.FieldManagedStorage;
@@ -33,6 +33,7 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 import java.util.List;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * 薇斯娜灵剑 —— 一次性打击实体。
@@ -217,7 +218,7 @@ public class VesnaSpiritSwordEntity extends Entity implements ISyncManagedEntity
                 // 于是「星扩散状态下的灵剑」伤害恒为 ATK×0.5，与技能等级/阶级完全无关
                 //（二阶第二段低 2.2~5.3 倍、三阶收尾低 3.1~7.4 倍、大招灵剑低 5.3~12.5 倍）。
                 spec = ModDamageSpec.stellarDirect(
-                        ElementalReactionType.STELLAR_SWIRL_WIND, ModElements.ANEMO.get(),
+                        ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(),
                         elementAmount, multiplier)
                         .withStellarBaseBonusMult(
                                 com.linweiyun.genshin.core.system.reaction.StellarGlimmer

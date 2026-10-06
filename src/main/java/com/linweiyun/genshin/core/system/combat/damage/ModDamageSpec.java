@@ -1,18 +1,19 @@
 package com.linweiyun.genshin.core.system.combat.damage;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.combat.decay.DecayGroup;
-import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroup;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.core.system.poise.HitImpact;
 import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
 import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * 伤害规格 —— 定义一次攻击的完整参数规格
@@ -398,7 +399,7 @@ public class ModDamageSpec {
                 0f, 0f,
                 elementAmount, null,
                 null,
-                DamageType.LUNAR, ElementalReactionType.LUNAR_CHARGED, 0f, 0f, 0f, 0f, 0f, false);
+                DamageType.LUNAR, ModReactionTypes.LUNAR_CHARGED.get(), 0f, 0f, 0f, 0f, 0f, false);
     }
 
     public static ModDamageSpec lunarDirectHp(float hpMultiplier) {
@@ -408,7 +409,7 @@ public class ModDamageSpec {
                 0f, 0f,
                 0f, null,
                 null,
-                DamageType.LUNAR, ElementalReactionType.LUNAR_CHARGED, 0f, 0f, 0f, 0f, 0f, false);
+                DamageType.LUNAR, ModReactionTypes.LUNAR_CHARGED.get(), 0f, 0f, 0f, 0f, 0f, false);
     }
 
     /**

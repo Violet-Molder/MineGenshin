@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.content.effect.character;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
@@ -53,7 +53,7 @@ public interface ICharacterEffect {
      * <p>文案写「水/冰伤害的暴击伤害提升 X%」「星扩散反应伤害的暴击伤害提升 X%」就覆写它 ——
      * 统一 CDG 表达不了这种按元素区分的口径（例：沃雅妮莎 2/6 命「黑与白的双音」）。
      */
-    default float getCritDamageBonus(com.linweiyun.genshin.core.element.GenshinElement element,
+    default float getCritDamageBonus(com.linweiyun.elementlib.core.element.GenshinElement element,
                                      boolean stellarReaction) {
         return 0f;
     }

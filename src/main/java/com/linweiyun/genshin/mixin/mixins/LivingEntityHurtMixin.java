@@ -14,10 +14,10 @@ import com.linweiyun.genshin.core.system.combat.damage.TeyvatConvertedDamageSour
 import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.control.ControlService;
 import com.linweiyun.genshin.core.system.performance.HotPathLog;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
@@ -36,6 +36,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 @Mixin(LivingEntity.class)
 public class LivingEntityHurtMixin {
@@ -181,7 +182,7 @@ public class LivingEntityHurtMixin {
                     if (!isDirectLunar) {
                         // 雷暴云周期结算每跳都会再飘一次「月感电」，走和反应触发同一套斜体配色
                         DamageIndicatorFactory.lunarReactionGradient(
-                                target, ElementalReactionType.LUNAR_CHARGED);
+                                target, ModReactionTypes.LUNAR_CHARGED.get());
                     }
 
                     // 伤害数字与「月感电」反应文字同一套：顶部月色 → 白色 + 斜体

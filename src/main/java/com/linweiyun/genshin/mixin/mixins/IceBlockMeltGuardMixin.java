@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.mixin.mixins;
 
-import com.linweiyun.genshin.core.system.about.block.BlockElementStore;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementStore;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;

@@ -3,31 +3,31 @@ package com.linweiyun.genshin.core.system.reaction.builtin;
 import com.linweiyun.genshin.content.items.weapon.catalyst.HymnTheMaelstrom;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
-import com.linweiyun.genshin.core.attachment.StatusContainer;
+import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.genshin.core.character.util.capability.IStellarStateHolder;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.AttachmentSource;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentHelper;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.linweiyun.genshin.core.system.about.host.EntityHost;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.AttachmentSource;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.about.host.EntityHost;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.performance.BoundedLruMap;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectHelper;
 import com.linweiyun.genshin.content.effect.character.CharacterEffectInstance;
 import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
 import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarSwirlEffect;
 import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
 import com.linweiyun.genshin.core.system.registry.register.ModCharacterEffects;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import com.linweiyun.genshin.content.entities.area.StellarVortexEntity;
 import com.linweiyun.genshin.core.character.catalyst.vodyanitsa.VodyanitsaTalent;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -42,6 +42,9 @@ import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
 import java.util.*;
+import com.linweiyun.elementlib.core.attachment.ElementalAttachments;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import com.linweiyun.genshin.core.attachment.ElementContainerQueries;
 
 public class SwirlReaction extends ElementalReaction {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.ELEMENT);
@@ -70,7 +73,7 @@ public class SwirlReaction extends ElementalReaction {
     private static final Set<String> SWIRLABLE_IDS = Set.of(PYRO_ID, HYDRO_ID, ELECTRO_ID, CYRO_ID);
     private static final List<String> SPREAD_PRIORITY_IDS = List.of(PYRO_ID, HYDRO_ID, ELECTRO_ID, CYRO_ID);
 
-    public SwirlReaction(ElementalReactionType type,
+    public SwirlReaction(java.util.function.Supplier<ElementalReactionType> type,
                          String elementAId, String elementBId,
                          float ratioA, float ratioB, int basePriority) {
         super(type, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -112,7 +115,7 @@ public class SwirlReaction extends ElementalReaction {
         if (attackerIsAnemo) {
             spreadElement = findSpreadElement(ctx.targetContainer());
             if (spreadElement == null) {
-                return ReactionResult.builder(reactionType).build();
+                return ReactionResult.builder(type()).build();
             }
             defenderTarget = spreadElement;
         } else {
@@ -122,7 +125,7 @@ public class SwirlReaction extends ElementalReaction {
 
         float totalDefenderUnit = sumConsumable(ctx.targetContainer(), defenderTarget);
         if (totalDefenderUnit <= 0f) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float attackerQty = ctx.attackerUnit();
@@ -138,7 +141,7 @@ public class SwirlReaction extends ElementalReaction {
         consumedPyroSide = consumed[0];
         consumedAnemoSide = consumed[1];
         if (consumedPyroSide <= 0f || consumedAnemoSide <= 0f) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         // 在消耗元素前收集星扩散贡献者（消耗后 isFinished 会返回 true）
@@ -151,8 +154,9 @@ public class SwirlReaction extends ElementalReaction {
         List<PGCharacter> preConsumeWindContributors = List.of();
         if (isStellarSwirl) {
             triggerCharacter = resolveTriggerCharacter(ctx.attackerEntity());
-            preConsumeWindContributors = new ArrayList<>(ctx.targetContainer().getActiveContributors(
-                    serverLevel, serverLevel.getGameTime(), ModElements.CYRO.get(), ModElements.ANEMO.get()));
+            preConsumeWindContributors = new ArrayList<>(ElementContainerQueries.getActiveContributors(
+                    ctx.targetContainer(), serverLevel, serverLevel.getGameTime(),
+                    ModElements.CYRO.get(), ModElements.ANEMO.get()));
         }
 
         if (attackerIsAnemo) {
@@ -174,7 +178,7 @@ public class SwirlReaction extends ElementalReaction {
             spreadToNearby(ctx, spreadElement, spreadQuantity, ctx.targetEntity());
         }
 
-        return ReactionResult.builder(reactionType)
+        return ReactionResult.builder(type())
                 .reacted()
                 .consumedAttacker(attackerIsAnemo ? consumedAnemoSide : consumedPyroSide)
                 .consumedDefender(attackerIsAnemo ? consumedPyroSide : consumedAnemoSide)
@@ -192,7 +196,7 @@ public class SwirlReaction extends ElementalReaction {
     }
 
     private boolean isSwirlable(GenshinElement element) {
-        Identifier key = ModRegistries.ELEMENT_REGISTRY.getKey(element);
+        Identifier key = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.getKey(element);
         return key != null && SWIRLABLE_IDS.contains(key.toString());
     }
 
@@ -241,13 +245,13 @@ public class SwirlReaction extends ElementalReaction {
     }
 
     private void applySwirlDamage(ReactionContext ctx, GenshinElement spreadElement, LivingEntity target) {
-        ModDamageSpec spec = ModDamageSpec.transformative(reactionType, spreadElement, AttackType.SWIRL);
+        ModDamageSpec spec = ModDamageSpec.transformative(type(), spreadElement, AttackType.SWIRL);
         ModDamageSource source = ModDamageSource.from(spec, ctx.attackerEntity());
         // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
         if (target.level() instanceof ServerLevel serverLevel) {
             target.hurtServer(serverLevel, source, 0f);
         }
-        DamageIndicatorFactory.reaction(target, reactionType);
+        DamageIndicatorFactory.reaction(target, type());
     }
 
     private void spreadToNearby(ReactionContext ctx, GenshinElement spreadElement,
@@ -255,7 +259,7 @@ public class SwirlReaction extends ElementalReaction {
         if (!(target.level() instanceof ServerLevel level)) return;
         double rSq = SWIRL_RADIUS * SWIRL_RADIUS;
 
-        ModDamageSpec dmgSpec = ModDamageSpec.transformative(reactionType, spreadElement, AttackType.SWIRL);
+        ModDamageSpec dmgSpec = ModDamageSpec.transformative(type(), spreadElement, AttackType.SWIRL);
         AttachmentProfile spreadProfile = createSpreadProfile(spreadQuantity);
 
         for (LivingEntity nearby : level.getEntitiesOfClass(
@@ -265,9 +269,9 @@ public class SwirlReaction extends ElementalReaction {
 
             ModDamageSource dmgSource = ModDamageSource.from(dmgSpec, ctx.attackerEntity());
             nearby.hurtServer(level, dmgSource, 0f);
-            DamageIndicatorFactory.reaction(nearby, reactionType);
+            DamageIndicatorFactory.reaction(nearby, type());
 
-            StatusContainer nearbyContainer = nearby.getData(AttachmentRegistration.CONTAINER);
+            StatusContainer nearbyContainer = nearby.getData(ElementalAttachments.CONTAINER);
             if (nearbyContainer != null) {
                 EntityHost nearbyHost = EntityHost.of(nearby);
                 // 扩散把元素「再挂」到旁边的人身上，走的是同一个宿主入口：
@@ -279,8 +283,8 @@ public class SwirlReaction extends ElementalReaction {
                 }
                 ElementalAttachmentHelper.attach(nearbyHost, spreadElement,
                         AttachmentSource.SPECIAL, spreadProfile,
-                        com.linweiyun.genshin.core.system.about.AttachContext.reactionWrite(
-                                ctx.attackerEntity(), dmgSpec));
+                        com.linweiyun.elementlib.core.system.about.AttachContext.reactionWrite(
+                                ctx.attackerEntity()));
             }
         }
     }
@@ -316,7 +320,7 @@ public class SwirlReaction extends ElementalReaction {
 
         if (ctx.targetEntity() instanceof LivingEntity livingTarget) {
             DamageIndicatorFactory.stellarIceReactionGradient(livingTarget,
-                    ElementalReactionType.STELLAR_SWIRL_ICE);
+                    ModReactionTypes.STELLAR_SWIRL_ICE.get());
         }
 
         double x = ctx.targetEntity().getX();

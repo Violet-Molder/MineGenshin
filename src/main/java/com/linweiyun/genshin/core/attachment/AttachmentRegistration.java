@@ -2,7 +2,7 @@ package com.linweiyun.genshin.core.attachment;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatEntityStats;
-import com.linweiyun.genshin.core.system.about.block.ChunkBlockElements;
+import com.linweiyun.elementlib.core.system.about.block.ChunkBlockElements;
 import com.linweiyun.genshin.core.system.shield.ShieldState;
 import com.linweiyun.genshin.core.system.poise.PoiseState;
 import com.mojang.serialization.Codec;
@@ -86,12 +86,6 @@ public class AttachmentRegistration {
                     "player_characters",
                     () -> AttachmentType.serializable(PlayerCharactersAttachment::new)
                             .sync(PlayerCharactersAttachment.STREAM_CODEC)
-                            .copyOnDeath().build());
-
-    public static final Supplier<AttachmentType<StatusContainer>> CONTAINER =
-            ATTACHMENTS.register("status_container",
-                    () -> AttachmentType.serializable(StatusContainer::new)
-                            .sync(StatusContainer.STREAM_CODEC)
                             .copyOnDeath().build());
 
     public static final Supplier<AttachmentType<AdventurerInfoAttachment>> ADVENTURER_INFO_ATTACHMENT =
@@ -191,14 +185,6 @@ public class AttachmentRegistration {
             ATTACHMENTS.register("locked_target",
                     () -> AttachmentType.builder(() -> LockedTargetData.EMPTY)
                             .serialize(LockedTargetData.CODEC.fieldOf("locked_target"))
-                            .build()
-            );
-
-    public static final Supplier<AttachmentType<ChunkBlockElements>> CHUNK_ELEMENTS =
-            ATTACHMENTS.register("chunk_elements",
-                    () -> AttachmentType.builder(ChunkBlockElements::new)
-                            .serialize(ChunkBlockElements.CODEC.fieldOf("elements"))
-                            // 方块元素只服务端用，不需要同步给客户端（每 tick 同步整 chunk 表会掉帧）
                             .build()
             );
 

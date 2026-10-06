@@ -2,11 +2,11 @@ package com.linweiyun.genshin.core.system.combat.attack;
 
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.AttachmentProfile;
-import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
-import com.linweiyun.genshin.core.system.about.block.BlockElementRules;
+import com.linweiyun.elementlib.core.system.about.AttachmentProfile;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementHelper;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementRules;
 import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.action.ActionDefinition;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;

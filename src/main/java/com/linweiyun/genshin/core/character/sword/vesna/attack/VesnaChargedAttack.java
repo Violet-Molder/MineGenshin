@@ -8,7 +8,7 @@ import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -16,6 +16,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 /**
  * 薇斯娜的<b>重击</b>。
@@ -49,7 +50,7 @@ public final class VesnaChargedAttack {
             if (target == player) continue;
 
             ModDamageSpec spec = ModDamageSpec.stellarDirect(
-                    ElementalReactionType.STELLAR_SWIRL_WIND, ModElements.ANEMO.get(), 1.0f, 0.5f);
+                    ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(), 1.0f, 0.5f);
             spec.setStellarContributors(List.of(character));
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {

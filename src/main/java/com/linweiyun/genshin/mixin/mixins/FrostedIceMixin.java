@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.mixin.mixins;
 
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.block.BlockElementHelper;
+import com.linweiyun.elementlib.core.system.about.block.BlockElementHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +29,7 @@ public abstract class FrostedIceMixin {
                               BlockPos pos, RandomSource random, CallbackInfo ci) {
         // 只有「在元素体系里」的浮冰才由冻元素接管（有容器 = 我们冻出来的）。
         // 没有容器的浮冰（例如原版冰霜行者踩出来的）保持原版行为：不接管、照常融化。
-        if (com.linweiyun.genshin.core.system.about.block.BlockElementStore.peek(level, pos) == null) {
+        if (com.linweiyun.elementlib.core.system.about.block.BlockElementStore.peek(level, pos) == null) {
             return;
         }
 

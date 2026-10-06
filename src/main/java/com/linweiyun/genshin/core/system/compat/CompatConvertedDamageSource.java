@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.core.system.compat;
 
-import com.linweiyun.genshin.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import net.minecraft.world.damagesource.DamageSource;
 
 import javax.annotation.Nullable;

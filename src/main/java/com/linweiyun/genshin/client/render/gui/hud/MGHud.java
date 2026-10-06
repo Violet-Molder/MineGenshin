@@ -12,7 +12,7 @@ import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.status.StatusAccessor;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import com.linweiyun.genshin.client.render.gui.component.CharacterBuffIcon;
 import com.linweiyun.genshin.util.log.LogGroup;

@@ -6,11 +6,11 @@ import com.linweiyun.genshin.content.skill_node.RushesForward;
 import com.linweiyun.genshin.content.skill_node.SkillHelper;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
-import com.linweiyun.genshin.core.system.about.AttachmentType;
+import com.linweiyun.elementlib.core.system.about.AttachmentType;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import com.linweiyun.genshin.core.system.combat.decay.DecayGroups;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.server.level.ServerLevel;
@@ -22,6 +22,7 @@ import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
 import java.util.List;
+import com.linweiyun.genshin.core.system.combat.decay.ModDecayGroups;
 
 /**
  * 林薇云（<b>所有形态</b>）的元素战技。
@@ -59,7 +60,7 @@ public final class LinweiyunElementalSkill {
                                     AttackType.ELEMENTAL_SKILL, ModElements.ANEMO.get())
                             .multiplier(pressDamage)
                             .elementAmount(AttachmentType.WEAK.getInitialAmount())
-                            .decayGroup(DecayGroups.SHENHE_SKILL)
+                            .decayGroup(ModDecayGroups.SHENHE_SKILL)
                             .attackerCharacter(character)
                             .build();
                     ModDamageSource source = ModDamageSource.from(spec, player);
@@ -86,7 +87,7 @@ public final class LinweiyunElementalSkill {
                 ModDamageSpec spec = ModDamageSpec.builder(AttackType.ELEMENTAL_SKILL, ModElements.ANEMO.get())
                         .multiplier(holdDamage)
                         .elementAmount(AttachmentType.WEAK.getInitialAmount())
-                        .decayGroup(DecayGroups.SHENHE_SKILL)
+                        .decayGroup(ModDecayGroups.SHENHE_SKILL)
                         .attackerCharacter(character)
                         .build();
                 ModDamageSource source = ModDamageSource.from(spec, player);

@@ -1,16 +1,21 @@
 package com.linweiyun.genshin.core.element;
 
-import com.linweiyun.genshin.core.system.registry.ModRegistries;
+import com.linweiyun.elementlib.api.ElementRoles;
+import com.linweiyun.elementlib.core.element.GenshinElement;
+import com.linweiyun.genshin.Minegenshin;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 /**
- * 元素注册中心 —— 使用 DeferredRegister 将所有元素注册到 Minecraft Registry
+ * 本模组元素注册中心 —— 注册进 elementlib 的元素注册表（minegenshin 命名空间）。
  */
 public class ModElements {
 
-    public static final DeferredRegister<GenshinElement> ELEMENTS = ModRegistries.ELEMENTS;
+    public static final DeferredRegister<GenshinElement> ELEMENTS =
+            DeferredRegister.create(
+                    com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY,
+                    Minegenshin.MOD_ID);
 
     // ======== 主元素 ========
     public static final DeferredHolder<GenshinElement, GenshinElement> FYSIKOS = ELEMENTS.register(
@@ -44,12 +49,9 @@ public class ModElements {
             "frozen", () -> new GenshinElement(false, false, "elemental.gim.frozen"));
 
     /**
-     * <b>寒</b> —— 冰/冻的附加效果载体（减速、禁 AI）。
+     * 寒 —— 冰/冻的附加效果载体（减速、禁 AI）。
      *
-     * <p>刻意<b>不</b>做成「mainElement 归并到冰」的类元素：这个代码库里 mainElement 的唯一含义是
-     * 「参与反应配对时并入主元素」，归并进去寒就会被当成冰消耗/扩散（要四处写例外）。
-     * 独立注册后没有任何反应以寒为配对方，天然不参与反应。
-     * 伴随关系（有冰/冻就有寒）由 {@code ColdAura} 每 tick 同步。
+     * <p>独立注册、不并入冰参与反应配对；伴随关系（有冰/冻就有寒）由 elementlib 的 ColdAura 每 tick 同步。
      */
     public static final DeferredHolder<GenshinElement, ColdElement> COLD = ELEMENTS.register(
             "cold", () -> new ColdElement("elemental.gim.cold"));
@@ -64,16 +66,31 @@ public class ModElements {
             "wood", () -> new GenshinElement(false, false, "elemental.gim.wood"));
 
     /**
-     * 在所有元素注册完成后调用，设置类元素的主元素关联
-     *
-     * <p>注意这里<b>没有</b>寒：寒是独立元素（效果载体），不并入冰参与反应配对 ——
-     * 理由见 {@link #COLD} 的注释。
+     * 在所有元素注册完成后调用：设置类元素的主元素关联，并把元素绑定到 elementlib 的角色表。
      */
     public static void setupSubElements() {
         FROZEN.get().setMainElement(CYRO.get());
         AGGRAVATE.get().setMainElement(ELECTRO.get());
         BURNING.get().setMainElement(PYRO.get());
         WOOD.get().setMainElement(DENDRO.get());
+        bindRoles();
+    }
+
+    /** 把本模组的元素绑定到 elementlib 的框架角色，框架据此识别「冰 / 冻 / 寒 / 水」等。 */
+    public static void bindRoles() {
+        ElementRoles.bind(ElementRoles.FYSIKOS, FYSIKOS.get());
+        ElementRoles.bind(ElementRoles.PYRO, PYRO.get());
+        ElementRoles.bind(ElementRoles.HYDRO, HYDRO.get());
+        ElementRoles.bind(ElementRoles.ANEMO, ANEMO.get());
+        ElementRoles.bind(ElementRoles.ELECTRO, ELECTRO.get());
+        ElementRoles.bind(ElementRoles.DENDRO, DENDRO.get());
+        ElementRoles.bind(ElementRoles.CYRO, CYRO.get());
+        ElementRoles.bind(ElementRoles.GEO, GEO.get());
+        ElementRoles.bind(ElementRoles.FROZEN, FROZEN.get());
+        ElementRoles.bind(ElementRoles.COLD, COLD.get());
+        ElementRoles.bind(ElementRoles.AGGRAVATE, AGGRAVATE.get());
+        ElementRoles.bind(ElementRoles.BURNING, BURNING.get());
+        ElementRoles.bind(ElementRoles.WOOD, WOOD.get());
     }
 
     public static void register(IEventBus eventBus) {

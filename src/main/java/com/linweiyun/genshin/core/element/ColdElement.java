@@ -1,5 +1,6 @@
 package com.linweiyun.genshin.core.element;
 
+import com.linweiyun.elementlib.core.element.GenshinElement;
 import net.minecraft.resources.Identifier;
 import com.linweiyun.genshin.core.system.control.ControlRequest;
 import com.linweiyun.genshin.core.system.control.ControlService;
@@ -13,7 +14,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
  * {@code ElementalCreature#acceptsElementAttachment}）—— 寒没挂上，减速与冻结自然都不存在。
  * 这也是「效果挂在寒身上」带来的好处：豁免只需要表达一次，不用在每个效果里各判一遍。
  *
- * @see com.linweiyun.genshin.core.system.about.ColdAura
+ * @see com.linweiyun.elementlib.core.system.about.ColdAura
  */
 public class ColdElement extends GenshinElement {
 

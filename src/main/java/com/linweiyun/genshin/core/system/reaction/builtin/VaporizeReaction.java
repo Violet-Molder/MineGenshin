@@ -1,14 +1,14 @@
 package com.linweiyun.genshin.core.system.reaction.builtin;
 
 import com.linweiyun.genshin.config.reaction.ReactionConfig;
-import com.linweiyun.genshin.core.element.GenshinElement;
-import com.linweiyun.genshin.core.status.StatusInstance;
-import com.linweiyun.genshin.core.system.about.ElementalAttachmentInstance;
-import com.linweiyun.genshin.core.system.reaction.ElementalReaction;
-import com.linweiyun.genshin.core.system.reaction.ReactionContext;
+import com.linweiyun.elementlib.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
+import com.linweiyun.elementlib.core.system.reaction.ElementalReaction;
+import com.linweiyun.elementlib.core.system.reaction.ReactionContext;
 import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
-import com.linweiyun.genshin.core.system.reaction.ReactionResult;
-import com.linweiyun.genshin.core.system.reaction.ElementalReactionType;
+import com.linweiyun.elementlib.core.system.reaction.ReactionResult;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 
 /**
  * 蒸发反应 —— 增幅反应
@@ -26,7 +26,7 @@ public class VaporizeReaction extends ElementalReaction {
     private static float getDominantMultiplier() { return (float) ReactionConfig.VAPORIZE.get(); }
     private static float getSubmissiveMultiplier() { return (float) ReactionConfig.VAPORIZE_NEGATIVE.get(); }
 
-    public VaporizeReaction(ElementalReactionType type,
+    public VaporizeReaction(java.util.function.Supplier<ElementalReactionType> type,
                             String elementAId, String elementBId,
                             float ratioA, float ratioB, int basePriority) {
         super(type, elementAId, elementBId, ratioA, ratioB, basePriority);
@@ -51,7 +51,7 @@ public class VaporizeReaction extends ElementalReaction {
                 attackerIsA ? elB : elA);
 
         if (defInstance == null || defInstance.isFinished()) {
-            return ReactionResult.builder(reactionType).build();
+            return ReactionResult.builder(type()).build();
         }
 
         float attackerQty = ctx.attackerUnit();
@@ -83,7 +83,7 @@ public class VaporizeReaction extends ElementalReaction {
 
         float consumedAttacker = attackerIsA ? consumedA : consumedB;
 
-        return ReactionResult.builder(reactionType)
+        return ReactionResult.builder(type())
                 .reacted()
                 .consumedAttacker(consumedAttacker)
                 .consumedDefender(attackerIsA ? consumedB : consumedA)
