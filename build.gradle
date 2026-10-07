@@ -32,6 +32,8 @@ repositories {
     mavenCentral()
     // elementlib 本地开发仓库（26.2.0.4 联调期用；正式发布后换回 Maven Central）
     maven { url = "G:/AI/Codex/Skill/像素原神/maven" }
+    // CI 里 elementlib 用 publishToMavenLocal 装进本机仓库后再构建
+    mavenLocal()
     // LDLib2
     maven { url = "https://maven.firstdark.dev/snapshots" }
     exclusiveContent {
