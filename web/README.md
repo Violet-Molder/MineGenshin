@@ -20,7 +20,7 @@ java -jar build/libs/minegenshin-web.jar
 在仓库根目录外运行时，用参数或环境变量指定文档源目录：
 
 ```bash
-java -jar minegenshin-web.jar --site.docs-root=E:/MCMOD/MineGenshin-26.2
+java -jar minegenshin-web.jar --site.docs-root=E:/MCMOD/MineGenshin
 SITE_DOCS_ROOT=/path/to/repo java -jar minegenshin-web.jar
 ```
 
