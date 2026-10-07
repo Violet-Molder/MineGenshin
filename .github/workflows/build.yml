@@ -33,7 +33,7 @@ jobs:
         working-directory: elementlib
         run: |
           chmod +x ./gradlew
-          ./gradlew publishToMavenLocal -x signMavenJavaPublication
+          ./gradlew publishToMavenLocal
 
       # This is needed to be able to run ./gradlew below
       # You can run `git update-index --chmod +x gradlew` then remove this step.
