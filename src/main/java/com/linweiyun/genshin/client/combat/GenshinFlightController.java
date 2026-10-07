@@ -238,11 +238,11 @@ public final class GenshinFlightController {
     // ==================== 工具 ====================
 
     /**
-     * 起飞要有滑翔装备（鞘翅这类）—— 和用户口径的「鞘翅飞行」对得上。
+     * 起飞要有滑翔装备（鞘翅这类），而且当前出战角色得是这套飞行的准入角色。
      * （创造 / 旁观在上面就返回了，走不到这里。）
      */
     private static boolean canStart(LocalPlayer player) {
-        return GenshinFlight.hasGlider(player);
+        return GenshinFlight.allowsGenshinFlight(player) && GenshinFlight.hasGlider(player);
     }
 
     /** 改客户端那份 abilities 并同步给服务端（两边都别留在错的状态上）。 */

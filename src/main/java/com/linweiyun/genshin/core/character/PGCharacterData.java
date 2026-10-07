@@ -11,6 +11,8 @@ import com.linweiyun.genshin.content.items.artifact.inventory.ArtifactInventory;
 import com.linweiyun.elementlib.core.attachment.StatusContainer;
 import com.linweiyun.elementlib.core.module.ElibModuleContainer;
 import com.linweiyun.elementlib.core.module.ElibModuleTypes;
+import com.linweiyun.elementlib.core.status.StatusInstance;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearance;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearanceData;
 import com.linweiyun.genshin.core.network.NetworkManager;
@@ -709,7 +711,62 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
          this.markDirty();
       }
 
-      this.statusContainer.tick();
+      this.tickElementDecay();
+   }
+
+   /** 元素容器上一次被推进的游戏刻。 */
+   private transient long lastElementDecayTick = Long.MIN_VALUE;
+
+   /** 元素量的同步精度：1 / 这个数（U）。小于一格的变化不值得往客户端发一次同步。 */
+   private static final float ELEMENT_STATE_STEP = 20.0f;
+
+   /**
+    * 推进一次元素容器（附着衰减）。
+    *
+    * <p>角色的元素容器只在整包同步时发往客户端，所以容器一变就标脏；
+    * 不标脏的话，附着量的变化与附着到期消失都不会传到客户端。
+    *
+    * <p>同一个游戏刻只推进一次，重复调用不会让附着按两倍速衰减。
+    */
+   public void tickElementDecay() {
+      Player owner = this.getOwnerPlayer();
+      if (owner == null) {
+         return;
+      }
+      long gameTime = owner.level().getGameTime();
+      if (this.lastElementDecayTick == gameTime) {
+         return;
+      }
+      this.lastElementDecayTick = gameTime;
+
+      StatusContainer container = this.getModuleContainer().get(ElibModuleTypes.ELEMENT);
+      if (container == null) {
+         return;
+      }
+      container.tick();
+      int state = elementState(container);
+      if (state != this.lastElementState) {
+         this.lastElementState = state;
+         this.markDirty();
+      }
+   }
+
+   /** 上一次同步出去的元素容器总览；容器变了才需要再同步一次。 */
+   private transient int lastElementState;
+
+   /**
+    * 元素容器的一眼总览：附着条数 + 各条剩余量（按 {@link #ELEMENT_STATE_STEP} 量化）。
+    *
+    * <p>只用来判断这一趟有没有变化。
+    */
+   private static int elementState(StatusContainer container) {
+      int state = container.getAll().size();
+      for (StatusInstance inst : container.getAll()) {
+         if (inst instanceof ElementalAttachmentInstance attachment) {
+            state = state * 31 + Math.round(attachment.getUnit() * ELEMENT_STATE_STEP);
+         }
+      }
+      return state;
    }
 
    public CharacterEffectContainer getEffectContainer() {

@@ -6,6 +6,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.util.CharacterHelper;
+import com.linweiyun.genshin.core.character.allweapon.linweiyun.Linweiyun;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
@@ -53,6 +56,24 @@ public final class GenshinFlight {
     private static final Set<UUID> GRANTED_MAYFLY = ConcurrentHashMap.newKeySet();
 
     private GenshinFlight() {
+    }
+
+    /** 原版自己管的飞行（创造 / 旁观者）——本模组一律不碰。 */
+    public static boolean hasNativeFlight(Player player) {
+        return player != null && (player.isCreative() || player.isSpectator());
+    }
+
+    /**
+     * 这套生存滑翔飞行的准入角色：目前是「林薇云」专属效果。
+     *
+     * <p>其它角色在原神模式、又背着鞘翅时也不给飞行能力。
+     */
+    public static boolean allowsGenshinFlight(Player player) {
+        if (player == null) {
+            return false;
+        }
+        PGCharacter character = CharacterHelper.getCurrentCharacter(player);
+        return character instanceof Linweiyun;
     }
 
     /** 这个玩家是不是开着原神模式。 */
@@ -108,8 +129,15 @@ public final class GenshinFlight {
         stack.hurtAndBreak(1, player, slot);
     }
 
-    /** 让这个玩家飞得起来 / 飞不起来（创造飞行那两面旗标里的一面）。 */
+    /**
+     * 让这个玩家飞得起来 / 飞不起来（创造飞行那两面旗标里的一面）。
+     *
+     * <p>创造 / 旁观者的飞行由原版给，本模组一概不碰。
+     */
     public static void setMayFly(Player player, boolean value) {
+        if (hasNativeFlight(player)) {
+            return;
+        }
         if (player.getAbilities().mayfly == value) {
             return;
         }
@@ -119,8 +147,15 @@ public final class GenshinFlight {
         }
     }
 
-    /** 停飞（服务端调用会把 new abilities 同步给客户端）。 */
+    /**
+     * 停飞（服务端调用会把 new abilities 同步给客户端）。
+     *
+     * <p>同样不碰创造 / 旁观者：他们的飞行由原版管。
+     */
     public static void stopFlying(Player player) {
+        if (hasNativeFlight(player)) {
+            return;
+        }
         if (!player.getAbilities().flying) {
             return;
         }
@@ -142,7 +177,11 @@ public final class GenshinFlight {
             return;
         }
 
-        boolean nativeFlight = player.isCreative() || player.isSpectator();
+        // 创造 / 旁观：飞行由原版管 —— 先于一切判断退出，只清掉我们自己的记账，不动 abilities
+        if (hasNativeFlight(player)) {
+            GRANTED_MAYFLY.remove(player.getUUID());
+            return;
+        }
 
         if (!isGenshinMode(player)) {
             // 原神模式之外：飞行是玩家自己的事（创造 / 旁观 / 别的 MOD），一律不碰。
@@ -154,13 +193,16 @@ public final class GenshinFlight {
             return;
         }
 
-        if (nativeFlight) {
-            // 创造 / 旁观：飞行本来就有 —— 不设门槛、不收费、也不要我们再给旗标
-            GRANTED_MAYFLY.remove(player.getUUID());
+        // 生存玩家：这套「有滑翔装备就能飞」是某个角色的专属效果，其它角色一律不给
+        if (!allowsGenshinFlight(player)) {
+            if (GRANTED_MAYFLY.remove(player.getUUID())) {
+                stopFlying(player);
+                setMayFly(player, false);
+            }
             return;
         }
 
-        // 生存玩家：原神模式的创造飞行能力由我们给（别的地方清了回来就再打开一次）
+        // 有资格的角色：原神模式的创造飞行能力由我们给（别的地方清了回来就再打开一次）
         if (!GRANTED_MAYFLY.contains(player.getUUID()) || !player.getAbilities().mayfly) {
             setMayFly(player, true);
             GRANTED_MAYFLY.add(player.getUUID());

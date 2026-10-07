@@ -25,51 +25,6 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * <b>控制接收方</b> —— 所有控制类效果只走<b>一个入口</b> {@link #applyControl}，
- * 由实体自己判定这一次是「削韧」、「控制」还是「直接免疫拦住」；
- * 打断动作、击退、冻结的 NoAI 都是<b>实体内置方法</b>。
- *
- * <h2>谁能拿到它</h2>
- * 本接口挂在 {@code TeyvatLiving} 上（{@code TeyvatLiving extends Controllable}），
- * 而原版 {@code LivingEntity} 由 {@code LivingEntityTeyvatMixin} 注入
- * {@code NonTeyvatEntity extends TeyvatLiving} —— 所以<b>每一个活体都有内置方法与入口</b>，
- * 本模组的怪与首领还能覆盖它们；原版生物拿到的是一套现成的默认实现，
- * 不需要为它多写一个类。
- *
- * <h2>一个入口，四种判定</h2>
- * <pre>
- *   applyControl(请求)
- *     ├─ 削韧那一笔（请求带削韧时）先落地 —— 它不问破没破，只看护盾
- *     └─ 再看控制：
- *          REFUSED → 免疫：有盾 = 霸体，或实体的 blocksControl（首领）拦下 —— 控制不生效
- *          POISE   → 削韧：没破韧，这一下只把韧性条往下推，不打断、不推
- *          WINDOW  → 控制：破绽窗口里那一下，无视抗打断系数
- *          CONTROL → 控制：破韧期间，命中类还要比「打断强度 ≥ 抗打断系数」
- * </pre>
- *
- * <p><b>注</b>：{@link Verdict#POISE} 与 {@link Verdict#REFUSED} 对调用方都是「控制没生效」，
- * 分开只是为了读日志与以后做表现（例如「被盾弹开」和「没破韧」是两种手感）。
- *
- * <h2>谁在执行</h2>
- * <ul>
- *   <li><b>命中带来的</b>（{@link ControlType#SOFT}、{@link ControlType#IMPACT}）：
- *       主效果是<b>打断动作</b> {@link #interruptAction}（强行回到静止），
- *       <b>击退是次要的、可以没有</b> {@link #knockback} —— 这一下没带冲击就一点都不推；
- *       两个都是内置方法，覆盖成「推不动」只改一个方法；</li>
- *   <li><b>冻结的 NoAI</b>（{@link ControlType#FREEZE}）：{@link #freezeAction}，
- *       和别的控制同一道门，但判定里<b>不看韧性</b>（冻结可以无视韧性直接成立）；</li>
- *   <li><b>技能每刻持续施加的</b>（{@link ControlType#LEVITATE}、{@link ControlType#GATHER}）：
- *       入口只开门，位移由节点自己执行（范围盒在那里）。</li>
- * </ul>
- *
- * <h2>绕过入口：{@link #forceControl}</h2>
- * 首领的技能在「抬手 / 蓄力 / 收招 / 破盾瞬间」这类时刻要<b>强行</b>给一次控制，
- * 就走 {@link ControlService#force}（内部调 {@link #forceControl}）：
- * 不问韧性、不问系数、不问窗口，直接把内置方法跑一遍。
- * 另有 {@link ControlService#openGap} 那种更轻的写法 —— 开一个一次性窗口，
- * 让「接下来那一下命中」自己从入口通过。
- */
 public interface Controllable {
 
     /**
@@ -330,23 +285,6 @@ public interface Controllable {
 
     /**
      * <b>实体内置方法：取消「正在进行中的动作」。</b>
-     *
-     * <p>「停 Goal + 禁 AI」<b>拦不住所有动作</b>：有些怪把动作写在自己的
-     * {@code aiStep} 里，而那段逻辑根本不看 AI 开关。最典型的就是
-     * {@link Witch 女巫喝药} —— 她的 {@code aiStep} 每刻自己推进 {@code usingTime}，
-     * 冻住（{@code setNoAi(true)}）她照样会把那瓶药喝完；她也不走
-     * {@link LivingEntity#stopUsingItem()} 那条通用 use 通道，而是用自己的
-     * {@code DATA_USING_ITEM}。所以打断必须点名清掉这类状态：
-     * <ul>
-     *   <li>通用 use 动作（吃喝、举盾、拉弓）→ {@link LivingEntity#stopUsingItem()}；</li>
-     *   <li>挥击动画停在半途 → {@code swinging} / {@code swingTime} / {@code attackAnim} 归零；</li>
-     *   <li>女巫的喝药 → {@link #cancelWitchDrink(Witch)}（只把标记翻掉<b>不够</b>，见那边）。</li>
-     * </ul>
-     *
-     * <p><b>本模组的怪或首领要打断自己特有的动作</b>（读条、变形、蓄力状态机），
-     * <b>覆盖这个方法加一句即可</b>（纯 Java，不用碰 mixin）；它会被
-     * {@link #interruptAction} 与静止窗口里的每刻钩子（{@code ControlService.onServerTick}）
-     * 各调一次，所以里面写的必须是<b>幂等</b>的。
      *
      * <p><b>原版 / 别的模组的生物</b>没法在这里点名（它们的私有字段模组碰不到），
      * 那条路是 {@link TickActionSuppressor}：写一个 mixin 实现它，
