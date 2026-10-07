@@ -15,11 +15,25 @@ jobs:
       - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      # elementlib 的新版本还没进 Maven Central：CI 里就地构建同名分支，装进本机 maven 仓库
+      - name: Checkout elementlib
+        uses: actions/checkout@v4
+        with:
+          repository: Violet-Molder/elementlib
+          ref: ${{ github.head_ref || github.ref_name }}
+          path: elementlib
+
+      - name: Publish elementlib to local maven
+        working-directory: elementlib
+        run: |
+          chmod +x ./gradlew
+          ./gradlew publishToMavenLocal -x signMavenJavaPublication
 
       # This is needed to be able to run ./gradlew below
       # You can run `git update-index --chmod +x gradlew` then remove this step.
