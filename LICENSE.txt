@@ -59,8 +59,8 @@ https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
                         Project-specific notices:
 ================================================================================
 
-  Original project: MineGenshin-26.2
-  Repository:       https://github.com/Violet-Molder/MineGenshin-26.2
+  Original project: MineGenshin
+  Repository:       https://github.com/Violet-Molder/MineGenshin
 
   The original art assets, audio assets, and text assets of this project
   (including but not limited to textures, models, sounds, and translation

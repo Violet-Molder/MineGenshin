@@ -61,7 +61,7 @@
 
 ### 2.1 接口层：`ICharacterConfigUI`
 
-[ICharacterConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/ICharacterConfigUI.java)
+[ICharacterConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/ICharacterConfigUI.java)
 
 ```java
 public interface ICharacterConfigUI {
@@ -81,7 +81,7 @@ public interface ICharacterConfigUI {
 
 ### 2.2 骨架层：`CharacterConfigScreen`（抽象类）
 
-[CharacterConfigScreen.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigScreen.java)
+[CharacterConfigScreen.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigScreen.java)
 
 这是核心骨架类，子类只需重写少量方法。
 
@@ -145,7 +145,7 @@ public record InfoPage(@Nullable String titleKey, UIElement content) {
 
 ### 2.3 工具层：`CharacterConfigPage`
 
-[CharacterConfigPage.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigPage.java)
+[CharacterConfigPage.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigPage.java)
 
 纯静态工具类，提供以下能力：
 
@@ -200,7 +200,7 @@ public static void applyPreview(PGCharacter character, int[] previewMask) {
 
 ### 2.4 默认实现：`CharacterConfigUI`
 
-[CharacterConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigUI.java)
+[CharacterConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigUI.java)
 
 ```java
 public class CharacterConfigUI extends CharacterConfigScreen {
@@ -216,14 +216,14 @@ public class CharacterConfigUI extends CharacterConfigScreen {
 
 #### `ShenheConfigUI` — 复杂的定制
 
-[ShenheConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/polearm/shenhe/ShenheConfigUI.java)
+[ShenheConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/polearm/shenhe/ShenheConfigUI.java)
 
 特点：
 - **自定义外观选项**：左右腿（穿鞋/袜子类型选择）、猫耳显示（手写行）
 - **技能倍率表**：`ShenheTalentConfig.SOURCE`
 - **预览骨骼修正**：胸屏区域（`ysmGlow_texiao` / `ysmGlow_texiao2` 骨骼）在预览中缩小并前移
 
-申鹤的外观数据（[ShenheAppearanceData.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/appearance/ShenheAppearanceData.java)）声明 5 项：
+申鹤的外观数据（[ShenheAppearanceData.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/appearance/ShenheAppearanceData.java)）声明 5 项：
 
 | 索引 | 名称 | 控件类型 | 手写 |
 |---|---|---|---|
@@ -235,14 +235,14 @@ public class CharacterConfigUI extends CharacterConfigScreen {
 
 #### `LinweiyunConfigUI` — 简洁的定制
 
-[LinweiyunConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/allweapon/linweiyun/LinweiyunConfigUI.java)
+[LinweiyunConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/allweapon/linweiyun/LinweiyunConfigUI.java)
 
 特点：
 - **外观数据**：`AllWeaponAppearanceData`（武器形态 + 显示武器，全自动）
 - **技能倍率表**：`LinweiyunTalentConfig.SOURCE`
 - **预览动画**：`"idle"`（没有 `extra48` 动画）
 
-林薇云的外观数据（[AllWeaponAppearanceData.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/allweapon/AllWeaponAppearanceData.java)）：
+林薇云的外观数据（[AllWeaponAppearanceData.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/allweapon/AllWeaponAppearanceData.java)）：
 
 | 索引 | 名称 | 控件类型 | 说明 |
 |---|---|---|---|
@@ -253,7 +253,7 @@ public class CharacterConfigUI extends CharacterConfigScreen {
 
 #### 接口：`TalentConfigSource`
 
-[TalentConfigSource.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/TalentConfigSource.java)
+[TalentConfigSource.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/TalentConfigSource.java)
 
 ```java
 public interface TalentConfigSource {
@@ -266,13 +266,13 @@ public interface TalentConfigSource {
 
 #### 全局注册：`TalentConfigs`
 
-[TalentConfigs.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/TalentConfigs.java)
+[TalentConfigs.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/TalentConfigs.java)
 
 所有倍率表注册在一个 `LinkedHashSet` 中，服务端按 key 全局查表。Key 必须全局唯一（加角色前缀）。
 
 #### 配置类示例：`ShenheTalentConfig`
 
-[LinweiyunTalentConfig.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/LinweiyunTalentConfig.java) — 两者结构相同
+[LinweiyunTalentConfig.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/LinweiyunTalentConfig.java) — 两者结构相同
 
 ```java
 public class LinweiyunTalentConfig {
@@ -319,7 +319,7 @@ public abstract class CharacterAppearanceData {
 
 ### 2.8 界面导航
 
-[ScreenNavigator.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/client/render/gui/screen/ScreenNavigator.java)
+[ScreenNavigator.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/client/render/gui/screen/ScreenNavigator.java)
 
 | 方法 | 触发键 | 用途 |
 |---|---|---|
@@ -501,31 +501,31 @@ public static void openCharacterConfigScreen(Player player) {
 
 | 文件 | 路径 |
 |---|---|
-| 接口定义 | [ICharacterConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/ICharacterConfigUI.java) |
-| 基类骨架 | [CharacterConfigScreen.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigScreen.java) |
-| 工具类 | [CharacterConfigPage.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigPage.java) |
-| 默认实现 | [CharacterConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigUI.java) |
-| 申鹤配置 | [ShenheConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/polearm/shenhe/ShenheConfigUI.java) |
-| 林薇云配置 | [LinweiyunConfigUI.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/allweapon/linweiyun/LinweiyunConfigUI.java) |
-| 倍率接口 | [TalentConfigSource.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/TalentConfigSource.java) |
-| 倍率注册 | [TalentConfigs.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/TalentConfigs.java) |
-| 申鹤倍率 | [ShenheTalentConfig.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/ShenheTalentConfig.java) |
-| 林薇云倍率 | [LinweiyunTalentConfig.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/config/character/LinweiyunTalentConfig.java) |
-| 外观基类 | [CharacterAppearanceData.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/appearance/CharacterAppearanceData.java) |
-| 申鹤外观 | [ShenheAppearanceData.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/appearance/ShenheAppearanceData.java) |
-| 全武外观 | [AllWeaponAppearanceData.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/allweapon/AllWeaponAppearanceData.java) |
-| 导航 | [ScreenNavigator.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/client/render/gui/screen/ScreenNavigator.java) |
-| 按键 | [KeyInputHandler.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/client/keybindings/KeyInputHandler.java) |
-| 角色基类 | [PGCharacter.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/PGCharacter.java) |
-| 角色数据 | [PGCharacterData.java](file:///E:/MCMOD/MineGenshin-26.2/src/main/java/com/linweiyun/genshin/core/character/PGCharacterData.java) |
+| 接口定义 | [ICharacterConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/ICharacterConfigUI.java) |
+| 基类骨架 | [CharacterConfigScreen.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigScreen.java) |
+| 工具类 | [CharacterConfigPage.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigPage.java) |
+| 默认实现 | [CharacterConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/configui/CharacterConfigUI.java) |
+| 申鹤配置 | [ShenheConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/polearm/shenhe/ShenheConfigUI.java) |
+| 林薇云配置 | [LinweiyunConfigUI.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/allweapon/linweiyun/LinweiyunConfigUI.java) |
+| 倍率接口 | [TalentConfigSource.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/TalentConfigSource.java) |
+| 倍率注册 | [TalentConfigs.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/TalentConfigs.java) |
+| 申鹤倍率 | [ShenheTalentConfig.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/ShenheTalentConfig.java) |
+| 林薇云倍率 | [LinweiyunTalentConfig.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/config/character/LinweiyunTalentConfig.java) |
+| 外观基类 | [CharacterAppearanceData.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/appearance/CharacterAppearanceData.java) |
+| 申鹤外观 | [ShenheAppearanceData.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/appearance/ShenheAppearanceData.java) |
+| 全武外观 | [AllWeaponAppearanceData.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/allweapon/AllWeaponAppearanceData.java) |
+| 导航 | [ScreenNavigator.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/client/render/gui/screen/ScreenNavigator.java) |
+| 按键 | [KeyInputHandler.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/client/keybindings/KeyInputHandler.java) |
+| 角色基类 | [PGCharacter.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/PGCharacter.java) |
+| 角色数据 | [PGCharacterData.java](file:///E:/MCMOD/MineGenshin/src/main/java/com/linweiyun/genshin/core/character/PGCharacterData.java) |
 
 ### LSS 样式文件
 
 | 文件 | 路径 |
 |---|---|
-| 配置页 | [character_config.lss](file:///E:/MCMOD/MineGenshin-26.2/src/main/resources/assets/minegenshin/lss/character_config.lss) |
-| 装备页 | [character_equip.lss](file:///E:/MCMOD/MineGenshin-26.2/src/main/resources/assets/minegenshin/lss/character_equip.lss) |
-| 角色选择 | [character_select.lss](file:///E:/MCMOD/MineGenshin-26.2/src/main/resources/assets/minegenshin/lss/character_select.lss) |
-| 队伍编辑 | [character_party.lss](file:///E:/MCMOD/MineGenshin-26.2/src/main/resources/assets/minegenshin/lss/character_party.lss) |
-| 突破界面 | [ascension.lss](file:///E:/MCMOD/MineGenshin-26.2/src/main/resources/assets/minegenshin/lss/ascension.lss) |
-| 角色信息 | [character_info.lss](file:///E:/MCMOD/MineGenshin-26.2/src/main/resources/assets/minegenshin/lss/character_info.lss) |
+| 配置页 | [character_config.lss](file:///E:/MCMOD/MineGenshin/src/main/resources/assets/minegenshin/lss/character_config.lss) |
+| 装备页 | [character_equip.lss](file:///E:/MCMOD/MineGenshin/src/main/resources/assets/minegenshin/lss/character_equip.lss) |
+| 角色选择 | [character_select.lss](file:///E:/MCMOD/MineGenshin/src/main/resources/assets/minegenshin/lss/character_select.lss) |
+| 队伍编辑 | [character_party.lss](file:///E:/MCMOD/MineGenshin/src/main/resources/assets/minegenshin/lss/character_party.lss) |
+| 突破界面 | [ascension.lss](file:///E:/MCMOD/MineGenshin/src/main/resources/assets/minegenshin/lss/ascension.lss) |
+| 角色信息 | [character_info.lss](file:///E:/MCMOD/MineGenshin/src/main/resources/assets/minegenshin/lss/character_info.lss) |

@@ -24,7 +24,7 @@ version="${mod_version}" #mandatory
 displayName="${mod_name}" #mandatory
 
 # A URL to query for updates for this mod. See the JSON update specification https://docs.neoforged.net/docs/misc/updatechecker/
-updateJSONURL="https://raw.githubusercontent.com/Violet-Molder/MineGenshin-26.2/master/version.json" #optional
+updateJSONURL="https://raw.githubusercontent.com/Violet-Molder/MineGenshin/master/version.json" #optional
 
 # A URL for the "homepage" for this mod, displayed in the mod UI
 #displayURL="https://change.me.to.your.mods.homepage.example.invalid/" #optional

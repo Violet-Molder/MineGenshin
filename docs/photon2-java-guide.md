@@ -81,7 +81,7 @@ Photon2 是 KilaBash（LowDragMC）的实时 VFX 工具链：粒子/Trail/Beam �
 
 ## 3. 依赖接入
 
-本仓库（`MineGenshin-26.2`）**已经接好了**，`gradle.properties`：
+本仓库（`MineGenshin`）**已经接好了**，`gradle.properties`：
 
 ```properties
 minecraft_version=26.2

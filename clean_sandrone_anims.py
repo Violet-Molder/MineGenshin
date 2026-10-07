@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json, io, shutil
 
-P = r'E:\MCMOD\MineGenshin-26.2\src\main\resources\assets\minegenshin\character\sandrone\sandrone.animation.json'
+P = r'E:\MCMOD\MineGenshin\src\main\resources\assets\minegenshin\character\sandrone\sandrone.animation.json'
 shutil.copyfile(P, P + '.backup')
 
 with io.open(P, 'r', encoding='utf-8') as f:
