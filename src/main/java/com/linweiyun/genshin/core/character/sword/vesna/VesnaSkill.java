@@ -48,9 +48,8 @@ import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
  * <h2>搬运时只动了三处</h2>
  * <ol>
  *   <li>类名与父类换成 {@link SkillBase}；</li>
- *   <li>原来内联的命座分支改成一行调用 {@link VesnaConstellation}
- *       （1 命的免剑气 / 次数上限、6 命的「变移」窗口）；</li>
- *   <li>原来内联的突破天赋调用（整肃的叠层 / 清层、大权加成）改成调用 {@link VesnaTalent}。</li>
+ *   <li>命座分支走一行调用 {@link VesnaConstellation}（1 命的免剑气 / 次数上限、6 命的「变移」窗口）；</li>
+ *   <li>突破天赋调用走 {@link VesnaTalent}（整肃的叠层 / 清层、大权加成）。</li>
  * </ol>
  * 数值、顺序、日志文本、RNG 用法一个都没动 —— 日志里的 {@code [VesnaTalent]} 标签
  * 保持原样不改成 {@code [VesnaSkill]}，免得按标签过滤日志的人对不上。
@@ -278,7 +277,7 @@ public class VesnaSkill extends SkillBase {
      *
      * <h2>巡风列装为什么必须在这里进</h2>
      * CD 是在服务端受理请求那一刻就设的（{@code applyElementalSkillCooldown}），
-     * 而模式原来是在伤害点（第 6 刻）才开。中间那 6 刻只要被打断，
+     * 而模式要到伤害点（第 6 刻）才开。中间那 6 刻只要被打断，
      * 就变成「CD 转了、模式没进去」—— 玩家看到的是技能白按。
      *
      * <p>现在：受理 = 进模式 = 设 CD，三件事同一刻，之后执行期不再可打断
@@ -343,7 +342,7 @@ public class VesnaSkill extends SkillBase {
         }
 
         // 先叠整肃、再结算这一刀的伤害 —— 这一刀**自己那一层也算进去**。
-        // 原来是「打完才叠」，于是每次翔风剑都比实际少一层（表现就是「丢一段」）；
+        // 不能「打完才叠」：那样每次翔风剑都比实际少一层（表现就是「丢一段」）；
         // 而且只有先叠，第六层才可能在「三阶#3 / 大招」那一刻刚好叠满。
         VesnaTalent talent = (VesnaTalent) vesna.getTalent();
         VesnaConstellation constellation = (VesnaConstellation) vesna.getConstellationObj();

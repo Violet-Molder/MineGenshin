@@ -75,11 +75,6 @@ public final class VesnaNormalAttack {
         // —— 后续效果 ——
         if (level.isClientSide() || !(character instanceof Vesna vesna)) return;
 
-        // 风元素微粒
-        if (level.getRandom().nextFloat() < NORMAL_ATTACK_PARTICLE_CHANCE) {
-            new ElementalOrbSpawner(level, ModElements.ANEMO.get(), 1, true, player.position()).execute();
-        }
-
         // 巡风列装模式：发射风铃
         if (!vesna.isWindriderActive()) return;
 

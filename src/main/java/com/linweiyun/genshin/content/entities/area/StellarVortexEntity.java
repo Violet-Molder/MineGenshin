@@ -107,7 +107,7 @@ public class StellarVortexEntity extends AreaEntity {
      * <p>「最后一次让这枚星璇<b>生成 / 升级（合并进来）</b>的星扩散触发者」要落盘 ——
      * {@code @Persisted} 对<b>实体</b>无效，所以只有这个 int 走
      * {@link #addAdditionalSaveData}/{@link #readAdditionalSaveData}，
-     * 运行时再把 {@code PGCharacter} 引用按 id 找回来（找不回就退化回旧行为）。
+     * 运行时再把 {@code PGCharacter} 引用按 id 找回来（找不回则退化）。
      */
     private int lastStellarTriggerCharacterUUID;
 
@@ -172,7 +172,7 @@ public class StellarVortexEntity extends AreaEntity {
     /**
      * 取回冰段伤害源角色：先看运行时引用，引用丢了（实体重载）就按落盘的 id 在玩家队伍里找。
      *
-     * @return 找不到时返回 {@code null}（调用方退化回「第一个贡献者」的旧行为）
+     * @return 找不到时返回 {@code null}（调用方退化到「第一个贡献者」）
      */
     public PGCharacter resolveStellarTriggerCharacter() {
         if (lastStellarTriggerCharacter == null && lastStellarTriggerCharacterUUID != 0
@@ -275,7 +275,7 @@ public class StellarVortexEntity extends AreaEntity {
         this.lastTopContributor = contributorList.get(0);
 
         // 星扩散-冰的伤害源 = 最后一次让这枚星璇生成 / 升级的星扩散触发者；
-        // 找不到（离线 / 存档里没有）就退化回「第一个贡献者」的旧行为。
+        // 找不到（离线 / 存档里没有）就退化到「第一个贡献者」。
         PGCharacter iceSource = resolveStellarTriggerCharacter();
         if (iceSource == null) {
             iceSource = contributorList.get(0);
@@ -366,9 +366,9 @@ public class StellarVortexEntity extends AreaEntity {
                 ModElements.CYRO.get(), (float) coefficient, 0f, 0f, contributors);
     }
 
-    /** 兼容旧调用（参数现在直接走 {@code ModDamageSpec.stellarReaction(...)} 工厂，不再需要反射）。 */
+    /** 兼容调用点保留的空方法：参数由 {@code ModDamageSpec.stellarReaction(...)} 工厂写入。 */
     private static void setSpecFields(ModDamageSpec spec, float coefficient, float baseBonusMult, float baseBonusFlat) {
-        // 保留空实现：旧的反射写法已删除，参数在工厂方法里给
+        // 空实现：参数由工厂方法写入。
     }
 
     @Override

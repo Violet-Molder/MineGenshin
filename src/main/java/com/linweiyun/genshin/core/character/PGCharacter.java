@@ -387,23 +387,11 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       if (current != null) {
          current.attack(player, this, comboStage);
       }
-
-      if (!player.level().isClientSide() && this.spawnsNormalAttackParticle()) {
-         this.trySpawnNormalAttackParticle(player);
-      }
    }
 
+   /** 这个角色是否参与普通攻击产球；实际产球由伤害管线调用 {@code NormalAttackOrbProducer#tryProduce}。 */
    public boolean spawnsNormalAttackParticle() {
       return true;
-   }
-
-   public void trySpawnNormalAttackParticle(Player player) {
-      if (!(player.level().getRandom().nextFloat() >= 0.5F)) {
-         GenshinElement element = this.getElemental();
-         if (element != null && element != ModElements.FYSIKOS.get()) {
-            new ElementalOrbSpawner(player.level(), element, 1, true, player.position()).execute();
-         }
-      }
    }
 
    public void performChargedAttack(Player player) {
@@ -652,7 +640,9 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
             int nextIndex = (currentIndex + offset) % 4;
             PGCharacter nextChar = attachment.getPartyCharacter(nextIndex);
             if (nextChar != null && nextChar.getData().getCurrentHP() > 0.0) {
-               attachment.setCurrentCharacterIndex(nextIndex);
+               // 走统一切人入口，带上「倒下换人」的 cause
+               attachment.switchTo(nextIndex,
+                       com.linweiyun.genshin.event.game.SwitchCause.INCAPACITATED);
                if (player instanceof ServerPlayer sp) {
                   NetworkManager.setCharacterSelectionToPlayer(sp, nextIndex);
                }

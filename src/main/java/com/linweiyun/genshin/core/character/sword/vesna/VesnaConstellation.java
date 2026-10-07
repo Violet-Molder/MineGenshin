@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 /**
  * 薇斯娜的<b>命之座</b>（C1 / C2 / C4 / C6；3 / 5 命未实现）。
  *
- * <p>这些效果原来内联在 {@code Vesna} 与技能里，现在搬到这里、调用点只剩一行：
+ * <p>这些效果集中在这里，调用点只剩一行：
  *
  * <table border="1">
  *   <caption>命座口径</caption>

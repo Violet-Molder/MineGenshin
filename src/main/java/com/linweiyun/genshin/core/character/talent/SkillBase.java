@@ -161,8 +161,8 @@ public class SkillBase {
     * <b>这一招现在放得出来吗</b>（招式自己的门禁，和冷却 / 能量是两回事）。
     *
     * <p>基类只管一条规则：<b>自由飞行期间不能放技能和大招</b>（普攻、闪避、下落攻击照常）。
-    * 之所以写在这里、而不是去拦按键：<b>部分角色的部分技能本来就允许在空中 / 飞行中放</b>，
-    * 那种角色覆盖这个方法、把自己允许的那几种放行即可 —— 拦按键就把所有人都一起拦死了。
+    * 拦的是招式而不是按键：部分角色的部分技能允许在空中 / 飞行中放，
+    * 那种角色覆盖本方法、放行自己允许的招式即可。
     *
     * <p>被 {@code PGCharacter#canCast} 与客户端的 {@code ActionCastGuard} 共用，
     * 两端同一条规则（客户端连动画都不会播）。
@@ -221,9 +221,6 @@ public class SkillBase {
                         .onCastStart(ctx -> this.onCastStart(ctx.player, ctx.character, ActionKind.NORMAL_ATTACK))
                         .onActiveStart(ctx -> {
                            this.attack(ctx.player, ctx.character, s);
-                           if (ctx.character.spawnsNormalAttackParticle()) {
-                              ctx.character.trySpawnNormalAttackParticle(ctx.player);
-                           }
                         })
                         .build()
                   );

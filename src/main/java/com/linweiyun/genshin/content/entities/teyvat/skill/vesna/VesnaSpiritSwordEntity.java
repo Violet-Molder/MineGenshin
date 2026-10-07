@@ -214,9 +214,8 @@ public class VesnaSpiritSwordEntity extends Entity implements ISyncManagedEntity
             if (stellarSwirl) {
                 // ⚠️ 形参顺序是 (elementAmount, stellarCoefficient)。星烁管线的伤害只认
                 // stellarCoefficient（伤害 = 攻击力 × 系数），elementAmount 只影响附着。
-                // 这里原来是 {@code (multiplier, 0.5f)} —— 倍率被当成元素量丢掉、系数写死 0.5，
-                // 于是「星扩散状态下的灵剑」伤害恒为 ATK×0.5，与技能等级/阶级完全无关
-                //（二阶第二段低 2.2~5.3 倍、三阶收尾低 3.1~7.4 倍、大招灵剑低 5.3~12.5 倍）。
+                // 两个参数不能写反：写成 {@code (multiplier, 0.5f)} 会让「星扩散状态下的灵剑」
+                // 伤害恒为 ATK×0.5，与技能等级、阶级无关。
                 spec = ModDamageSpec.stellarDirect(
                         ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(),
                         elementAmount, multiplier)

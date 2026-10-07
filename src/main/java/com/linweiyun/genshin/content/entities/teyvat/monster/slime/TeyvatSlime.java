@@ -106,10 +106,7 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
      *
      * <p><b>只免疫伤害，不拒收附着</b>：打上去照样挂元素、照样能反应，只是这一下不掉血。
      *
-     * <p>以前这条规则写在两次错误的位置上：{@code hurtServer} 提前 {@code return false}
-     * （附着在伤害管线内部做 → 连附着都不发生），以及
-     * {@code onAttachElement → element == getElement()}（含义写反了：拦掉的是「别人打来的元素」，
-     * 于是史莱姆除了自己那种元素什么都挂不上）。现在附着走默认实现（全收）。
+     * <p>附着走默认实现（全收）：{@code onAttachElement} 与 {@code hurtServer} 都不拦附着。
      */
     @Override
     public boolean isImmuneToElementDamage(GenshinElement element) {

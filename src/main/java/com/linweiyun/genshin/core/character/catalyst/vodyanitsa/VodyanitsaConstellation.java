@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Player;
 /**
  * 沃雅妮莎的<b>命之座</b>（C1 / C2 / C4 / C6；3 / 5 命暂无实现）。
  *
- * <p>这些效果原来内联在技能与 {@code tick} 里，现在搬到这里、由 {@link VodyanitsaSkill}
+ * <p>这些效果集中在这里，由 {@link VodyanitsaSkill}
  * 与 {@link Vodyanitsa} 各留一行调用。四个命座各管一件事：
  *
  * <table border="1">

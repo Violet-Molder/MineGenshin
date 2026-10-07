@@ -15,7 +15,7 @@ import org.joml.Quaternionf;
  * 安全。这个四元数只在方法内部「填值 → 立刻交给 {@code PoseStack.mulPose}」，
  * {@code mulPose} 会把值读进矩阵、不保留引用；而 26.2 的实体渲染在客户端主线程上
  * 是串行的，不存在两个线程同时用同一个实例的情况。分支结构与原版逐条对齐
- * （单轴走单轴旋转，多轴走 ZYX），所以结果与原来逐位一致。
+ * （单轴走单轴旋转，多轴走 ZYX），结果逐位一致。
  */
 public final class Rotations {
 

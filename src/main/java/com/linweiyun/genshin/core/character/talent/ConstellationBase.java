@@ -7,7 +7,7 @@ import net.minecraft.world.entity.player.Player;
  * 角色<b>命之座</b>基类 —— C1..C6 的效果。
  *
  * <h2>为什么单独一个类</h2>
- * 命座是「叠在招式/天赋之上的一层」：招式里原来那些 {@code if (character.hasConstellation(n))}
+ * 命座是「叠在招式/天赋之上的一层」：招式里那些 {@code if (character.hasConstellation(n))}
  * 分支现在都改成<b>一行调用</b>，实现在这里。这样「这个角色满命到底改了什么」一眼能看完，
  * 而招式里只剩下「这一招本身怎么打」。
  *

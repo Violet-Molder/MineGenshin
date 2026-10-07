@@ -38,7 +38,7 @@ public class HPProgressBar extends ProgressBar {
     private static final Identifier TRAIL_TEXTURE =
             Minegenshin.id("gui/short_character_hp_bar_white.png");
 
-    /** 拖尾每秒衰减的比例，与怪物血条一致（0.3/s，正好是旧实现「每帧 0.005 × 60fps」） */
+    /** 拖尾每秒衰减的比例，与怪物血条一致（0.3/s ≈ 每帧 0.005 × 60fps）。 */
     private static final float TRAIL_DECAY_PER_SECOND = 0.3f;
 
     /** 单帧最多推进多少秒：卡顿 / 切窗口回来后不要让拖尾一次跳完 */

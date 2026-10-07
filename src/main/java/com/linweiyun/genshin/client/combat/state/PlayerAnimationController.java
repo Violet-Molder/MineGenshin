@@ -274,7 +274,7 @@ public final class PlayerAnimationController {
             // 本地玩家：**直接看按键**。飞行时松开空格后人还会带着惯性继续往上飘，
             // 拿竖直速度判断的话要等速度掉到阈值以下才切回水平 —— 用户报的「停下来
             // 还要等近一秒才恢复」就是这个。按键是瞬时状态，松手立刻切。
-            // 别的玩家看不到输入，只能按位移判断（阈值 0.008，比原来的 0.02 灵敏些）。
+            // 别的玩家看不到输入，只能按位移判断（阈值 0.008）。
             boolean ascending;
             boolean descending;
             if (player instanceof LocalPlayer localPlayer) {

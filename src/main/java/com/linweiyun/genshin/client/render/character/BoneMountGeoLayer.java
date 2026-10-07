@@ -353,7 +353,7 @@ public final class BoneMountGeoLayer<T extends GeoAnimatable, O, R extends GeoRe
      *
      * <h2>兜底路径：全树隐藏</h2>
      * 源模型不被预编译接管（含非 {@code CuboidGeoBone} 的自定义骨骼），或者优化总开关被关掉时，
-     * 回退到原来的做法：全模型先隐藏，再把目标骨骼的祖先链与它自己打开。
+     * 回退到兜底做法：全模型先隐藏，再把目标骨骼的祖先链与它自己打开。
      *
      * <p>GL5 没有 {@code GeoBone.setHidden}，骨骼显隐是渲染趟内的
      * {@code frameSnapshot}；兜底路径自己建、自己清，不会污染共享的 baked model。

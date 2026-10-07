@@ -2,8 +2,10 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.core.system.combat.action;
 
-import com.linweiyun.genshin.content.items.weapon.WeaponItem;
+import com.linweiyun.elementlib.api.event.ElibEvents;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.event.game.ElementalBurstCastEvent;
+import com.linweiyun.genshin.event.game.ElementalSkillCastEvent;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.combat.attack.PlungeState;
@@ -11,7 +13,6 @@ import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -88,19 +89,31 @@ public class ActionManager {
             return false;
          } else {
             character.applyElementalSkillCooldown(player, skillTime);
-            notifyWeaponAbilityCast(player, character, def.kind);
+            publishSkillCast(player, character, def.kind, skillTime);
             return true;
          }
       }
    }
 
-   private static void notifyWeaponAbilityCast(Player player, PGCharacter character, ActionKind kind) {
-      if (!player.level().isClientSide()) {
-         ItemStack weapon = character.getData().getWeapon();
-         if (weapon != null && !weapon.isEmpty() && weapon.getItem() instanceof WeaponItem weaponItem) {
-            weaponItem.onAbilityCast(player, character, kind);
-         }
+   /** 广播元素战技释放事件（仅服务端；口径为请求被接受、CD 已扣）。 */
+   private static void publishSkillCast(Player player, PGCharacter character, ActionKind kind, int skillTime) {
+      if (player.level().isClientSide() || !(player instanceof net.minecraft.server.level.ServerPlayer sp)
+              || !(player.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+         return;
       }
+      ElementalSkillCastEvent event = new ElementalSkillCastEvent(level, level.getGameTime(), sp,
+              character, kind, skillTime >= 1000, skillTime);
+      ElibEvents.post(event);
+   }
+
+   /** 广播元素爆发释放事件（仅服务端）。 */
+   private static void publishBurstCast(Player player, PGCharacter character) {
+      if (player.level().isClientSide() || !(player instanceof net.minecraft.server.level.ServerPlayer sp)
+              || !(player.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+         return;
+      }
+      ElementalBurstCastEvent event = new ElementalBurstCastEvent(level, level.getGameTime(), sp, character);
+      ElibEvents.post(event);
    }
 
    public boolean requestElementalBurst(Player player, PGCharacter character) {
@@ -124,7 +137,7 @@ public class ActionManager {
             return false;
          } else {
             character.applyElementalBurstCooldown(player);
-            notifyWeaponAbilityCast(player, character, ActionKind.ELEMENTAL_BURST);
+            publishBurstCast(player, character);
             LOGGER.info("[ActionManager] [{}] burst STARTED", side);
             return true;
          }

@@ -39,8 +39,8 @@ public final class CharacterAnimationRegistry {
                 ShenheAnimations.INSTANCE);
 
         // 林薇云：全武器角色。必须在这里登记 —— 否则她的普攻 / 战技 / 爆发全部静默失效
-        // （见 registerPlaceholder 的注释），常态也会退回兜底配置（那套以前没接飞行三态，
-        // 飞着上升会一直播 jump）。她自己的 LinweiyunAnimations 把飞行接上了。
+        // （见 registerPlaceholder 的注释），常态会退回兜底配置（兜底没有飞行三态，
+        // 飞着上升会一直播 jump）。她自己的 LinweiyunAnimations 接了飞行。
         CharacterActions.register(Linweiyun.ID, ResourceDrivenActionHandler.INSTANCE,
                 LinweiyunAnimations.INSTANCE);
 

@@ -8,6 +8,8 @@
 
 ## 26.2.0.2 — 2026-10-06（兼容版本）
 
+**状态：当前更改（未发布）** —— 版本号进了 release 渠道才改标「已发布」，在此之前本节改动一直挂在 26.2.0.2 下。
+
 本版把元素与韧性收进 elementlib 的通用模块层，并新增方块韧性。
 版本命名从这里改为「MC 版本 + mod 版本」；本版为兼容版本，旧存档仍可读。
 
@@ -29,6 +31,32 @@
 
 - 旧 `elementlib:status_container` 与 `chunk_elements` 数据按格迁移，只读不写；
 - 旧 `minegenshin:status_container`（PGCharacterData 字段）首次访问时迁移进模块容器。
+
+### 事件网络接入（2026-10-07 追加）
+
+事实在发生的那一刻广播一次，消费方改成订阅；攻击链路「攻击 → 命中 → 造成伤害」三层分家。
+
+**新增**
+
+- 游戏事件：`minegenshin:damage_calculated`（算完没落血）、`minegenshin:damage_dealt`（血量真的掉了，
+  盾全挡 / 元素免疫不发）、`character_enter_field` / `character_leave_field` / `character_switched`（带切换原因）、
+  `elemental_skill_cast` / `elemental_burst_cast`、`party_member_joined` / `party_member_left`；
+  全部实现 elementlib 的 `ElibIdentifiedEvent`，走 `ElibEvents.post` 广播（即 NeoForge 事件总线）；
+- `DamageOutcome`：一次伤害的两阶段结果（`hit` / `damaged` / `finalDamage` / `blockReason` / `killed`），
+  飘字与事件同读这一份；`NormalAttackOrbProducer`：普通攻击产球改由伤害管线在确认真的掉血后**直接调用**
+  （每次 50% 一颗元素微粒），不再靠旁观者扫伤害；
+- `GenshinEvents`：本模组唯一的事件登记入口，事件定义在 `event/game`、订阅在 `event/listener/server`。
+
+**变更**
+
+- `PlayerCharactersAttachment` 换人收口到 `switchTo(index, cause)`，由它广播退场 → 登场 → 切换三条事件；
+  重登 / 死亡重生走 `restoreCurrentIndex`，不广播；
+- 千岩牢固四件套、武器被动改为订阅事件（原先由伤害入口硬编码回调）；
+- 日志组新增 `EVENT`，`ElibEvents.setEventLogger` 接上本模组的日志。
+
+**文档**
+
+- `docs/systems/combat-attack.md` 改口径：攻击相关处理一律订阅事件网络，不再「都挤进一个入口」。
 
 ---
 

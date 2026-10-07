@@ -48,7 +48,8 @@ public class PlayerDeathCloneHandler {
         dstChar.getSheetCharacterUUIDs().addAll(srcChar.getSheetCharacterUUIDs());
         dstChar.getPartyCharacterUUIDs().clear();
         dstChar.getPartyCharacterUUIDs().addAll(srcChar.getPartyCharacterUUIDs());
-        dstChar.setCurrentCharacterIndex(srcChar.getCurrentCharacterIndex());
+        // 静默恢复索引：死亡重生不是一次切人，不广播切换事件
+        dstChar.restoreCurrentIndex(srcChar.getCurrentCharacterIndex());
 
         StatusContainer dstStatus = ElementalAttachments.container(entity);
         StatusContainer srcStatus = ElementalAttachments.container(original);

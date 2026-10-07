@@ -24,9 +24,7 @@ public abstract class TeyvatMonster extends Monster implements TeyvatHostile, El
      *   <li>{@link #isImmuneToElementDamage} = 吃不吃这个元素的伤害（伤害侧）。</li>
      * </ul>
      *
-     * <p>以前这两件事都挤在 {@code hurtServer} 的提前 {@code return false} 里 —— 而附着是在伤害
-     * 管线内部做的，于是「免疫伤害」被扩大成「连附着都不发生」。现在免疫不再拦附着：
-     * 打上去照样挂元素、照样反应，只是伤害按 0 结算。
+     * <p>免疫只归零伤害，不拦附着：打上去照样挂元素、照样反应，只是这一下不掉血。
      */
     @Override
     public boolean onAttachElement(GenshinElement element, AttachmentSource source,

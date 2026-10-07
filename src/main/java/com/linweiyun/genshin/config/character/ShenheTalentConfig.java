@@ -34,8 +34,8 @@ public class ShenheTalentConfig {
     /**
      * 普攻倍率表（1~6 段）。
      *
-     * <p>⚠️ 第 6 段是给<b>薇斯娜</b>用的：她的 {@code getMaxCombo() == 6}，而这张表原来只到第 5 段，
-     * 于是第 6 段落到 {@code default -> 0.0} —— 那一整段普攻恒为 0 伤害。
+     * <p>⚠️ 第 6 段是给<b>薇斯娜</b>用的：她的 {@code getMaxCombo() == 6}，
+     * 表里没有第 6 段就会落到 {@code default -> 0.0}，那一整段普攻恒为 0 伤害。
      * 默认值暂取<b>第 2 段</b>的数值（她的第 6 段本来就复用第 2 段的动画 {@code attack_2}），
      * 官方数值到位后改 TOML 即可，不用动代码。
      */
@@ -127,7 +127,7 @@ public class ShenheTalentConfig {
         builder.pop();
     }
 
-    /** 定义一项并登记进页面的取用表（范围和原来一致：0 ~ 100）。 */
+    /** 定义一项并登记进页面的取用表（范围 0 ~ 100）。 */
     private static StringDoubleValue define(ModConfigSpec.Builder builder, String group, String key, double defaultValue) {
         StringDoubleValue value = StringDoubleValue.defineInRange(builder, key, defaultValue, 0.0, 100.0);
         BY_KEY.put(key, value);
@@ -187,7 +187,7 @@ public class ShenheTalentConfig {
             case 3 -> NA_BASE_3.get();
             case 4 -> NA_BASE_4.get();
             case 5 -> NA_BASE_5.get();
-            // 第 6 段：薇斯娜 getMaxCombo()==6。原来没有这一档 → 0.0 → 那一段普攻 0 伤害。
+            // 第 6 段：薇斯娜 getMaxCombo()==6；缺这一档会落到 0.0，那一段普攻 0 伤害。
             case 6 -> NA_BASE_6.get();
             default -> 0.0;
         };

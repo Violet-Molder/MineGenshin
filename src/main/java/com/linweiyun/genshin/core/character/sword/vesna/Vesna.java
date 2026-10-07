@@ -128,11 +128,6 @@ public class Vesna extends SwordCharacter implements IStellarHousehold, IStellar
     }
 
     @Override
-    public boolean spawnsNormalAttackParticle() {
-        return false;
-    }
-
-    @Override
     public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
         return Map.of(
                 ModAttributes.MAX_HP.getId(), Vesna::getAllHp,

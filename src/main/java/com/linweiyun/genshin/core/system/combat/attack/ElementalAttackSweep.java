@@ -38,10 +38,8 @@ import org.jetbrains.annotations.Nullable;
  * 是同一套代码。方块能不能被这个元素附着由 {@link BlockElementRules} 回答（宿主第一段筛查），
  * 能发生什么反应由 {@code BlockHost.acceptsReaction} + 反应注册表回答，这里一概不判断。
  *
- * <p>几何取「玩家眼睛 → 视线方向 × 这一招的生效攻击距离」，再按 {@link #INFLATE} 膨胀。
- * 之所以和角色天赋里那个「{@code player.position() → 视线 2.5 格、膨胀 1.0}」不完全同源：
- * 伤害的收集体现在每一条天赋里（每个角色的打击盒本来就不同），而方块附着希望只在一处接线、
- * 覆盖普攻/重击/战技/大招全部招式，所以这里用「这一招的攻击距离」做统一近似。
+ * <p>几何取「玩家眼睛 → 视线方向 × 这一招的生效攻击距离」，再按 {@link #INFLATE} 膨胀 ——
+ * 用这一招的攻击距离做统一近似，一处接线覆盖普攻 / 重击 / 战技 / 大招。
  */
 public final class ElementalAttackSweep {
 

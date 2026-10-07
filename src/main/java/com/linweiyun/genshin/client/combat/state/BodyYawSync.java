@@ -118,7 +118,7 @@ public final class BodyYawSync {
      * 渲染这个远端玩家时该用的身体朝向。
      *
      * <p>没收到过同步值时退回原版那套（{@code yBodyRotO → yBodyRot} 插值），
-     * 至少不会比原来更差。
+     * 不会更差。
      */
     public static float renderYaw(Player player, float partialTick) {
         UUID id = player.getUUID();

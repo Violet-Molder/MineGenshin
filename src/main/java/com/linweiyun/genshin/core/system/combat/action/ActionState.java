@@ -175,9 +175,14 @@ public class ActionState {
             if (Float.isNaN(poise)) {
                 poise = defaultPoise(hitCoefficient);
             }
+            // 招式身份：kindId + originId（AttachmentSource 只表达覆盖规则）
+            String kind = definition.kind.name().toLowerCase(java.util.Locale.ROOT);
             ElibAttackPipeline.dispatch(ElibAttackAction.of(context.player, element,
                     ElibAttackTrigger.ACTION_DAMAGE_POINT, AttachmentSource.NORMAL_ATTACK,
-                    AttachmentProfile.WEAK, reach).withPoise(poise));
+                    AttachmentProfile.WEAK, reach)
+                    .withKindId(kind)
+                    .withOriginId(com.linweiyun.genshin.Minegenshin.id("attack/" + kind))
+                    .withPoise(poise));
         } catch (Exception e) {
             LOGGER.error("[ElibAttack] 攻击管线抛异常 kind={} tick={}", definition.kind, tickCount, e);
         }
@@ -230,15 +235,6 @@ public class ActionState {
         finished = true;
     }
 
-    private void syncAnimationToClient() {
-        // 已移除：动画由客户端状态机自己驱动，服务端不再回推动画名。
-        //
-        // 旧实现会在第一段伤害命中时给施法者自己发一个 syncAnimationRPCPacket，
-        // 客户端收到后走 forceRequest(priority=99, 30 刻, 硬直 15, 定身 15)，
-        // 把本地刚按下的动作整个覆盖掉 —— 表现就是「按下去没反应、必须等动画播完」。
-        // 远端表现现在由 ActionStateMachine → NetworkManager.animationStateRPCPacket →
-        // ANIMATION_STATE_ATTACHMENT 同步，见 ServerAnimationTicker。
-    }
 
     public void interrupt(InterruptReason reason) {
         if (finished) return;

@@ -75,10 +75,8 @@ public final class CombatEntityAccessor {
     // ==================== 元素加成 ====================
     private static float getElementBonusFromCharacter(PGCharacter character, GenshinElement elemental) {
         var data = character.getData();
-        // ⚠️ 物理也要单独一档：增伤区是「1 + 元素伤害加成」，物理伤害那一份就是
-        //    PHYSICAL_BONUS（物伤杯走的就是它）。原来这里没有 FYSIKOS 的分支 →
-        //    物理伤害恒吃 0 加成，而抗性那边（getDefenderResistance）是<b>有</b>物理分支的，
-        //    一正一反正好对不上。
+        // ⚠️ 物理也要单独一档：增伤区是「1 + 元素伤害加成」，物理那一份是 PHYSICAL_BONUS（物伤杯）。
+        //    缺 FYSIKOS 分支会让物理伤害恒吃 0 加成，而抗性那边是有物理分支的，一正一反对不上。
         if (elemental == ModElements.FYSIKOS.get()) return physicalBonus(data);
         if (elemental == ModElements.PYRO.get())    return (float) data.getAttributeTotalValue(ModAttributes.PYRO_BONUS.value());
         if (elemental == ModElements.HYDRO.get())   return (float) data.getAttributeTotalValue(ModAttributes.HYDRO_BONUS.value());

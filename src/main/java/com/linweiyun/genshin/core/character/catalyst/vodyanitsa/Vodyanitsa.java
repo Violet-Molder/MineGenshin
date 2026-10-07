@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  *
  * <p>她只做<b>中转/调度</b>：持有 {@link VodyanitsaSkill}（招式）/
  * {@link VodyanitsaTalent}（突破天赋）/ {@link VodyanitsaConstellation}（命座）三个协作者，
- * 每刻按原来的顺序把它们串起来，自己不写任何伤害 / 效果实现。
+ * 每刻按固定顺序把它们串起来，自己不写任何伤害 / 效果实现。
  *
  * <p>数值表见 {@link VodyanitsaAttributeConfig}；技能见 {@link VodyanitsaSkill}；
  * 突破天赋见 {@link VodyanitsaTalent}；命座见 {@link VodyanitsaConstellation}。
@@ -43,7 +43,7 @@ public class Vodyanitsa extends CatalystCharacter {
 
     // ==================== 「遥久之歌」的状态本体 ====================
 
-    /** 剩余刻数（0 = 没在唱）。键与原来一致（{@code song_ticks}）。 */
+    /** 剩余刻数（0 = 没在唱）。存档键为 {@code song_ticks}。 */
     @DescSynced
     @Persisted(key = "song_ticks")
     protected int songTicks;

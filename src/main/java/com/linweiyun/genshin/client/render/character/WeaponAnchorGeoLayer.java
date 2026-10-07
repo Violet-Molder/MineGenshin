@@ -32,8 +32,8 @@ import java.util.function.BiConsumer;
  * 所以这一层对全项目是无副作用的。
  *
  * <h2>坐标系</h2>
- * 实体渲染时的 PoseStack 是<b>相对相机</b>的（这是 MC 现代渲染管线的前提，
- * 也是 {@code CameraRenderState#pos} 存在的理由），所以：
+ * 实体渲染时的 PoseStack 是<b>相对相机</b>的（MC 现代渲染管线的前提，
+ * {@code CameraRenderState#pos} 存的就是相机世界坐标），所以：
  * <pre>
  * 骨骼世界坐标 = 相机世界坐标 + PoseStack 顶上的平移
  * </pre>

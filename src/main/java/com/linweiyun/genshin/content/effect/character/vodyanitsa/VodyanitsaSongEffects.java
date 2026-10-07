@@ -163,12 +163,8 @@ public final class VodyanitsaSongEffects {
     /**
      * 场上（以玩家为球心半径 20 格）有没有流荡风旋，或者刚引爆完 5 秒内。
      *
-     * <p>⚠️ 这里以前踩过一个**恒真**的坑：{@code lastDetonationTick} 初始化成
-     * {@code Long.MIN_VALUE}，于是 {@code gameTime - lastDetonationTick} 直接**溢出**，
-     * 结果「刚引爆过」这个条件在从没引爆过时也成立 —— 表现就是：
-     * 场上明明没有流荡风旋，突破天赋 2 却一直按「星扩散模式」走，
-     * 沃雅妮莎自己的水伤一层都不消耗（附加伤害永远是 0）。
-     * 现在用 {@code -1} 当哨兵值，并且要求 {@code lastDetonationTick >= 0}。
+     * <p>{@code lastDetonationTick} 用 {@code -1} 表示「从未引爆」，判定前要求它 {@code >= 0}：
+     * 用 {@code Long.MIN_VALUE} 做哨兵会让 {@code gameTime - lastDetonationTick} 溢出，令「刚引爆过」恒真。
      */
     public static boolean flowingSwirlActive(Player holder) {
         if (holder == null || !(holder.level() instanceof net.minecraft.server.level.ServerLevel level)) {

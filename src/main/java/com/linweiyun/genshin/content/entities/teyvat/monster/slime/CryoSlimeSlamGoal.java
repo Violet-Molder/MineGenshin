@@ -36,7 +36,7 @@ public class CryoSlimeSlamGoal extends CryoSlimeSkillGoal {
     /** 上升到最高点的刻数。 */
     private static final int RISE_TICKS = 14;
 
-    /** 滞空刻数（0.6 秒）—— 原来 1.5 秒太长，实战里就是干等着。 */
+    /** 滞空刻数（0.6 秒）。 */
     private static final int HOVER_TICKS = 12;
 
     /** 落点扩散刻数（1.5 秒）：玩家用来跑出去的时间。 */

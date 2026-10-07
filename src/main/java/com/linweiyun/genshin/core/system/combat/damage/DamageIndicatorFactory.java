@@ -41,9 +41,8 @@ public final class DamageIndicatorFactory {
     /**
      * 上一次给该目标生成飘字的位置，用来避免连续两条飘字重叠。
      *
-     * <p>原来用无界 {@code HashMap} 只 put 不 remove，怪物死光、玩家换维度之后
-     * 这些 UUID 条目会一直留在静态表里。改成带上限的 LRU：访问即刷新，
-     * 超过 {@value #MAX_LAST_SPAWN_POS} 个目标就淘汰最久没打过的。</p>
+     * <p>带上限的 LRU：访问即刷新，超过 {@value #MAX_LAST_SPAWN_POS} 个目标就淘汰最久没打过的
+     * （无界表会让死掉的怪物条目长期留在静态表里）。</p>
      */
     private static final int MAX_LAST_SPAWN_POS = 1024;
     private static final Map<UUID, Vec3> LAST_SPAWN_POS =
@@ -88,8 +87,8 @@ public final class DamageIndicatorFactory {
     /**
      * 按配置项取颜色。
      *
-     * <p>热路径上原来是「取字符串 → {@code Integer.decode}」，每次伤害都会走一遍；
-     * 现在交给 {@link DamageTextColorCache#colorOf}：配置项值不变时直接命中上次结果。</p>
+     * <p>交给 {@link DamageTextColorCache#colorOf}：配置项值不变时直接命中上次结果，
+     * 不做每次伤害一遍的「取字符串 → {@code Integer.decode}」。</p>
      */
     private static int colorOf(net.neoforged.neoforge.common.ModConfigSpec.ConfigValue<String> configValue) {
         return DamageTextColorCache.colorOf(configValue);
@@ -121,9 +120,8 @@ public final class DamageIndicatorFactory {
         /**
          * 暴击飘字：更大的起跳与收束。
          *
-         * <p>暴击是高频路径（攻速堆高后每几 tick 一次），原来是
-         * {@code Options.builder().baseScale(4.4f).startScale(12.4f).build()} ——
-         * 每次暴击新建一个 Builder 加一个 Options。这里提成常量，参数值完全一致。</p>
+         * <p>暴击是高频路径（攻速堆高后每几 tick 一次），这里用常量
+         * （{@code baseScale 4.4f} / {@code startScale 12.4f}），不每次新建 Builder 与 Options。</p>
          */
         public static final Options CRIT = new Options(4.4f, 12.4f, DEFAULT_DURATION_MS);
 
@@ -508,7 +506,7 @@ public final class DamageIndicatorFactory {
         double originY;
         double originZ;
         if (attacker != null && attacker != target && attacker.level() == level) {
-            // 攻击者胸口 → 目标胸口，取 30% 处（与旧实现 attackerCenter.lerp(targetCenter, 0.3) 等价）
+            // 攻击者胸口 → 目标胸口，取 30% 处
             double attackerX = attacker.getX();
             double attackerY = attacker.getY() + attacker.getBbHeight() * 0.7;
             double attackerZ = attacker.getZ();

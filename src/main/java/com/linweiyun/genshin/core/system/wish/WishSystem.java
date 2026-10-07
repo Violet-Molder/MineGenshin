@@ -104,8 +104,7 @@ public class WishSystem {
             return false;
         }
 
-        // ⚠️ 必须拿玩家**实际持有**的那一份实例：ModCharacters.getById(...) 每次调用都是
-        //    新建一个模板角色，改它的命座等于改了个没人看的副本（旧代码就是拿它直接 addCharacter）。
+        // 必须用玩家实际持有的那一份实例：模板角色是每次新建的副本，改它不会生效。
         PGCharacter owned = charactersAttachment.getCharacterByUUID(template.getCharacterUUID());
 
         if (owned == null) {

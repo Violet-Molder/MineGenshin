@@ -18,7 +18,7 @@ import java.util.Map;
  * 都会乘以「实体数 × 帧数」。这里收掉的三处都是这么被抓出来的：
  *
  * <ol>
- *   <li><b>元素图标贴图</b>：原来是
+ *   <li><b>元素图标贴图</b>：不缓存就要
  *       {@code Identifier.fromNamespaceAndPath("minegenshin", "icon/elemental/" + id + ".png")}
  *       —— 每个图标、每个实体、每一帧都要拼一次字符串再 new 一个 {@link Identifier}。
  *       现在按元素实例查表，稳态下零分配；</li>

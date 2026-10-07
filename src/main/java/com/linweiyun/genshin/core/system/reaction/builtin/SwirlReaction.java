@@ -277,7 +277,7 @@ public class SwirlReaction extends ElementalReaction {
                 // 扩散把元素「再挂」到旁边的人身上，走的是同一个宿主入口：
                 // 拒收这次附着的目标不会跟着反应（与直接攻击同一条规则）。
                 // 挂上之后的反应由附着入口接着做（附着 → 附着内反应），这里不再单独调反应系统；
-                // 带上传染规格与攻击者，让入口内部的反应拿到与原来一致的上下文。
+                // 带上传染规格与攻击者，让入口内部的反应拿到完整上下文。
                 if (nearbyHost == null) {
                     continue;
                 }
@@ -344,10 +344,9 @@ public class SwirlReaction extends ElementalReaction {
         // 突破天赋 1（沃雅妮莎）：遥久之歌持续期间触发星扩散 → 改为创造「流荡风旋」。
         // 数据表现：创造 / 引爆时给周围敌人降 35% 风抗（6 秒）。
         //
-        // ⚠️ 两个坑：
-        //   ① 必须排在 triggerWindDamage <b>之前</b> —— 否则这一下的风伤吃不到自己刚降的抗；
-        //   ② 「合并进已有风旋」那一支以前<b>没有</b>这段判定，于是只要场上已经有一个星辉风旋，
-        //      后面怎么触发都转不成流荡风旋（风抗自然一直是 0.1）。
+        // 两条约束：
+        //   ① 必须排在 triggerWindDamage 之前，否则这一下的风伤吃不到自己刚降的抗；
+        //   ② 「合并进已有风旋」那一支也要判 flowing，否则场上已有星辉风旋时后续触发转不成流荡风旋。
         boolean flowing = VodyanitsaTalent.songCovers(level, x, y, z);
         if (flowing) {
             vortex.markFlowingSwirl();

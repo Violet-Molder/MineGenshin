@@ -516,7 +516,7 @@ public final class AttackApproach {
      *
      * <p>突进期间不消耗预算 —— 追着人跑的时候当然要一直对着他。
      *
-     * <p><b>两个必须遵守的约束</b>（都踩过）：
+     * <p><b>两个必须遵守的约束</b>：
      * <ol>
      *   <li><b>绝不过冲</b>：本刻转动量必须夹在「剩余夹角」以内。早期版本直接
      *       {@code yRot + sign*speed}，而 {@link #TURN_MIN_SPEED} 有 10° ——

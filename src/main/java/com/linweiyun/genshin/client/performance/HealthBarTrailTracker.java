@@ -49,7 +49,7 @@ public final class HealthBarTrailTracker {
 
     private static final Int2ObjectOpenHashMap<State> STATES = new Int2ObjectOpenHashMap<>();
 
-    /** 拖尾每秒衰减的比例。0.3/s 正等于旧实现「每帧 0.005 × 60fps」，观感不变 */
+    /** 拖尾每秒衰减的比例（0.3/s ≈ 每帧 0.005 × 60fps）。 */
     private static final float DECAY_PER_SECOND = 0.3f;
 
     /** 采样断档超过这么多刻（1s）就认为本地历史不可信：重新从当前血量起步，不补旧账 */

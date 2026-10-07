@@ -80,9 +80,8 @@ import java.util.List;
  *
  * <p>实现落在两处：定身 0（人走得动）+ {@code ActionStateMachine.interruptOnNormalInput}
  * 对持续型状态（{@code currentStateLoops}）的<b>整段豁免</b>（走位顶不掉状态）。
- * 后者是显式的，不依赖「执行期恰好铺满整段」那个巧合 —— 那个巧合在
- * 「动作系统开关」关闭时就不成立（{@code changeState} 会把硬直直接清零，
- * 以前一按 WASD 就收招）。
+ * 后者是显式的，不依赖「执行期恰好铺满整段」那个巧合 ——
+ * 那个巧合在动作系统开关关闭时不成立（{@code changeState} 会把硬直清零）。
  *
  * <h2>角色要覆盖什么</h2>
  * 默认实现给了一套「转一圈、打周围一圈」的物理重击，够跑通流程；

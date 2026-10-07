@@ -294,8 +294,7 @@ public class LargeCryoSlime extends TeyvatMonster implements ElementalCreature, 
         // 5：护盾恢复
         this.goalSelector.addGoal(5, new CryoSlimeShieldRestoreGoal(this));
         // 6：只走不打。
-        //    ⚠️ 停下距离必须和撞击的触发距离<b>一致</b>：停在 6 格而撞击要 4 格内的话，
-        //    它会在 6 格站定、然后永远等不到可以起跳的距离（这个坑踩过）。
+        //    停下距离必须和撞击的触发距离一致，否则它站定后永远等不到可以起跳的距离。
         this.goalSelector.addGoal(6, new ApproachTargetGoal(this, 0.6D, MobBehaviorConfig.collideRange()));
         // 8/9：看人与东张西望
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 12.0F));

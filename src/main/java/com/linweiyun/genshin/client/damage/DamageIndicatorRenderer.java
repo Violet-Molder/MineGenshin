@@ -32,16 +32,15 @@ import java.util.List;
  * 然后交给 {@link GradientTextRenderer} 提交带渐变的文字几何。</p>
  *
  * <p>因为几何本身就活在世界投影里，透视自带的近大远小就是飘字的距离表现，
- * 不再需要旧 HUD 方案那套手动投影 + 距离缩放（旧实现既依赖 GUI 尺度，也要自己算衰减）。</p>
+ * 不需要手动投影与距离缩放。</p>
  *
  * <h2>这一层的性能职责（渲染优化模块的入口）</h2>
  * <ol>
  *   <li><b>先规划再提交</b>：可见性剔除、条数上限、锚点位姿烘焙全部交给
  *       {@link IndicatorFramePlanner}，本类只负责取相机参数并调用一次
  *       {@link GradientTextRenderer#submitBatch}；</li>
- *   <li><b>不再逐条 pushPose/popPose</b>：旧实现每条飘字都要压栈、拷一份位姿再出栈，
- *       条数一多就是纯粹的矩阵拷贝开销，现在烘焙进
- *       {@link IndicatorFramePlanner.Entry#anchor}；</li>
+ *   <li><b>不逐条 pushPose/popPose</b>：位姿烘焙进
+ *       {@link IndicatorFramePlanner.Entry#anchor}，省掉每条飘字的矩阵拷贝；</li>
  *   <li><b>不再逐条查语言表</b>：{@code I18n.get}（内部含 {@code String.format}）
  *       已经移到 {@link DamageIndicator#labelFor}，只在「文字 / 字体 / 语言」变化时重算。</li>
  * </ol>

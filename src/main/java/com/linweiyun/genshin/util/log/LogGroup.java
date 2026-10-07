@@ -2,7 +2,11 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.util.log;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public enum LogGroup {
+   EVENT("事件（广播 / 订阅）"),
    COMBAT("战斗（动作 / 伤害 / 目标选择）"),
    ELEMENT("元素（附着 / 反应）"),
    CHARACTER("角色（角色 / 角色效果）"),
@@ -13,6 +17,8 @@ public enum LogGroup {
    MIXIN("混入（Mixin）");
 
    private final String label;
+   @Setter
+   @Getter
    private volatile boolean enabled = true;
 
    LogGroup(String label) {
@@ -23,11 +29,4 @@ public enum LogGroup {
       return this.label;
    }
 
-   public boolean isEnabled() {
-      return this.enabled;
-   }
-
-   public void setEnabled(boolean enabled) {
-      this.enabled = enabled;
-   }
 }

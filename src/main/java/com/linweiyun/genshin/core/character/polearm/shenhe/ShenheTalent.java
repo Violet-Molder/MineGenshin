@@ -16,7 +16,7 @@ import net.minecraft.world.entity.player.Player;
 /**
  * 申鹤的<b>天赋</b>（突破天赋 / 被动）。
  *
- * <p>这个类名以前是「技能」用的（现在技能搬去 {@link ShenheSkill}）。
+ * <p>技能在 {@link ShenheSkill}。
  * 这里只放<b>不由某一招自身打出来</b>的那部分：
  *
  * <h2>突破天赋 1 —— 冰凌</h2>
@@ -40,7 +40,7 @@ public class ShenheTalent extends TalentBase {
     /** 增伤的持续刻数：点按 10 秒 / 长按 15 秒。 */
     private static final int ASCEND2_TAP_TICKS = 200;
     private static final int ASCEND2_HOLD_TICKS = 300;
-    /** 增伤效果的实例 id（沿用原来的字符串，两个方向各一份）。 */
+    /** 增伤效果的实例 id（参与查重与同步，不要改名；两个方向各一份）。 */
     private static final Identifier ASCEND2_TAP_ID = Identifier.parse("minegenshin:shenhe_ascend2_tap");
     private static final Identifier ASCEND2_HOLD_ID = Identifier.parse("minegenshin:shenhe_ascend2_hold");
 
@@ -48,7 +48,7 @@ public class ShenheTalent extends TalentBase {
      * 突破天赋 1：给队伍 4 人各挂一份「冰凌」。
      *
      * <p>数值由调用方给（点按 5 根 / 200 刻、长按 7 根 / 300 刻）——
-     * 和原来内联时的字面量完全一致，只是抽成了一个方法。
+     * 字面量与效果定义保持一致。
      *
      * @param count         冰凌根数
      * @param durationTicks 持续刻数
@@ -73,7 +73,7 @@ public class ShenheTalent extends TalentBase {
      *
      * <p>点按（{@code hold = false}）给元素战技 / 元素爆发 +15%（10 秒）；
      * 长按（{@code hold = true}）给普攻 / 重击 / 下落攻击 +15%（15 秒）。
-     * 不足突破 4 直接不发（原来那句 {@code getAscensionPhase() >= 4} 挪到这里）。
+     * 不足突破 4 直接不发（{@code getAscensionPhase() >= 4}）。
      */
     public void grantAscend2DamageBonus(Player player, PGCharacter character, boolean hold) {
         if (character.getData().getAscensionPhase() < ASCEND2_PHASE) return;

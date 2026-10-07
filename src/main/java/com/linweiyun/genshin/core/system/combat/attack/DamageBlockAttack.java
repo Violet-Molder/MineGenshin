@@ -36,7 +36,10 @@ public final class DamageBlockAttack {
         Vec3 center = target.position();
         ElibAttackAction action = ElibAttackAction.aimed(attacker, element,
                 ElibAttackTrigger.ACTION_DAMAGE_POINT, AttachmentSource.NORMAL_ATTACK, profile,
-                center, Vec3.ZERO, RADIUS).withElementAmount(elementAmount);
+                center, Vec3.ZERO, RADIUS).withElementAmount(elementAmount)
+                // 内部子步骤：不发攻击行为事件，仍对打到的方块发命中事件。
+                .asDamageSubStep()
+                .withOriginId(com.linweiyun.genshin.Minegenshin.id("attack/area_damage"));
         ElibAttackPipeline.dispatchAround(action, center, RADIUS, false);
     }
 }

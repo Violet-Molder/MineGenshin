@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * <pre>
  * 辉映·星烁（Radiance: Stellar Glimmer）  ← 统称，不是一条独立反应
  *   ├─ 辉映·星超导（Radiance: Stellar Conduce）
- *   └─ 辉映·星扩散（Radiance: Stellar Glimmer-Swirl，就是原来的星扩散）
+ *   └─ 辉映·星扩散（Radiance: Stellar Glimmer-Swirl，即星扩散）
  * </pre>
  *
  * <h2>为什么要分「分支」而不是直接判断反应类型</h2>

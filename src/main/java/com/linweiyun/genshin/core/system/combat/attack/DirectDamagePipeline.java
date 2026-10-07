@@ -28,6 +28,7 @@ import com.linweiyun.elementlib.api.ElibAttackOutcome;
 import com.linweiyun.elementlib.api.ElibAttackTrigger;
 import com.linweiyun.elementlib.core.system.attack.ElibAttackPipeline;
 import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import com.linweiyun.genshin.Minegenshin;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -135,34 +136,42 @@ final class DirectDamagePipeline {
         // ── 附着本身 ──
         // 顺序要求：附着发生在任何免疫/伤害生效判断<b>之前</b>，只受宿主筛查与护盾裁决影响。
         ReactionResult reactionResult = null;
-        if (canAttach && host != null) {
+        if (host != null) {
             long gameTime = target.level().getGameTime();
+            // 招式身份：kindId + originId（AttachmentSource 只表达覆盖规则）
+            String kind = spec.getAttackType().name().toLowerCase(java.util.Locale.ROOT);
             AttachContext attachContext = AttachContext.attack(
                     hasAttacker ? CharacterKeys.keyOf(attacker) : null,
                     hasAttacker ? gameTime : 0L,
                     damageSource.getEntity(),
-                    spec.getElementAmount() * elementCoefficient);
-            // 统一攻击入口：实体目标精确走 dispatchOn；门禁没过（例如非玩家来源）才回退直连附着
+                    spec.getElementAmount() * elementCoefficient,
+                    Minegenshin.id("attack/" + kind));
+            // 无论这一下是否附着都进管线：命中与附着是两件事，命中事件挂在这条调用上。
+            // 不附着用 elementAmount = 0 表达；damageSubStep = true 表示内部子步骤、不发攻击行为事件。
             Entity actionAttacker = damageSource.getEntity() != null ? damageSource.getEntity() : target;
             ElibAttackAction attackAction = new ElibAttackAction(
                     actionAttacker, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile,
-                    ElibAttackTrigger.ENTITY, "damage",
+                    ElibAttackTrigger.ENTITY, kind,
                     target.getEyePosition(), Vec3.ZERO, 1.0, gameTime,
                     hasAttacker ? CharacterKeys.keyOf(attacker) : null,
-                    spec.getPoiseDamage(attacker), spec.getElementAmount(), null);
+                    spec.getPoiseDamage(attacker), canAttach ? spec.getElementAmount() : 0f, null,
+                    true, Minegenshin.id("attack/" + kind));
             ElibAttackOutcome outcome = ElibAttackPipeline.dispatchOn(attackAction, target,
-                    spec.getElementAmount() * elementCoefficient);
-            AttachResult attachResult = outcome.attachResultOf(target);
-            if (attachResult == null) {
-                attachResult = ElementalAttachmentHelper.attach(
-                        host, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile, attachContext);
-            }
-            if (!attachResult.attached()) {
-                // 宿主拒收这次附着 → 反应同样不发生。
-                // 「没挂上去就没有反应」是附着与反应之间的唯一顺序约束；先手元素保留 = 共存。
-                canReact = false;
-            } else {
-                reactionResult = attachResult.reaction();
+                    canAttach ? spec.getElementAmount() * elementCoefficient : null);
+            if (canAttach) {
+                AttachResult attachResult = outcome.attachResultOf(target);
+                if (attachResult == null) {
+                    // 门禁没过（例如非玩家来源的怪物伤害）才回退直连附着
+                    attachResult = ElementalAttachmentHelper.attach(
+                            host, spec.getElement(), AttachmentSource.NORMAL_ATTACK, profile, attachContext);
+                }
+                if (!attachResult.attached()) {
+                    // 宿主拒收这次附着 → 反应同样不发生。
+                    // 「没挂上去就没有反应」是附着与反应之间的唯一顺序约束；先手元素保留 = 共存。
+                    canReact = false;
+                } else {
+                    reactionResult = attachResult.reaction();
+                }
             }
         }
 
@@ -202,8 +211,7 @@ final class DirectDamagePipeline {
 
         // ── ⑤ 元素免疫 ──
         // 「免疫只拦伤害」：附着与反应在上面已经跑完了（挂得上、能反应、能飘字），
-        // 只是这一下伤害按 0 结算。以前免疫写在 hurtServer 的提前 return 里，
-        // 而附着是在本管线内部做的 → 免疫等于「连附着都不发生」。
+        // 只是这一下伤害按 0 结算。
         boolean immuneToDamage =
                 ElementalAttachable.isImmuneToDamage(target, spec.getElement());
         float finalDamage = immuneToDamage ? 0f : computedDamage;

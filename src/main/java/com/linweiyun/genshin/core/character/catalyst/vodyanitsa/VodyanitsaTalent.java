@@ -26,7 +26,7 @@ import java.util.UUID;
 /**
  * 沃雅妮莎的<b>天赋</b>（突破天赋 / 被动）。
  *
- * <p>这个类名以前是「技能」用的（现在技能搬去 {@link VodyanitsaSkill}）。
+ * <p>技能在 {@link VodyanitsaSkill}。
  * 这里放的是<b>不由某一招自己打出来</b>的那两段突破天赋：
  *
  * <h2>突破天赋 1（突破 ≥ 1）—— 流荡风旋</h2>
@@ -143,7 +143,7 @@ public class VodyanitsaTalent extends TalentBase {
      * 突破天赋 1（突破 ≥ 1）：把当前场上的星辉风旋转化为「流荡风旋」。
      *
      * <p>转化之后它们在引爆时也会降风抗（创造那一次在 {@code SwirlReaction} 里判定）。
-     * 判定框是「以玩家为中心、半径 = 索敌距离 × 2」（沿用原来的 {@code SONG_RANGE * 2.0}）。
+     * 判定框是「以玩家为中心、半径 = 索敌距离 × 2」。
      */
     public void convertVorticesNearby(Player player, Vodyanitsa vodyanitsa) {
         if (vodyanitsa.getData().getAscensionPhase() < ASCEND1_PHASE) return;
@@ -160,7 +160,7 @@ public class VodyanitsaTalent extends TalentBase {
     /**
      * 突破天赋 2（突破 ≥ 4）：给当前场上角色 25 层「领唱」、其余队伍角色 10 层「重唱」（各 30 秒）。
      *
-     * <p>不足突破 4 时只打一条日志（原来那句 {@code phase >= 4} 的分支挪到这里，
+     * <p>不足突破 4 时只打一条日志（{@code phase >= 4} 的分支在这里，
      * 日志文本一字不改）。
      */
     public void grantAscend2SongStacks(Player player, Vodyanitsa vodyanitsa) {

@@ -25,11 +25,37 @@
 
 ## 事件与钩子
 
+### 事件网络（26.2.0.5 起）
+
+「发生了什么」的统一广播走 **NeoForge 的事件总线**（`NeoForge.EVENT_BUS`），事件类定义在
+`elementlib` 的 `api/event/`（元素与攻击）与 `minegenshin` 的 `event/game/`（角色、队伍、伤害、技能释放）。
+广播统一走 `ElibEvents.post(...)`（它兜住监听者异常 —— NeoForge 的 `EventBus` 会记日志后**重抛**）；
+监听者在 `GenshinEvents.init()` 里登记，那个类就是「谁在听什么」的唯一清单。
+
+> **什么该订阅、什么该内部驱动**：普通攻击产球**不是**监听者 —— 它是伤害结算自身的一部分，
+> 由伤害管线在确认掉血的那一步直接调用 `NormalAttackOrbProducer#tryProduce`，
+> 与「造成实际伤害」事件的广播同一时刻、同一级别。判断标准：这件事是「这件事的一部分」，
+> 还是「知道这件事之后另外做点什么」。前者内部驱动，后者才订阅。
+
+| 事件 | id | 触发点 |
+|---|---|---|
+| 元素附着成功 | `elementlib:element_attached` | `ElementalAttachmentHelper.doAttach`（写入后、反应前） |
+| 元素反应发生 | `elementlib:element_reacted` | `ElementalReactionManager.runReactions`（每个成立的反应） |
+| 攻击行为 | `elementlib:attack_performed` | `ElibAttackPipeline`（每次出手，含对空；内部子步骤不发） |
+| 击中目标 | `elementlib:attack_hit` | `ElibAttackPipeline`（每个被触及的宿主，实体与方块都算） |
+| 伤害结算完成 | `minegenshin:damage_calculated` | `LivingEntityHurtMixin`（扣血前；区分过盾 / 免疫 / 钩子取消） |
+| 造成实际伤害 | `minegenshin:damage_dealt` | `LivingEntityHurtMixin`（扣血后；血量真的变小才发） |
+| 切人 / 登场 / 退场 | `minegenshin:character_switched` 等 | `PlayerCharactersAttachment.switchTo`（改索引的唯一入口） |
+| 入队 / 退队 | `minegenshin:party_member_joined` 等 | `PlayerCharactersAttachment.setPartyCharacter` / `removePartyCharacter` |
+| 释放战技 / 爆发 | `minegenshin:elemental_skill_cast` 等 | `ActionManager.requestElementalSkill` / `requestElementalBurst` 成功分支 |
+
+事件是**只读通知**，不提供取消：要拦行为走宿主筛查、`BlockEvent.BreakEvent`、`ControlService` 这些既有裁决通道。
+
 ### 归属规则（三选一）
 
 | 情况 | 放哪 |
 |---|---|
-| 跨模块的通用分发入口 | `event/` 下，方法体只做校验与委派（当前只有 `PlayerLoginEventListeners`） |
+| 跨模块的通用分发入口 | `event/` 下，方法体只做校验与委派（`PlayerLoginEventListeners`；事件网络的监听者清单是 `event/game/GenshinEvents`） |
 | 只服务单一模块 | 该模块包内，命名 `XxxHandler`（如 `CharacterEffectHandler`、`ShieldTickHandler`） |
 | 客户端专有表现 | `client/` 或 `render/` 内，`@EventBusSubscriber(value = Dist.CLIENT)` |
 

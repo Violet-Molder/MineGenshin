@@ -16,6 +16,7 @@ import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.combat.action.ServerTickScheduler;
 import com.linweiyun.genshin.core.system.performance.DamageNumberThrottle;
 import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
+import com.linweiyun.genshin.event.listener.server.GenshinEvents;
 import com.linweiyun.genshin.core.system.registry.register.*;
 import com.lowdragmc.lowdraglib2.gui.factory.PlayerUIMenuType;
 import net.minecraft.resources.Identifier;
@@ -50,6 +51,7 @@ public class Minegenshin {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
     public Minegenshin(IEventBus modEventBus, ModContainer modContainer) {
         ElementLibBridge.install();
+        GenshinEvents.init();
         modEventBus.addListener(this::commonSetup);
         NeoForge.EVENT_BUS.register(this);
         modContainer.registerConfig(ModConfig.Type.COMMON, GenshinConfig.CHARACTER_SPEC, "minegenshin/character.toml");

@@ -16,7 +16,7 @@ import net.minecraft.world.entity.player.Player;
 /**
  * 雷电将军的<b>天赋</b>（突破天赋 / 被动）。
  *
- * <p>这个类名以前是「技能」用的（现在技能搬去 {@link RaidenShogunSkill}）。
+ * <p>技能在 {@link RaidenShogunSkill}。
  * 内容和她现在的实现一致：点按/长按 E 发放的冰凌与队伍增伤。
  *
  * <p>⚠️ 效果的实例 id 字符串是 {@code minegenshin:shenhe_ascend2_tap} /
@@ -32,7 +32,7 @@ public class RaidenShogunTalent extends TalentBase {
     /** 增伤的持续刻数：点按 10 秒 / 长按 15 秒。 */
     private static final int ASCEND2_TAP_TICKS = 200;
     private static final int ASCEND2_HOLD_TICKS = 300;
-    /** 增伤效果的实例 id（沿用原来的字符串，两个方向各一份）。 */
+    /** 增伤效果的实例 id（参与查重与同步，不要改名；两个方向各一份）。 */
     private static final Identifier ASCEND2_TAP_ID = Identifier.parse("minegenshin:shenhe_ascend2_tap");
     private static final Identifier ASCEND2_HOLD_ID = Identifier.parse("minegenshin:shenhe_ascend2_hold");
 

@@ -115,7 +115,7 @@ public final class VesnaResources {
         ActionStep attack6Step = new ActionStep(
                 // 第 6 段直接复用第 2 段的完整动画。
                 //
-                // 原来这里写的是 air_attack_long + 收尾 air_attack_end ——
+                // 不用 air_attack_long + 收尾 air_attack_end：
                 // 那两个其实是「第 2 段被拆成两半」的产物：long 是攻击本体、end 是收尾。
                 // 拆开用就得额外接一次收尾状态，中间还夹一段很长的保持（身体 0.5 秒就到位了，
                 // 后面全靠 hold 撑满 7 秒），而第 6 段根本不需要那么长的恢复。
@@ -178,7 +178,7 @@ public final class VesnaResources {
         // ─── 大招 Q：跃起下坠刺击（60 能量）───
         //
         // 动画 "burst_dive" 在**独立文件** character/vesna/vesna_burst.animation.json 里
-        // （原来的 "final" 留在主动画文件里不动）。它只负责「跳起来 + 转成下坠姿态」；
+        // （"final" 在主动画文件里）。它只负责「跳起来 + 转成下坠姿态」；
         // 飞出去的过程由客户端 BurstDive 驱动：跃起 8 刻 → 第 8 刻锁落点 → 下坠 10 刻。
         //
         // 伤害点写在 8 + 10 = 18 刻（就是 DiveBurst.landTick()，同一个数的两种写法），
@@ -209,7 +209,7 @@ public final class VesnaResources {
         return new CharacterActionData(
                 combo,
                 new SkillData(skillStep, null),
-                // 大招 60 能量（原来 80）
+                // 大招 60 能量
                 new BurstData(burstStep, 60f),
                 new DodgeData(dodgeStep)
         );

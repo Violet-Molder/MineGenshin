@@ -440,8 +440,7 @@ public interface Controllable {
     /**
      * <b>实体内置方法：冻结的 NoAI。</b>
      *
-     * <p>原来这一步直接写在 {@code ColdElement} 里（每 tick 按有没有冻元素
-     * {@code setNoAi}），现在搬到实体上：这样它和打断、击退走<b>同一个入口</b>，
+     * <p>这一步放在实体上，和打断、击退走<b>同一个入口</b>，
      * 首领一类实体在 {@link #blocksControl} 里说一句就能连冻结一起免疫，
      * 而任何实体想改「冻住长什么样」（比如冻结期间还能转头）也只改这一个方法。
      *

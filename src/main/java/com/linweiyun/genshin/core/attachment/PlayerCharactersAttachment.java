@@ -26,6 +26,7 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
     public final static StreamCodec<ByteBuf, PlayerCharactersAttachment> STREAM_CODEC = PersistedParser.createStreamCodec(PlayerCharactersAttachment::new);
     private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
 
+
     @Persisted(key = "owned_characters")
     private List<PGCharacter> ownedCharacters = new ArrayList<>();
 
@@ -84,12 +85,15 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
         ownedCharacters.remove(removed);
         sheetCharacterUUIDs.remove(Integer.valueOf(uuid));
         boolean wasInParty = false;
+        int removedSlot = -1;
         for (int i = 0; i < partyCharacterUUIDs.size(); i++) {
             if (partyCharacterUUIDs.get(i) == uuid) {
                 partyCharacterUUIDs.set(i, 0);
                 wasInParty = true;
+                if (removedSlot < 0) removedSlot = i;
             }
         }
+        int previousCurrentIndex = currentCharacterIndex;
         if (wasInParty) sortParty();
         if (!ownedCharacters.isEmpty()) {
             if (partyCharacterUUIDs.get(currentCharacterIndex) == 0) {
@@ -97,6 +101,9 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
             }
         } else {
             currentCharacterIndex = 0;
+        }
+        if (wasInParty) {
+            publishPartyLeft(removedSlot, removed, true, currentCharacterIndex != previousCurrentIndex);
         }
         return true;
     }
@@ -203,23 +210,72 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
 
     public int getCurrentCharacterIndex() { return currentCharacterIndex; }
 
-    public void setCurrentCharacterIndex(int index) {
+    /**
+     * 切换出战角色的唯一入口 —— 索引变更与退场 / 登场 / 切换三条事件的广播都在这里。
+     *
+     * <p>广播发生在索引更新之后，因此「之前是谁」只能从事件字段读取。
+     *
+     * @return 索引真的变了才返回 {@code true}
+     */
+    public boolean switchTo(int index, com.linweiyun.genshin.event.game.SwitchCause cause) {
         int clamped = Math.max(0, Math.min(3, index));
-        if (clamped != this.currentCharacterIndex) {
-            // 退场钩子：让「刚才在场上的那个角色」收尾（例如武器被动要清 buff + 重置轮换顺序）
-            PGCharacter previous = getCurrentCharacter();
-            if (previous != null) {
-                Player owner = previous.getData().getOwnerPlayer();
-                if (owner != null && !owner.level().isClientSide()) {
-                    var weapon = previous.getData().getWeapon();
-                    if (weapon != null && !weapon.isEmpty()
-                            && weapon.getItem() instanceof com.linweiyun.genshin.content.items.weapon.WeaponItem weaponItem) {
-                        weaponItem.onLeaveField(owner, previous);
-                    }
-                }
-            }
+        if (clamped == this.currentCharacterIndex) {
+            return false;
         }
+        int previousIndex = this.currentCharacterIndex;
+        PGCharacter previous = getCurrentCharacter();
         this.currentCharacterIndex = clamped;
+        publishSwitch(previous, getCurrentCharacter(), previousIndex, clamped, cause);
+        return true;
+    }
+
+    /** 默认口径：一次普通切人。 */
+    public void setCurrentCharacterIndex(int index) {
+        switchTo(index, com.linweiyun.genshin.event.game.SwitchCause.KEY);
+    }
+
+    /** 静默恢复索引（死亡重生、重登恢复），不广播任何切换事件。 */
+    public void restoreCurrentIndex(int index) {
+        this.currentCharacterIndex = Math.max(0, Math.min(3, index));
+    }
+
+    /** 广播退场 → 登场 → 切换三条事件（仅服务端）。 */
+    private void publishSwitch(@Nullable PGCharacter previous, @Nullable PGCharacter next,
+                               int previousIndex, int nextIndex,
+                               com.linweiyun.genshin.event.game.SwitchCause cause) {
+        Player owner = null;
+        if (next != null) {
+            owner = next.getData().getOwnerPlayer();
+        }
+        if (owner == null && previous != null) {
+            owner = previous.getData().getOwnerPlayer();
+        }
+        if (!(owner instanceof ServerPlayer serverPlayer) || owner.level().isClientSide()) {
+            return;
+        }
+        if (!(owner.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+            return;
+        }
+        long gameTime = level.getGameTime();
+        if (previous != null) {
+            com.linweiyun.genshin.event.game.CharacterLeaveFieldEvent event =
+                    new com.linweiyun.genshin.event.game.CharacterLeaveFieldEvent(
+                            level, gameTime, serverPlayer, previous, next, cause);
+            com.linweiyun.elementlib.api.event.ElibEvents.post(event);
+        }
+        if (next != null) {
+            com.linweiyun.genshin.event.game.CharacterEnterFieldEvent event =
+                    new com.linweiyun.genshin.event.game.CharacterEnterFieldEvent(
+                            level, gameTime, serverPlayer, next, previous, cause);
+            com.linweiyun.elementlib.api.event.ElibEvents.post(event);
+        }
+        if (previous != null && next != null) {
+            com.linweiyun.genshin.event.game.CharacterSwitchedEvent event =
+                    new com.linweiyun.genshin.event.game.CharacterSwitchedEvent(
+                            level, gameTime, serverPlayer, previous, next,
+                            previousIndex, nextIndex, cause);
+            com.linweiyun.elementlib.api.event.ElibEvents.post(event);
+        }
     }
 
     public void setPartyCharacter(int index, int characterUUID) {
@@ -227,7 +283,11 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
             while (partyCharacterUUIDs.size() <= index) {
                 partyCharacterUUIDs.add(0);
             }
+            int previousUuid = partyCharacterUUIDs.get(index);
             partyCharacterUUIDs.set(index, characterUUID);
+            if (previousUuid != characterUUID) {
+                publishPartyJoin(index, characterUUID, previousUuid, false);
+            }
         }
     }
 
@@ -238,6 +298,9 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
         long count = partyCharacterUUIDs.stream().filter(uuid -> uuid != 0).count();
         if (count <= 1) return false;
 
+        PGCharacter removed = getPartyCharacter(index);
+        java.util.List<Integer> before = new ArrayList<>(partyCharacterUUIDs);
+        int previousCurrentIndex = currentCharacterIndex;
         partyCharacterUUIDs.set(index, 0);
         sortParty();
 
@@ -246,7 +309,45 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
         } else if (currentCharacterIndex > index) {
             currentCharacterIndex--;
         }
+        publishPartyLeft(index, removed, !before.equals(partyCharacterUUIDs),
+                currentCharacterIndex != previousCurrentIndex);
         return true;
+    }
+
+    /** 广播角色进入队伍事件。 */
+    private void publishPartyJoin(int index, int characterUUID, int previousUuid, boolean shifted) {
+        PGCharacter joined = getCharacterByUUID(characterUUID);
+        Player owner = joined == null ? null : joined.getData().getOwnerPlayer();
+        if (!(owner instanceof ServerPlayer serverPlayer) || owner.level().isClientSide()) {
+            return;
+        }
+        if (!(owner.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+            return;
+        }
+        PGCharacter replaced = previousUuid == 0 ? null : getCharacterByUUID(previousUuid);
+        com.linweiyun.genshin.event.game.PartyMemberJoinedEvent event =
+                new com.linweiyun.genshin.event.game.PartyMemberJoinedEvent(
+                        level, level.getGameTime(), serverPlayer, index, joined, replaced, shifted);
+        com.linweiyun.elementlib.api.event.ElibEvents.post(event);
+    }
+
+    /** 广播角色退出队伍事件。 */
+    private void publishPartyLeft(int index, @Nullable PGCharacter removed, boolean shifted,
+                                  boolean indexMoved) {
+        if (removed == null) {
+            return;
+        }
+        Player owner = removed.getData().getOwnerPlayer();
+        if (!(owner instanceof ServerPlayer serverPlayer) || owner.level().isClientSide()) {
+            return;
+        }
+        if (!(owner.level() instanceof net.minecraft.server.level.ServerLevel level)) {
+            return;
+        }
+        com.linweiyun.genshin.event.game.PartyMemberLeftEvent event =
+                new com.linweiyun.genshin.event.game.PartyMemberLeftEvent(
+                        level, level.getGameTime(), serverPlayer, index, removed, shifted, indexMoved);
+        com.linweiyun.elementlib.api.event.ElibEvents.post(event);
     }
 
     public void sortParty() {

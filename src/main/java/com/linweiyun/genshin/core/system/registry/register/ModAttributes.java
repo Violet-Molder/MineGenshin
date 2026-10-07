@@ -36,7 +36,7 @@ public class ModAttributes {
             ATTRIBUTES.register("cd_reduction", () -> new AttributeType("cd_reduction", "attribute.minegenshin.cd_reduction", 0));
     public static final DeferredHolder<AttributeType, AttributeType> SS =
             // 翻译键必须和 lang 文件里的条名一致（attribute.minegenshin.shield_strength）。
-            // 原来写成 attribute.minegenshin.ss，面板上就原样显示了一串键名。
+            // 不能写成 attribute.minegenshin.ss —— 面板上会原样显示键名。
             ATTRIBUTES.register("shield_strength", () -> new AttributeType("shield_strength", "attribute.minegenshin.shield_strength", 0));
 
     // Elemental Type

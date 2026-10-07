@@ -14,9 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * └── character/&lt;id&gt;/   角色
  * </pre>
  *
- * <p>方块状态之所以不单独开一类：它只属于某一个方块，开两类会让「同一个 id 的资源」被劈成两半，
- * 拷贝 / 删除 / 改名时容易漏。方块对应的物品（blockitem）同理，放在
- * {@code block/<id>/blockitem/} 子目录下。
+ * <p>方块状态不单独开一类：它只属于某一个方块，分开会让「同一个 id 的资源」被劈成两半。
+ * 方块对应的物品（blockitem）同理，放在 {@code block/<id>/blockitem/} 子目录下。
  *
  * <p>文件夹名不带任何前缀 —— 它们全部位于 {@code assets/minegenshin/} 命名空间之下，
  * 与原版的 {@code blockstates/}、{@code models/}、{@code textures/}、以及

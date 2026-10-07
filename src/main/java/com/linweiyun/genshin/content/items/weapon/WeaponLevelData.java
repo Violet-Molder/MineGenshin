@@ -40,8 +40,7 @@ public class WeaponLevelData {
      * <p>⚠️ 档位是**每 5 级一档**（lv1 / lv5 / lv10 / … / lv90 共 19 档，见
      * {@link WeaponSubStatConfig#MULT_01} 那一串），所以必须交给
      * {@link WeaponSubStatConfig#getMultiplier(int)} 去查档 ——
-     * 以前这里按 {@code level - 1} 直接索引那张表，等于「升一级跳一档」，
-     * 副词条几下就顶到接近满级（1 级 1.0 → 2 级 1.162 → 5 级 1.565 …）。
+     * 不能按 {@code level - 1} 直接索引那张表（那等于「升一级跳一档」，副词条几下就顶到接近满级）。
      */
     public static double getSubStatMultiplier(int level) {
         return WeaponSubStatConfig.getMultiplier(level);

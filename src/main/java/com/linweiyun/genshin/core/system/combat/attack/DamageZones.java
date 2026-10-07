@@ -62,10 +62,8 @@ public final class DamageZones {
     /**
      * 基础伤害区 {@code ATK×atkMult + HP×hpMult + DEF×defMult + EM×emMult + flat}。
      *
-     * <p>⚠️ 这里<b>不</b>乘 {@code (1 + 倍率提升)}：那是<b>倍率区</b>，由管线单独乘一次
-     * （{@code DirectDamagePipeline} 里的 {@code × (1f + baseMultiplierBonus)}）。
-     * 以前两边都乘 → 实际是 {@code (1+x)²}；而且 {@link #baseZoneText} 不显示这一项，
-     * 于是日志的【基础区】数字乘起来对不上末尾结果（正是文档里提醒的「结算真的错了」）。
+     * <p>这里<b>不</b>乘 {@code (1 + 倍率提升)}：那是<b>倍率区</b>，
+     * 由 {@code DirectDamagePipeline} 单独乘一次。
      */
     public static float baseDamage(PGCharacter attacker, ModDamageSpec spec) {
         var data = attacker.getData();
@@ -321,9 +319,8 @@ public final class DamageZones {
      *
      * <p>⚠️ <b>星烁（星扩散 / 星超导）走的是剧变那一档</b>：它的反应加成区就是
      * {@code 1 + 16×EM/(EM+2000) + 星烁加成}（见 {@code StellarDamage} 的公式与数值行）。
-     * 原来这个 switch <b>没有</b>星烁的四个枚举值 → 落到 {@code default -> 0f}，
-     * 星烁反应完全吃不到元素精通，而日志却照着自己的公式把 {@code 16×EM/(EM+2000)} 印出来 ——
-     * 公式和结果对不上（EM 200 时实际少了约 2.45 倍，EM 500 时约 4.2 倍）。
+     * 这个 switch 必须有星烁的四个枚举值：缺了就落到 {@code default -> 0f}，
+     * 星烁反应吃不到元素精通，而日志仍会按自己的公式把 {@code 16×EM/(EM+2000)} 印出来。
      */
     public static float emBonus(PGCharacter attacker, ElementalReactionType reactionType) {
         double em = elementalMastery(attacker);

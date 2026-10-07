@@ -13,10 +13,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * <b>角色宿主</b> —— 附着挂在「出战角色」而不是玩家身上的那类载体。
  *
- * <p>存在的理由：玩家实体只有一个，但队伍里有多个角色，附着必须跟着角色走 ——
- * 站进冰雾挂的是<b>当前出战角色</b>的冰，切人就是换一个附着（见
- * {@code core/status/CharacterChillHandler}）。以前这类附着靠 {@code attach(player, 角色容器, ...)}
- * 这种「目标与容器不是同一个东西」的写法实现，现在它就是 {@link ElementalHost} 的一个正常实现。
+ * <p>玩家实体只有一个、队伍里有多个角色，所以附着跟着角色走：
+ * 站进冰雾挂的是<b>当前出战角色</b>的冰，切人就是换一个附着（见 {@code core/status/CharacterChillHandler}）。
  */
 public final class CharacterHost implements ElementalHost {
 

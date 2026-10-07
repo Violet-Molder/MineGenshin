@@ -76,8 +76,7 @@ public final class ShieldService {
      * 直接把文献口径的削韧拿去扣盾，一下就能把冰史莱姆的盾打穿。
      * 所以在这里把两者解耦：盾的既有数值一个都不用动，改刻度只影响这一个系数。
      *
-     * <p>{@code 0.01} 是这么定的：文献口径的一次普攻（10）× 0.01 = 0.1 盾量，
-     * 与改造前 {@link #PLAIN_ATTACK_POISE} 的旧值（0.1）一致 —— 盾的手感不变。
+     * <p>{@code 0.01} 的取值：一次普攻（10 削韧）× 0.01 = 0.1 盾量。
      */
     public static final float POISE_TO_SHIELD = 0.01f;
 

@@ -8,13 +8,18 @@ import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.attack.HurtEntityHelper;
 import com.linweiyun.genshin.core.system.combat.damage.DamageIndicatorFactory;
+import com.linweiyun.genshin.core.system.combat.damage.DamageOutcome;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.genshin.core.system.combat.damage.TeyvatConvertedDamageSource;
+import com.linweiyun.genshin.event.game.DamageCalculatedEvent;
+import com.linweiyun.genshin.event.game.DamageDealtEvent;
 import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.control.ControlService;
 import com.linweiyun.genshin.core.system.performance.HotPathLog;
 import com.linweiyun.elementlib.core.element.GenshinElement;
+import com.linweiyun.elementlib.core.system.about.ElementalAttachable;
+import com.linweiyun.elementlib.api.event.ElibEvents;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import com.linweiyun.elementlib.api.ElementalReactionType;
@@ -30,6 +35,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.damagesource.DamageContainer;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -41,6 +47,7 @@ import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 @Mixin(LivingEntity.class)
 public class LivingEntityHurtMixin {
     private static final Logger LOGGER = ModLog.getLogger(LogGroup.MIXIN);
+
 
     @Shadow
     protected SoundEvent getDeathSound() {
@@ -136,14 +143,17 @@ public class LivingEntityHurtMixin {
                 level, target, source.getEntity(), element,
                 com.linweiyun.elementlib.core.system.about.AttachmentProfile.forAmount(spec.getElementAmount()),
                 spec.getElementAmount());
-        float finalDamage = HurtEntityHelper.calculateFinalModDamage(
+        float rawDamage = HurtEntityHelper.calculateFinalModDamage(
                 modSource, attackerCharacter, target);
 
         // 护盾：ModDamageSource 的真实伤害到这里才算出来，所以在这里扣盾
         // 带攻击者：普攻 / 重击 / 下坠的基准削韧按「武器类型」查表（见 WeaponPoiseTable）
         float poiseDamage = spec.getPoiseDamage(attackerCharacter);
-        if (finalDamage > 0f) {
-            finalDamage = ShieldService.absorbDamage(target, source, finalDamage, poiseDamage);
+        float shieldAbsorbed = 0f;
+        float finalDamage = rawDamage;
+        if (rawDamage > 0f) {
+            finalDamage = ShieldService.absorbDamage(target, source, rawDamage, poiseDamage);
+            shieldAbsorbed = Math.max(0f, rawDamage - finalDamage);
         }
 
         // 控制入口（玩家与怪物共用）：削韧与控制一起交给目标自己判 ——
@@ -152,26 +162,54 @@ public class LivingEntityHurtMixin {
         // 顺序固定在护盾之后：有盾时会被判成「免疫」，连韧性条都不进。
         ControlService.onHit(target, poiseDamage, source);
 
+        PGCharacter targetCharacter = resolveTargetCharacter(target);
+
         DamageContainer container = new DamageContainer(source, finalDamage);
         if (target.isAlive() && CommonHooks.onEntityIncomingDamage(target, container)) {
+            // 被钩子取消：仍属命中并已结算，只是没落到血量上
+            postDamageCalculated(level, spec, source, attackerCharacter, target, targetCharacter,
+                    new DamageOutcome(true, false, rawDamage, shieldAbsorbed, finalDamage,
+                            DamageOutcome.DamageBlockReason.INCOMING_CANCELLED, false));
             cir.setReturnValue(false);
             return;
         }
 
-        if (target instanceof Player player
-                && player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT)) {
-            PlayerCharactersAttachment attachment =
-                    player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
-            PGCharacter current = attachment.getCurrentCharacter();
-            if (current != null) {
-                current.hurt(finalDamage);
+        // 阶段一：伤害结算完成（扣血之前）
+        DamageOutcome.DamageBlockReason blockReason = DamageOutcome.DamageBlockReason.NONE;
+        if (finalDamage <= 0f) {
+            if (element != null && ElementalAttachable.isImmuneToDamage(target, element)) {
+                blockReason = DamageOutcome.DamageBlockReason.IMMUNITY;
+            } else if (shieldAbsorbed > 0f) {
+                blockReason = DamageOutcome.DamageBlockReason.SHIELD;
             } else {
-                target.setHealth(Math.max(target.getHealth() - finalDamage, 0));
+                blockReason = DamageOutcome.DamageBlockReason.ZERO;
             }
-        } else if (target instanceof TeyvatLiving) {
-            target.setHealth(Math.max(target.getHealth() - finalDamage, 0));
+        }
+        postDamageCalculated(level, spec, source, attackerCharacter, target, targetCharacter,
+                new DamageOutcome(true, false, rawDamage, shieldAbsorbed, finalDamage, blockReason, false));
+
+        // 阶段二：扣血。原神模式玩家的血量在 PGCharacter 上，前后值必须走同一条路径读
+        float healthBefore = healthOf(target, targetCharacter);
+        if (targetCharacter != null) {
+            targetCharacter.hurt(finalDamage);
         } else {
             target.setHealth(Math.max(target.getHealth() - finalDamage, 0));
+        }
+        float healthAfter = healthOf(target, targetCharacter);
+
+        boolean damaged = finalDamage > 0f && healthAfter < healthBefore;
+        boolean killed = target.isDeadOrDying()
+                || (targetCharacter != null && targetCharacter.getData().getCurrentHP() <= 0.0);
+        if (damaged) {
+            DamageDealtEvent event = new DamageDealtEvent(level, level.getGameTime(),
+                    new DamageOutcome(true, true, rawDamage, shieldAbsorbed, finalDamage,
+                            DamageOutcome.DamageBlockReason.NONE, killed),
+                    spec, source.getEntity(), attackerCharacter, target, targetCharacter);
+            ElibEvents.post(event);
+
+            // 普通攻击产球由伤害管线直接驱动
+            com.linweiyun.genshin.core.system.combat.damage.NormalAttackOrbProducer.tryProduce(
+                    level, spec, source.getEntity(), attackerCharacter);
         }
 
         if (finalDamage > 0f) {
@@ -254,6 +292,36 @@ public class LivingEntityHurtMixin {
      * <p>那个分支会带着换算后的伤害<b>递归调用</b> {@code hurtServer}，
      * 所以护盾必须在递归的那一层扣，否则同一次攻击会被扣两遍。
      */
+    /** 受击方是原神模式玩家时返回其当前出战角色（血量在角色上），否则返回 null。 */
+    @Nullable
+    private static PGCharacter resolveTargetCharacter(LivingEntity target) {
+        if (!(target instanceof Player player)) {
+            return null;
+        }
+        if (!Boolean.TRUE.equals(player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT))) {
+            return null;
+        }
+        PlayerCharactersAttachment attachment =
+                player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+        return attachment == null ? null : attachment.getCurrentCharacter();
+    }
+
+    /** 读血量：原神模式玩家读角色血量，其它读实体血量。 */
+    private static float healthOf(LivingEntity target, @Nullable PGCharacter targetCharacter) {
+        return targetCharacter != null
+                ? (float) targetCharacter.getData().getCurrentHP()
+                : target.getHealth();
+    }
+
+    /** 广播伤害结算完成事件。 */
+    private static void postDamageCalculated(ServerLevel level, ModDamageSpec spec, DamageSource source,
+                                             @Nullable PGCharacter attackerCharacter, LivingEntity target,
+                                             @Nullable PGCharacter targetCharacter, DamageOutcome outcome) {
+        DamageCalculatedEvent event = new DamageCalculatedEvent(level, level.getGameTime(), outcome, spec,
+                source.getEntity(), attackerCharacter, target, targetCharacter);
+        ElibEvents.post(event);
+    }
+
     private static boolean usesTeyvatConversion(ServerLevel level, DamageSource source) {
         if (!TeyvatWorldInvasion.get(level).isInvaded()) return false;
         if (source instanceof ModDamageSource || source instanceof TeyvatConvertedDamageSource) return false;

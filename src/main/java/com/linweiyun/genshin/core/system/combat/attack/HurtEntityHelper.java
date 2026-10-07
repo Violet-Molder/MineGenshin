@@ -79,12 +79,6 @@ public final class HurtEntityHelper {
         fireAttackedHooks(damageSource, attacker, target);
         float finalDamage = DirectDamagePipeline.calculate(damageSource, attacker, target);
 
-        // 圣遗物四件套（千岩牢固）：元素战技命中敌人 → 队伍附近所有角色 3 秒攻击力 +20%
-        // 放在这里是因为这是唯一一处同时拿得到「攻击类型 / 攻击者角色 / 被命中目标」的地方，
-        // 后台打的战技伤害也走同一条管线。
-        com.linweiyun.genshin.content.effect.character.artifact.TenacityOfTheMillelith4
-                .notifySkillHit(damageSource, attacker, target);
-
         // 直伤的免疫在 DirectDamagePipeline 里已经按「免疫区」结算过（附着与反应也都在那里跑完了），
         // 这里再问一次是幂等的：已经免疫过就是 0。
         return applyElementImmunity(target, spec.getElement(), finalDamage);

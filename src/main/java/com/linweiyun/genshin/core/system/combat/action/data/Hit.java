@@ -14,7 +14,7 @@ import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
  *
  * <p>这里原先并列着 {@code damage}（基础伤害倍率）、{@code damageSp}（特殊伤害倍率）
  * 和 {@code ignoreInvuln}（是否无视无敌）三个字段，<b>全仓没有任何读取方</b> ——
- * 摆在这里会让人以为「伤害也能在这里配」，等于两套伤害来源。已删除。
+ * 摆在这里会让人以为「伤害也能在这里配」，等于两套伤害来源。
  * 需要按「这一下」区分伤害或无敌判定时，走角色技能的伤害点回调，不要往这里加倍率字段。
  *
  * <h2>{@link #poise} 是系数，不是绝对削韧值</h2>
