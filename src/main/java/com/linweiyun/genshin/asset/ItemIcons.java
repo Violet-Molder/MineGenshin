@@ -4,7 +4,7 @@ import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public final class ItemIcons {
     public static final String CATEGORY_ITEM = "item";
 
     /** 解析结果缓存：注册名 → 实际要画的路径字符串（可能是 null 表示用兜底）。 */
-    private static final Map<Identifier, String> CACHE = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, String> CACHE = new ConcurrentHashMap<>();
 
     private ItemIcons() {
     }
@@ -67,7 +67,7 @@ public final class ItemIcons {
         if (stack == null || stack.isEmpty()) {
             return EMPTY;
         }
-        Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         if (itemId == null) {
             return EMPTY;
         }
@@ -80,7 +80,7 @@ public final class ItemIcons {
         if (stack == null || stack.isEmpty()) {
             return false;
         }
-        Identifier itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
         return itemId != null && iconFor(itemId) != null;
     }
 
@@ -92,8 +92,8 @@ public final class ItemIcons {
     // ==================== 内部 ====================
 
     @Nullable
-    private static String resolve(Identifier itemId) {
-        Identifier icon = iconFor(itemId);
+    private static String resolve(ResourceLocation itemId) {
+        ResourceLocation icon = iconFor(itemId);
         if (icon != null) {
             return icon.toString();
         }
@@ -101,19 +101,19 @@ public final class ItemIcons {
         // 退回物品自己的贴图：原版平面物品的贴图就是图标，画出来是对的。
         // geo 物品的贴图是 UV 图集，画出来会是一坨错位色块 —— 所以这类物品请补一张图标。
         // 平面物品的贴图在本项目布局里是 item/<物品名>/textures/texture.png
-        Identifier objectTexture = ModAssetPaths.itemTexture(itemId.getPath());
+        ResourceLocation objectTexture = ModAssetPaths.itemTexture(itemId.getPath());
         if (exists(objectTexture)) {
             return objectTexture.toString();
         }
 
         // 物品来自别的命名空间时，退回它自己的原版平面贴图
-        Identifier flat = flatTexture(itemId);
+        ResourceLocation flat = flatTexture(itemId);
         if (exists(flat)) {
             return flat.toString();
         }
 
         // 再退一步：统一布局里 item/<名字>/textures/<名字>.png（geo 物品的贴图通常在这）
-        Identifier unified = ModAssetPaths.textureIn(
+        ResourceLocation unified = ModAssetPaths.textureIn(
                 GenshinAssets.ITEM_ROOT + "/" + itemId.getPath(), itemId.getPath() + ".png");
         if (exists(unified)) {
             return unified.toString();
@@ -129,16 +129,16 @@ public final class ItemIcons {
      * 与 {@code icon/item/<名字>.png}（通用图标目录）。
      */
     @Nullable
-    private static Identifier iconFor(Identifier itemId) {
-        Identifier objectIcon = objectIcon(itemId.getPath());
+    private static ResourceLocation iconFor(ResourceLocation itemId) {
+        ResourceLocation objectIcon = objectIcon(itemId.getPath());
         if (exists(objectIcon)) {
             return objectIcon;
         }
-        Identifier own = GenshinAssets.icon(CATEGORY_ITEM, itemId.getPath());
+        ResourceLocation own = GenshinAssets.icon(CATEGORY_ITEM, itemId.getPath());
         if (exists(own)) {
             return own;
         }
-        Identifier their = Identifier.fromNamespaceAndPath(
+        ResourceLocation their = ResourceLocation.fromNamespaceAndPath(
                 itemId.getNamespace(), GenshinAssets.ICON_ROOT + "/" + CATEGORY_ITEM + "/" + itemId.getPath() + ".png");
         if (exists(their)) {
             return their;
@@ -147,17 +147,17 @@ public final class ItemIcons {
     }
 
     /** 物品自己的图标：{@code item/<物品名>/icon.png}。 */
-    private static Identifier objectIcon(String itemName) {
+    private static ResourceLocation objectIcon(String itemName) {
         return ModAssetPaths.textureIn(GenshinAssets.ITEM_ROOT + "/" + itemName, "icon.png");
     }
 
-    private static Identifier flatTexture(Identifier itemId) {
-        return Identifier.fromNamespaceAndPath(
+    private static ResourceLocation flatTexture(ResourceLocation itemId) {
+        return ResourceLocation.fromNamespaceAndPath(
                 itemId.getNamespace(), "textures/item/" + itemId.getPath() + ".png");
     }
 
     /** 这个资源在不在资源包里。只在解析时查一次，结果进缓存。 */
-    private static boolean exists(Identifier id) {
+    private static boolean exists(ResourceLocation id) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft == null || minecraft.getResourceManager() == null) {
             return false;

@@ -9,10 +9,9 @@ import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.Util;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -87,9 +86,9 @@ import org.slf4j.Logger;
  *
  * <p>为什么必须在<b>帧</b>里做、而不是在 tick 里做：鼠标增量是每帧写进 {@code yRot} 的
  * （{@code MouseHandler.handleAccumulatedMovement} 每帧调一次 {@code Entity.turn}），
- * 而每刻只有 20 次。旧版在这里用 tick 收敛（每刻只能补上 35% 的夹角），
- * 于是「鼠标一直在动」时镜头永远差着约 1.86 倍的每刻增量追不上，停手后再慢慢荡回去 ——
- * 画面就是又卡又不对。现在改成按帧、按真实帧间隔做指数收敛，
+ * 而每刻只有 20 次。按 tick 收敛时，鼠标一直在动的这段时间里镜头永远差着约 1.86 倍的
+ * 每刻增量，停手后才慢慢荡回去 —— 画面就是又卡又不对。
+ * 所以这里按帧、按真实帧间隔做指数收敛，
  * 并且把 {@code yRotO} 和 {@code yRot} 写成同一个值（这一帧渲染出来的角度就是刚算好的角度），
  * 收敛速度与帧率无关，也不会再被 tick 级的 {@code rotLerp} 拉回去。
  *
@@ -123,9 +122,9 @@ public final class ThirdPersonCamera {
      * 自动归位的「渐入」时长（秒）：条件满足后，强度从 0 慢慢升到 100%。
      *
      * <h2>为什么必须有这一段</h2>
-     * 旧版是「静默时间一到就按满速开始转」——从完全不动突然变成一直在动，
-     * 那一下的<b>突变</b>比矫正本身显眼得多（玩家的原话：从未触发到触发有明显区别）。
-     * 加了渐入之后，前一两秒几乎看不出来，等察觉时镜头已经在缓缓转了。
+     * 静默时间一到就按满速开始转的话，镜头会从完全不动突然变成一直在动，
+     * 那一下的<b>突变</b>比矫正本身显眼得多。有了渐入，前一两秒几乎看不出来，
+     * 等察觉时镜头已经在缓缓转了。
      *
      * <p>条件一断（动了鼠标 / 松开方向键 / 按了 S）权重<b>立刻归零</b>，
      * 不做淡出 —— 鼠标永远优先，晚一帧让位都会显得黏。
@@ -249,7 +248,7 @@ public final class ThirdPersonCamera {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         BodyFacing facing = player == null ? BodyFacing.VANILLA : bodyFacing(player);
-        if (player == null || event.getCamera().entity() != player
+        if (player == null || event.getCamera().getEntity() != player
                 || facing == BodyFacing.VANILLA) {
             lastYaw = Float.NaN;
             lastCameraNanos = 0L;
@@ -318,7 +317,7 @@ public final class ThirdPersonCamera {
         player.setYRot(next);
         // 插值两端写成同一个值：这一帧渲染出来的镜头角度就是刚算好的角度。
         // 只写 yRot 不写 yRotO 的话，渲染会拿「本刻开始时的朝向」当插值起点，
-        // 镜头就会慢半刻、并且每刻一顿（这正是旧版跟随看起来卡的原因之一）。
+        // 镜头就会慢半刻、并且每刻一顿。
         player.yRotO = next;
         event.setYaw(next);
         lastYaw = next;
@@ -327,7 +326,7 @@ public final class ThirdPersonCamera {
     /**
      * 这刻该不该做「镜头自动归位」。
      *
-     * <p>两条规则，都是实测调出来的：
+     * <p>两条规则：
      * <ul>
      *   <li><b>按后退不归位</b>：按着 S 时人是正对镜头往后退的（身体朝实际移动方向，
      *       见 {@code LivingEntityTickHeadTurnMixin}）。镜头要是还转到人背后，画面会从正面
@@ -341,8 +340,7 @@ public final class ThirdPersonCamera {
         if (isBackpedaling(player)) {
             return false;
         }
-        Input keys = player.input.keyPresses;
-        return keys.forward() || keys.left() || keys.right();
+        return player.input.up || player.input.left || player.input.right;
     }
 
     /**
@@ -357,7 +355,7 @@ public final class ThirdPersonCamera {
      */
     public static boolean isBackpedaling(Entity entity) {
         LocalPlayer player = Minecraft.getInstance().player;
-        return player != null && entity == player && player.input.keyPresses.backward();
+        return player != null && entity == player && player.input.down;
     }
 
     // ==================== 给 mixin 用 ====================

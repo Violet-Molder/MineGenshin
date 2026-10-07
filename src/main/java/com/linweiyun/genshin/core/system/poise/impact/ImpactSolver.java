@@ -5,7 +5,7 @@ import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.system.poise.PoiseService;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +107,7 @@ public final class ImpactSolver {
     }
 
     /** 按怪物 id 覆盖重量（正式配置接入之前的出口；不在表里就走实体属性）。 */
-    private static final Map<Identifier, Float> WEIGHT_OVERRIDES = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, Float> WEIGHT_OVERRIDES = new ConcurrentHashMap<>();
 
     private ImpactSolver() {
     }
@@ -182,7 +182,7 @@ public final class ImpactSolver {
 
     /** 目标的重量：按怪物 id 覆盖 → 实体属性 → 默认 100。 */
     public static float weightOf(LivingEntity entity) {
-        Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (id != null) {
             Float override = WEIGHT_OVERRIDES.get(id);
             if (override != null && override > 0f) {
@@ -197,7 +197,7 @@ public final class ImpactSolver {
     }
 
     /** 给某一种实体配重量覆盖；传 ≤0 视为移除。 */
-    public static void overrideWeight(Identifier entityId, float weight) {
+    public static void overrideWeight(ResourceLocation entityId, float weight) {
         if (entityId == null) {
             return;
         }

@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Map.Entry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
@@ -20,25 +20,25 @@ import org.slf4j.Logger;
 public final class GeoPackSource {
    private static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);
    private static final String NAMESPACE = "minegenshin";
-   private static final Identifier PACK_ID = Identifier.fromNamespaceAndPath("minegenshin", "geo/georesources.minegenshin");
+   private static final ResourceLocation PACK_ID = ResourceLocation.fromNamespaceAndPath("minegenshin", "geo/georesources.minegenshin");
    private static volatile boolean explained;
    private static volatile boolean notReadyExplained;
    private static volatile int managersSeen;
    private static volatile ResourceManager lastManager;
-   private static volatile Map<Identifier, byte[]> lastEntries = Map.of();
+   private static volatile Map<ResourceLocation, byte[]> lastEntries = Map.of();
 
    private GeoPackSource() {
    }
 
-   public static Map<Identifier, byte[]> entries(@Nullable ResourceManager manager) {
+   public static Map<ResourceLocation, byte[]> entries(@Nullable ResourceManager manager) {
       return entries(manager, false);
    }
 
-   public static Map<Identifier, byte[]> entriesQuiet(@Nullable ResourceManager manager) {
+   public static Map<ResourceLocation, byte[]> entriesQuiet(@Nullable ResourceManager manager) {
       return entries(manager, true);
    }
 
-   private static Map<Identifier, byte[]> entries(@Nullable ResourceManager manager, boolean quiet) {
+   private static Map<ResourceLocation, byte[]> entries(@Nullable ResourceManager manager, boolean quiet) {
       if (manager == null) {
          return Map.of();
       }
@@ -52,7 +52,7 @@ public final class GeoPackSource {
             return lastEntries;
          }
 
-         Map<Identifier, byte[]> loaded = load(manager, quiet);
+         Map<ResourceLocation, byte[]> loaded = load(manager, quiet);
          if (loaded == null) {
             return Map.of();
          }
@@ -66,7 +66,7 @@ public final class GeoPackSource {
       }
    }
 
-   public static boolean contains(@Nullable ResourceManager manager, @Nullable Identifier filePath) {
+   public static boolean contains(@Nullable ResourceManager manager, @Nullable ResourceLocation filePath) {
       return filePath != null && entries(manager).containsKey(filePath);
    }
 
@@ -74,12 +74,12 @@ public final class GeoPackSource {
       return entries(manager).size();
    }
 
-   public static boolean usePacked(@Nullable Identifier raw, boolean available) {
+   public static boolean usePacked(@Nullable ResourceLocation raw, boolean available) {
       return available && raw != null ? !ModAssetPaths.isLocalFile(raw) : false;
    }
 
    @Nullable
-   private static Map<Identifier, byte[]> load(ResourceManager manager, boolean quiet) {
+   private static Map<ResourceLocation, byte[]> load(ResourceManager manager, boolean quiet) {
       int seen = managersSeen++;
       if (!manager.getNamespaces().contains("minegenshin")) {
          if (!quiet && !notReadyExplained) {
@@ -134,11 +134,11 @@ public final class GeoPackSource {
 
                return Map.of();
             } else {
-               Map<Identifier, byte[]> entries = new LinkedHashMap<>(Math.max(4, items.size() * 2));
+               Map<ResourceLocation, byte[]> entries = new LinkedHashMap<>(Math.max(4, items.size() * 2));
                long bytes = 0L;
 
                for (Entry<String, byte[]> item : items.entrySet()) {
-                  entries.put(Identifier.fromNamespaceAndPath("minegenshin", item.getKey()), item.getValue());
+                  entries.put(ResourceLocation.fromNamespaceAndPath("minegenshin", item.getKey()), item.getValue());
                   bytes += ((byte[])item.getValue()).length;
                }
 

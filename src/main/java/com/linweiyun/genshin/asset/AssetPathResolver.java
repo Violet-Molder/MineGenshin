@@ -7,7 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
@@ -16,16 +16,16 @@ public final class AssetPathResolver {
    private AssetPathResolver() {
    }
 
-   public static boolean existing(@Nullable ResourceManager resourceManager, @Nullable Identifier location) {
+   public static boolean existing(@Nullable ResourceManager resourceManager, @Nullable ResourceLocation location) {
       return resourceManager != null && location != null
          ? resourceManager.getResource(location).isPresent() || GeoPackSource.contains(resourceManager, location)
          : false;
    }
 
    @Nullable
-   public static Identifier firstExisting(@Nullable ResourceManager resourceManager, Identifier... candidates) {
+   public static ResourceLocation firstExisting(@Nullable ResourceManager resourceManager, ResourceLocation... candidates) {
       if (resourceManager != null && candidates != null) {
-         for (Identifier candidate : candidates) {
+         for (ResourceLocation candidate : candidates) {
             if (existing(resourceManager, candidate)) {
                return candidate;
             }
@@ -38,21 +38,21 @@ public final class AssetPathResolver {
    }
 
    @Nullable
-   public static Identifier resolveModel(@Nullable ResourceManager resourceManager, AssetSet set) {
+   public static ResourceLocation resolveModel(@Nullable ResourceManager resourceManager, AssetSet set) {
       return firstExisting(resourceManager, set.modelCandidates());
    }
 
    @Nullable
-   public static Identifier resolveAnimation(@Nullable ResourceManager resourceManager, AssetSet set) {
+   public static ResourceLocation resolveAnimation(@Nullable ResourceManager resourceManager, AssetSet set) {
       return firstExisting(resourceManager, set.animationCandidates());
    }
 
    @Nullable
-   public static Identifier resolveTexture(@Nullable ResourceManager resourceManager, AssetSet set) {
+   public static ResourceLocation resolveTexture(@Nullable ResourceManager resourceManager, AssetSet set) {
       return firstExisting(resourceManager, set.textureCandidates());
    }
 
-   public static Map<Identifier, Resource> listCategory(@Nullable ResourceManager resourceManager, AssetCategory category) {
+   public static Map<ResourceLocation, Resource> listCategory(@Nullable ResourceManager resourceManager, AssetCategory category) {
       if (resourceManager == null) {
          return Map.of();
       }
@@ -64,7 +64,7 @@ public final class AssetPathResolver {
    public static Set<String> listIds(@Nullable ResourceManager resourceManager, AssetCategory category) {
       Set<String> ids = new LinkedHashSet<>();
 
-      for (Identifier location : listCategory(resourceManager, category).keySet()) {
+      for (ResourceLocation location : listCategory(resourceManager, category).keySet()) {
          String id = ModAssetPaths.idOf(location);
          if (id != null) {
             ids.add(id);
@@ -77,7 +77,7 @@ public final class AssetPathResolver {
    public static Set<String> listRoles(@Nullable ResourceManager resourceManager, AssetCategory category, String id) {
       Set<String> roles = new LinkedHashSet<>();
 
-      for (Identifier location : listCategory(resourceManager, category).keySet()) {
+      for (ResourceLocation location : listCategory(resourceManager, category).keySet()) {
          if (id.equals(ModAssetPaths.idOf(location))) {
             String role = ModAssetPaths.roleOf(location);
             if (role != null) {
@@ -99,11 +99,11 @@ public final class AssetPathResolver {
          + presence(resolveTexture(resourceManager, set));
    }
 
-   private static String presence(@Nullable Identifier location) {
+   private static String presence(@Nullable ResourceLocation location) {
       return location == null ? "MISSING" : location.toString();
    }
 
-   public static Optional<Resource> resource(@Nullable ResourceManager resourceManager, @Nullable Identifier location) {
+   public static Optional<Resource> resource(@Nullable ResourceManager resourceManager, @Nullable ResourceLocation location) {
       return resourceManager != null && location != null ? resourceManager.getResource(location) : Optional.empty();
    }
 }

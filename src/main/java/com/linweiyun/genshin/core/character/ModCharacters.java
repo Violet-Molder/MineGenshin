@@ -21,7 +21,7 @@ import java.util.function.Supplier;
 
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -30,7 +30,7 @@ public class ModCharacters {
    public static final DeferredRegister<PGCharacter> CHARACTERS = ModRegistries.CHARACTERS;
    private static final Map<Integer, Supplier<PGCharacter>> FACTORIES = new LinkedHashMap<>();
 
-   private static final Map<Identifier, Supplier<PGCharacter>> FACTORIES_BY_ID = new LinkedHashMap<>();
+   private static final Map<ResourceLocation, Supplier<PGCharacter>> FACTORIES_BY_ID = new LinkedHashMap<>();
    public static final DeferredHolder<PGCharacter, Shenhe> SHENHE = register("shenhe", 135001, Shenhe::new);
    public static final DeferredHolder<PGCharacter, Arlecchino> ARLECCHINO = register("arlecchino", 135002, Arlecchino::new);
    public static final DeferredHolder<PGCharacter, Columbina> COLUMBINA = register("columbina", 145001, Columbina::new);
@@ -53,7 +53,7 @@ public class ModCharacters {
       return factory != null ? createWithBaseStats(factory) : null;
    }
 
-   public static PGCharacter getById(Identifier id) {
+   public static PGCharacter getById(ResourceLocation id) {
       Supplier<PGCharacter> factory = FACTORIES_BY_ID.get(id);
       return factory != null ? createWithBaseStats(factory) : null;
    }
@@ -64,11 +64,11 @@ public class ModCharacters {
       Double baseATK = null;
       Double baseDEF = null;
 
-      for (Entry<Identifier, Supplier<List<? extends Integer>>> entry : instance.getStatGrowthMap().entrySet()) {
+      for (Entry<ResourceLocation, Supplier<List<? extends Integer>>> entry : instance.getStatGrowthMap().entrySet()) {
          List<? extends Integer> list = entry.getValue().get();
          if (list != null && !list.isEmpty()) {
             double first = list.get(0).intValue();
-            Identifier key = entry.getKey();
+            ResourceLocation key = entry.getKey();
             if (key.equals(ModAttributes.MAX_HP.getId())) {
                baseHP = first;
             } else if (key.equals(ModAttributes.ATK.getId())) {

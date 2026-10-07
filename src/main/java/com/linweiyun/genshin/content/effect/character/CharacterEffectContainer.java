@@ -242,7 +242,7 @@ public class CharacterEffectContainer {
     public static CharacterEffectContainer fromListTag(ListTag listTag) {
         List<CharacterEffectInstance> effects = new ArrayList<>();           // 创建效果列表
         for (int i = 0; i < listTag.size(); i++) {                          // 遍历ListTag中每个元素
-            CompoundTag tag = listTag.getCompoundOrEmpty(i);                 // 26.2安全获取方法，获取CompoundTag
+            CompoundTag tag = listTag.getCompound(i);                 //读取该下标的复合标签
             effects.add(CharacterEffectInstance.fromTag(tag));               // 反序列化每个效果实例
         }
         return new CharacterEffectContainer(effects);                        // 构建容器

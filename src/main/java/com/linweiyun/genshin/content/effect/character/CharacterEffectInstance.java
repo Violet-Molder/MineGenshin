@@ -2,7 +2,7 @@ package com.linweiyun.genshin.content.effect.character;
 
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public class CharacterEffectInstance {
@@ -11,7 +11,7 @@ public class CharacterEffectInstance {
     public static final int INFINITE = -1;
 
     /** 已经因为「查不到注册名」而打过日志的 id —— 避免每刻刷屏。 */
-    private static final java.util.Set<Identifier> WARNED_UNKNOWN_IDS =
+    private static final java.util.Set<ResourceLocation> WARNED_UNKNOWN_IDS =
             java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     // ========== 核心字段 ==========
@@ -19,7 +19,7 @@ public class CharacterEffectInstance {
     // 效果实例（直接持有，类型安全）
     private final ICharacterEffect effect;
     // 效果实例自己的 id（参数化效果用来区分不同参数的那一份；单例效果等于注册名）
-    private final Identifier effectId;
+    private final ResourceLocation effectId;
     /**
      * <b>注册名</b>（= 效果<b>类型</b>，用于序列化/反序列化）。
      *
@@ -31,7 +31,7 @@ public class CharacterEffectInstance {
      * <p>不用 {@code final}：构造期注册表可能还没就绪（类匹配会失败），
      * 所以 {@link #getEffectTypeId()} 允许在存盘那一刻再补解析一次。
      */
-    private Identifier effectTypeId;
+    private ResourceLocation effectTypeId;
     // 效果剩余持续时间（单位：tick），-1表示无限持续
     private int duration;
     // 效果等级/强度
@@ -56,8 +56,8 @@ public class CharacterEffectInstance {
         this.effect = effect;
         // 注册表里那一份：实例名 = 注册名。参数化实例（没进注册表）退回按类推出的类型名，
         // 至少保证「身份」不会变成 empty 占位。
-        Identifier key = registeredKeyOf(effect);
-        Identifier fallback = key != null ? key : resolveTypeId(null, effect);
+        ResourceLocation key = registeredKeyOf(effect);
+        ResourceLocation fallback = key != null ? key : resolveTypeId(null, effect);
         this.effectId = fallback;
         this.effectTypeId = fallback;
         this.duration = duration;
@@ -79,9 +79,9 @@ public class CharacterEffectInstance {
      * </ol>
      * 这样参数化效果不用改任何调用点，读档也能查到正确的类型。
      *
-     * @param effectId 效果实例自己的 Identifier
+     * @param effectId 效果实例自己的 ResourceLocation
      */
-    public CharacterEffectInstance(Identifier effectId, ICharacterEffect effect, int duration, int amplifier, boolean hidden, CompoundTag data) {
+    public CharacterEffectInstance(ResourceLocation effectId, ICharacterEffect effect, int duration, int amplifier, boolean hidden, CompoundTag data) {
         this.effect = effect;
         this.effectId = effectId;
         this.effectTypeId = resolveTypeId(effectId, effect);
@@ -96,14 +96,14 @@ public class CharacterEffectInstance {
      *
      * @return 注册名；实在找不到就返回传入的 id（读档时会被当成未知 id → 占位效果 + 日志）
      */
-    private static Identifier resolveTypeId(Identifier instanceId, ICharacterEffect effect) {
+    private static ResourceLocation resolveTypeId(ResourceLocation instanceId, ICharacterEffect effect) {
         if (instanceId != null && ModRegistries.CHARACTER_EFFECT_REGISTRY.containsKey(instanceId)) {
             return instanceId;
         }
         if (effect != null) {
             for (var entry : ModRegistries.CHARACTER_EFFECT_REGISTRY.entrySet()) {
                 if (entry.getValue().getClass() == effect.getClass()) {
-                    return entry.getKey().identifier();
+                    return entry.getKey().location();
                 }
             }
         }
@@ -119,13 +119,13 @@ public class CharacterEffectInstance {
      * 所以这里再确认一次「键存在、而且取出来的就是它自己」。
      */
     @Nullable
-    private static Identifier registeredKeyOf(@Nullable ICharacterEffect effect) {
+    private static ResourceLocation registeredKeyOf(@Nullable ICharacterEffect effect) {
         if (effect == null) return null;
-        Identifier key = ModRegistries.CHARACTER_EFFECT_REGISTRY.getKey(effect);
+        ResourceLocation key = ModRegistries.CHARACTER_EFFECT_REGISTRY.getKey(effect);
         if (key == null || !ModRegistries.CHARACTER_EFFECT_REGISTRY.containsKey(key)) {
             return null;
         }
-        return ModRegistries.CHARACTER_EFFECT_REGISTRY.getValue(key) == effect ? key : null;
+        return ModRegistries.CHARACTER_EFFECT_REGISTRY.get(key) == effect ? key : null;
     }
 
     /** 不带额外数据的构造函数 */
@@ -141,7 +141,7 @@ public class CharacterEffectInstance {
     /**
      * 显式指定 effectId，不带额外数据
      */
-    public CharacterEffectInstance(Identifier effectId, ICharacterEffect effect, int duration, int amplifier) {
+    public CharacterEffectInstance(ResourceLocation effectId, ICharacterEffect effect, int duration, int amplifier) {
         this(effectId, effect, duration, amplifier, false, new CompoundTag());
     }
 
@@ -151,8 +151,8 @@ public class CharacterEffectInstance {
         return effect;
     }
 
-    /** 获取效果的注册名 Identifier */
-    public Identifier getEffectId() {
+    /** 获取效果的注册名 ResourceLocation */
+    public ResourceLocation getEffectId() {
         return effectId;
     }
 
@@ -161,10 +161,10 @@ public class CharacterEffectInstance {
      *
      * <p>如果构造时没解析出来（比如在注册表就绪之前就创建了实例），这里再补一次。
      */
-    public Identifier getEffectTypeId() {
+    public ResourceLocation getEffectTypeId() {
         if (effectTypeId == null
                 || !ModRegistries.CHARACTER_EFFECT_REGISTRY.containsKey(effectTypeId)) {
-            Identifier resolved = resolveTypeId(effectId, effect);
+            ResourceLocation resolved = resolveTypeId(effectId, effect);
             if (resolved != null) {
                 effectTypeId = resolved;
             }
@@ -226,32 +226,32 @@ public class CharacterEffectInstance {
 
     /** 从额外数据中读取整数值 */
     public int getIntData(String key) {
-        return data.getInt(key).orElse(0);
+        return data.getInt(key);
     }
 
     /** 从额外数据中读取字符串值 */
     public String getStringData(String key) {
-        return data.getString(key).orElse("");
+        return data.getString(key);
     }
 
     /** 从额外数据中读取布尔值 */
     public boolean getBooleanData(String key) {
-        return data.getBoolean(key).orElse(false);
+        return data.getBoolean(key);
     }
 
     /** 从额外数据中读取浮点数值 */
     public float getFloatData(String key) {
-        return data.getFloat(key).orElse(0.0f);
+        return data.getFloat(key);
     }
 
     /** 从额外数据中读取双精度浮点数值 */
     public double getDoubleData(String key) {
-        return data.getDouble(key).orElse(0.0);
+        return data.getDouble(key);
     }
 
     /** 从额外数据中读取嵌套CompoundTag */
     public CompoundTag getCompoundData(String key) {
-        return data.getCompound(key).orElse(new CompoundTag());
+        return data.getCompound(key);
     }
 
     /** 向额外数据中写入整数值 */
@@ -314,7 +314,7 @@ public class CharacterEffectInstance {
      */
     public CompoundTag toTag() {
         CompoundTag tag = new CompoundTag();
-        Identifier typeId = getEffectTypeId();
+        ResourceLocation typeId = getEffectTypeId();
         tag.putString("effect_type", typeId == null ? "unknown" : typeId.toString());
         tag.putString("effect_id", effectId == null ? "unknown" : effectId.toString());
         tag.putInt("duration", duration);
@@ -341,13 +341,13 @@ public class CharacterEffectInstance {
      * <p>兼容老存档：只有 {@code effect_id} 时按它查一次；查不到就用占位效果并<b>打日志点名</b>。
      */
     public static CharacterEffectInstance fromTag(CompoundTag tag) {
-        Identifier typeId = parseId(tag.getString("effect_type").orElse(""));
-        Identifier instanceId = parseId(tag.getString("effect_id").orElse(""));
+        ResourceLocation typeId = parseId(tag.getString("effect_type"));
+        ResourceLocation instanceId = parseId(tag.getString("effect_id"));
 
-        int duration = tag.getInt("duration").orElse(0);
-        int amplifier = tag.getInt("amplifier").orElse(0);
-        boolean hidden = tag.getBoolean("hidden").orElse(false);
-        CompoundTag data = tag.getCompound("data").orElse(new CompoundTag());
+        int duration = tag.getInt("duration");
+        int amplifier = tag.getInt("amplifier");
+        boolean hidden = tag.getBoolean("hidden");
+        CompoundTag data = tag.getCompound("data");
 
         // 1) 优先用注册名查表
         ICharacterEffect effect = lookupEffect(typeId);
@@ -359,7 +359,7 @@ public class CharacterEffectInstance {
         if (effect != null) {
             effect = effect.createFromInstanceData(data);
         } else {
-            Identifier missing = typeId != null ? typeId : instanceId;
+            ResourceLocation missing = typeId != null ? typeId : instanceId;
             if (missing != null && WARNED_UNKNOWN_IDS.add(missing)) {
                 ICharacterEffect.LOGGER.warn(
                         "[角色效果] 存档里的效果 id={} 不在注册表里 → 用占位效果（这条效果读档后失效）", missing);
@@ -368,16 +368,16 @@ public class CharacterEffectInstance {
         }
 
         // 实例名沿用存档里的；没有就用注册名（同样要防 DefaultedMappedRegistry 把未知实例报成 empty）
-        Identifier finalInstanceId = instanceId != null ? instanceId : registeredKeyOf(effect);
+        ResourceLocation finalInstanceId = instanceId != null ? instanceId : registeredKeyOf(effect);
         return new CharacterEffectInstance(finalInstanceId, effect, duration, amplifier, hidden, data);
     }
 
-    private static Identifier parseId(String raw) {
+    private static ResourceLocation parseId(String raw) {
         if (raw == null || raw.isEmpty() || "unknown".equals(raw)) {
             return null;
         }
         try {
-            return Identifier.parse(raw);
+            return ResourceLocation.parse(raw);
         } catch (Exception e) {
             return null;
         }
@@ -391,11 +391,11 @@ public class CharacterEffectInstance {
      * 查询不存在的键会在 {@code getValue} 里空指针崩溃（而不是返回 null）。
      */
     @Nullable
-    private static ICharacterEffect lookupEffect(@Nullable Identifier id) {
+    private static ICharacterEffect lookupEffect(@Nullable ResourceLocation id) {
         if (id == null || !ModRegistries.CHARACTER_EFFECT_REGISTRY.containsKey(id)) {
             return null;
         }
-        return ModRegistries.CHARACTER_EFFECT_REGISTRY.getValue(id);
+        return ModRegistries.CHARACTER_EFFECT_REGISTRY.get(id);
     }
 
     // ========== 调试输出 ==========

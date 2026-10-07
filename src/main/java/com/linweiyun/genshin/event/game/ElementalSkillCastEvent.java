@@ -4,7 +4,7 @@ import com.linweiyun.elementlib.api.event.ElibIdentifiedEvent;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.Event;
@@ -14,7 +14,7 @@ import net.neoforged.bus.api.Event;
  */
 public final class ElementalSkillCastEvent extends Event implements ElibIdentifiedEvent {
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "elemental_skill_cast");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "elemental_skill_cast");
 
     private final ServerLevel level;
     private final long gameTime;
@@ -37,7 +37,7 @@ public final class ElementalSkillCastEvent extends Event implements ElibIdentifi
     }
 
     @Override
-    public Identifier eventId() {
+    public ResourceLocation eventId() {
         return ID;
     }
 

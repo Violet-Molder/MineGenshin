@@ -304,7 +304,7 @@ public class LeapSmashGoal<T extends PathfinderMob> extends Goal {
      */
     protected void smash(LivingEntity target) {
         this.mob.swing(InteractionHand.MAIN_HAND);
-        this.mob.doHurtTarget(this.serverLevel(), target);
+        this.mob.doHurtTarget(target);
         this.onSmashed(target);
     }
 
@@ -323,7 +323,7 @@ public class LeapSmashGoal<T extends PathfinderMob> extends Goal {
     // ==================== 工具 ====================
 
     protected ServerLevel serverLevel() {
-        return getServerLevel(this.mob);
+        return (ServerLevel) this.mob.level();
     }
 
     /** 当前阶段，给动画状态用。 */

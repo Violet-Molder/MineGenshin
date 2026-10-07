@@ -2,7 +2,7 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.character;
 
-import com.geckolib.animatable.manager.AnimatableManager.ControllerRegistrar;
+import software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar;
 import com.linweiyun.genshin.client.combat.state.PlayerAnimationController;
 import org.jetbrains.annotations.Nullable;
 

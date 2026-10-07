@@ -8,7 +8,7 @@ import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
@@ -43,12 +43,12 @@ public class SandroneCharacter extends ClaymoreCharacter {
     }
 
     @Override
-    public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+    public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
         return statGrowthMap();
     }
 
     /** 属性成长表 —— 直接指向林薇云那份配置（数值完全一致，改 TOML 就同时生效）。 */
-    private static Map<Identifier, Supplier<List<? extends Integer>>> statGrowthMap() {
+    private static Map<ResourceLocation, Supplier<List<? extends Integer>>> statGrowthMap() {
         return Map.of(
                 ModAttributes.MAX_HP.getId(), LinweiyunAttributeConfig::getAllHp,
                 ModAttributes.ATK.getId(), LinweiyunAttributeConfig::getAllAtk,

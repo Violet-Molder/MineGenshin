@@ -53,27 +53,19 @@ public final class RenderOptimize {
     }
 
     /**
-     * GPU 蒙皮开关（默认开；关掉 = 完全走 CPU 蒙皮路径，便于同场景对照与兼容性排查）。
+     * GPU 蒙皮开关，读配置项 {@code RENDER_OPTIMIZE_GPU_SKINNING}。
      *
-     * <p>与上面三个子项不同，它不是「同一份 CPU 计算换个写法」：GPU 路径把顶点缓冲
-     * 常驻显存、换掉整条管线（见 {@code SkinnedPipelines}），画面理论上等价但走的代码完全不同。
-     * 所以它必须是能一键切开的独立开关 —— 与光影或其它渲染模组撞车时关掉这一项就能回到
-     * 与优化前完全相同的渲染路径。</p>
+     * @return 配置值；配置未就绪时返回 {@code true}
      */
     public static boolean gpuSkinningEnabled() {
         return flag(PerformanceConfig.RENDER_OPTIMIZE_GPU_SKINNING, true);
     }
 
     /**
-     * 光影包生效时还要不要用 GPU 蒙皮（默认<b>否</b>，只留作排查用）。
+     * 光影包生效时是否继续使用 GPU 蒙皮，读配置项
+     * {@code RENDER_OPTIMIZE_GPU_SKINNING_UNDER_SHADERS}。
      *
-     * <p>光影模组在渲染管线这一层是按「程序身份」选着色器的 —— 它只认原版那几个顶点格式常量，
-     * 认不出的格式一律落进通用兜底程序，也就是说我们那条派生管线的 {@code entity_skinned}
-     * 顶点着色器在光影下根本不会执行。而 GPU 蒙皮的顶点缓冲是本模组按 32 字节/顶点<b>自己打包
-     * 上传</b>的，必须由认识这份布局的程序去读；程序一换人，画出来的就是「模型消失 + 周围散落黑块」。
-     * 所以默认由
-     * {@code SkinnedPipelineGuard} 自动让位给 CPU 蒙皮；这一项打开只是允许在
-     * 「明知可能画错」的前提下把 GPU 路径强行放回去，用来确认问题确实出在这条路径上。</p>
+     * @return 配置值；配置未就绪时返回 {@code false}
      */
     public static boolean gpuSkinningUnderShaders() {
         return flag(PerformanceConfig.RENDER_OPTIMIZE_GPU_SKINNING_UNDER_SHADERS, false);

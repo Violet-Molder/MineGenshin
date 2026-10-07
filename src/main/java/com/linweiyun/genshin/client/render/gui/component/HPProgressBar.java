@@ -5,7 +5,6 @@ import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.IDataProvider;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Clip;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ProgressBar;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.integration.kjs.KJSBindings;
@@ -13,9 +12,10 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.syncdata.ISubscription;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import org.appliedenergistics.yoga.YogaOverflow;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.LinkedHashMap;
@@ -35,7 +35,7 @@ public class HPProgressBar extends ProgressBar {
     public static final int TRAIL_COLOR = 0xFFB3801A;
 
     /** 拖尾用的白条贴图：原色白，靠 {@link #TRAIL_COLOR} 乘出拖尾色 */
-    private static final Identifier TRAIL_TEXTURE =
+    private static final ResourceLocation TRAIL_TEXTURE =
             Minegenshin.id("gui/short_character_hp_bar_white.png");
 
     /** 拖尾每秒衰减的比例，与怪物血条一致（0.3/s ≈ 每帧 0.005 × 60fps）。 */
@@ -48,7 +48,7 @@ public class HPProgressBar extends ProgressBar {
     private static final float TRAIL_EPSILON = 0.0005f;
 
     /**
-     * 带 {@code Clip.SCISSOR} 的裁剪层至少要占这么多<b>物理像素</b>，不足就整层不画。
+     * 开了 {@code overflow: hidden} 的裁剪层至少要占这么多<b>物理像素</b>，不足就整层不画。
      *
      * <p>LDLib2 会把裁剪框四舍五入到物理像素（{@code PreciseScissor#quantize} 的
      * {@code Math.round(边 × 界面缩放)}），宽度不到半个物理像素时结果就是 0 宽；
@@ -79,7 +79,7 @@ public class HPProgressBar extends ProgressBar {
      * 拖尾用的<b>整条</b>白条贴图（尺寸与 {@link #barIcon} 一致，永不缩放）。
      *
      * <p>贴图必须和填充条同款：两端楔形在贴图里固定 50 px 长，长条贴图 2100 宽、短条 1200 宽，
-     * 把短白条当长条拖尾画，斜边斜度会差将近一倍。换贴图见 {@link #trailTexture(Identifier)}。
+     * 把短白条当长条拖尾画，斜边斜度会差将近一倍。换贴图见 {@link #trailTexture(ResourceLocation)}。
      */
     public final UIElement trailIcon;
 
@@ -104,12 +104,10 @@ public class HPProgressBar extends ProgressBar {
                 .addChild(barIcon = new UIElement())
                 .layout(layout -> {
                     layout.positionType(TaffyPosition.ABSOLUTE);
+                    layout.overflow(YogaOverflow.HIDDEN);
                 })
-                .style(s -> {
-                    s.background(SpriteTexture.of(
-                            Identifier.fromNamespaceAndPath("minegenshin", "gui/empty.png")));
-                    s.clip(Clip.SCISSOR);
-                });
+                .style(s -> s.background(SpriteTexture.of(
+                        ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/empty.png"))));
 
         this.trailIcon = new UIElement();
         this.trailIcon
@@ -128,10 +126,10 @@ public class HPProgressBar extends ProgressBar {
                     layout.top(0);
                     layout.heightPercent(100);
                     layout.widthPercent(100);
+                    layout.overflow(YogaOverflow.HIDDEN);
                 })
                 .style(s -> {
                     s.zIndex(-1);
-                    s.clip(Clip.SCISSOR);
                 })
                 .addChild(this.trailIcon);
         this.barBackground.addChild(this.trailClip);
@@ -217,7 +215,7 @@ public class HPProgressBar extends ProgressBar {
 
     /** 当前界面缩放：裁剪框是按物理像素取整的，判据必须带上它 */
     private static float guiScale() {
-        return Minecraft.getInstance().getWindow().getGuiScale();
+        return (float) Minecraft.getInstance().getWindow().getGuiScale();
     }
 
     /**
@@ -257,7 +255,7 @@ public class HPProgressBar extends ProgressBar {
      * 短条用 {@code short_character_hp_bar_white.png}。形状不同的白条画在同宽的盒子里，
      * 两端楔形的斜边就对不上，绿色填充条底下会露出拖尾的尖角。
      */
-    public HPProgressBar trailTexture(Identifier texture) {
+    public HPProgressBar trailTexture(ResourceLocation texture) {
         this.trailIcon.style(s -> s.background(SpriteTexture.of(texture).setColor(TRAIL_COLOR)));
         return this;
     }

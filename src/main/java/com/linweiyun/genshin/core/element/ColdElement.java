@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.element;
 
 import com.linweiyun.elementlib.core.element.GenshinElement;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import com.linweiyun.genshin.core.system.control.ControlRequest;
 import com.linweiyun.genshin.core.system.control.ControlService;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,8 +24,8 @@ public class ColdElement extends GenshinElement {
      * <p><b>沿用旧名字 {@code cryo_slow} 是刻意的</b>：属性修饰符会随实体一起存进存档，
      * 改名会让旧存档里的减速变成「没人认得、也撤不掉」的残留。
      */
-    private static final Identifier SLOW_MODIFIER_ID =
-            Identifier.fromNamespaceAndPath("minegenshin", "cryo_slow");
+    private static final ResourceLocation SLOW_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath("minegenshin", "cryo_slow");
 
     /** 减速幅度（-10% 移速）。 */
     private static final float SLOW_AMOUNT = -0.10f;

@@ -84,7 +84,7 @@ public final class ElementLibBridge {
                 Entity attacker = ctx.attacker();
                 Entity sourceEntity = attacker != null ? attacker : target;
                 ModDamageSpec spec = ModDamageSpec.transformative(ctx.reactionType(), element);
-                target.hurtServer(level, ModDamageSource.from(spec, sourceEntity), 0f);
+                target.hurt(ModDamageSource.from(spec, sourceEntity), 0f);
             }
         });
 

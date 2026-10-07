@@ -11,8 +11,6 @@ import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProj
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaSpiritSwordEntity;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -39,10 +37,7 @@ public class ModEntities {
                     () -> EntityType.Builder.of(TalismanSpiritArea::new, MobCategory.MISC)
                             .clientTrackingRange(10)
                             .updateInterval(3)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("talisman_spirit"))
-                            )
+                            .build(Minegenshin.id("talisman_spirit").toString())
             );
     public static final Supplier<EntityType<ElementalOrb>> ELEMENTAL_ORB =
             ENTITIES.register(
@@ -52,10 +47,7 @@ public class ModEntities {
                             .eyeHeight(0.125F)
                             .clientTrackingRange(6)
                             .updateInterval(20)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("elemental_orb"))
-                            )
+                            .build(Minegenshin.id("elemental_orb").toString())
             );
     /**
      * 大型冰史莱姆。
@@ -74,10 +66,7 @@ public class ModEntities {
                                     .eyeHeight(1.52F)
                                     .passengerAttachments(1.31875F)
                                     .clientTrackingRange(10)
-                                    .build(ResourceKey.create(
-                                            Registries.ENTITY_TYPE,
-                                            Minegenshin.id("large_cryo_slime")
-                                    )));
+                                    .build(Minegenshin.id("large_cryo_slime").toString()));
 
     public static final Supplier<EntityType<ThunderCloudEntity>> THUNDER_CLOUD =
             ENTITIES.register(
@@ -86,10 +75,7 @@ public class ModEntities {
                             .sized(1.0F, 1.0F)
                             .clientTrackingRange(8)
                             .updateInterval(20)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("thunder_cloud"))
-                            ));
+                            .build(Minegenshin.id("thunder_cloud").toString()));
 
     public static final Supplier<EntityType<StellarVortexEntity>> STELLAR_VORTEX =
             ENTITIES.register(
@@ -98,10 +84,7 @@ public class ModEntities {
                             .sized(1.0F, 1.0F)
                             .clientTrackingRange(8)
                             .updateInterval(20)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("stellar_vortex"))
-                            ));
+                            .build(Minegenshin.id("stellar_vortex").toString()));
 
     public static final Supplier<EntityType<VesnaAttackProjectile>> VESNA_ATTACK_PROJECTILE =
             ENTITIES.register(
@@ -110,10 +93,7 @@ public class ModEntities {
                             .sized(0.5F, 0.5F)
                             .clientTrackingRange(8)
                             .updateInterval(10)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("vesna_attack_projectile"))
-                            ));
+                            .build(Minegenshin.id("vesna_attack_projectile").toString()));
 
     public static final Supplier<EntityType<VesnaSpiritSwordEntity>> VESNA_SPIRIT_SWORD =
             ENTITIES.register(
@@ -122,10 +102,7 @@ public class ModEntities {
                             .sized(0.5F, 0.5F)
                             .clientTrackingRange(8)
                             .updateInterval(10)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("vesna_spirit_sword"))
-                            ));
+                            .build(Minegenshin.id("vesna_spirit_sword").toString()));
 
     /**
      * 技能投射物：一块悬空旋转、砸向玩家的原版冰块。
@@ -141,9 +118,7 @@ public class ModEntities {
                             .sized(0.9F, 0.9F)
                             .clientTrackingRange(8)
                             .updateInterval(2)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    Minegenshin.id("ice_block")))
+                            .build(Minegenshin.id("ice_block").toString())
             );
 
     public static void register(IEventBus eventBus) {

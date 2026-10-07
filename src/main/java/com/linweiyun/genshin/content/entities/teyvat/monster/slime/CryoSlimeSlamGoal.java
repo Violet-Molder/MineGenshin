@@ -189,7 +189,7 @@ public class CryoSlimeSlamGoal extends CryoSlimeSkillGoal {
             if (victim == this.slime || !victim.isAlive()) {
                 continue;
             }
-            victim.hurtServer(serverLevel, source, 0f);
+            victim.hurt(source, 0f);
         }
         this.slime.resetCombat();
     }

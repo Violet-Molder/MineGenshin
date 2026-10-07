@@ -61,7 +61,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -148,7 +148,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       int burstMaxCooldownTick,
       float maxObtainingEnergy,
       String textureId,
-      Map<Identifier, Supplier<List<? extends Integer>>> statGrowthMap
+      Map<ResourceLocation, Supplier<List<? extends Integer>>> statGrowthMap
    ) {
       this.characterUUID = characterUUID;
       this.starRating = starRating;
@@ -175,7 +175,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       int burstMaxCooldownTick,
       float maxObtainingEnergy,
       String textureId,
-      Map<Identifier, Supplier<List<? extends Integer>>> statGrowthMap
+      Map<ResourceLocation, Supplier<List<? extends Integer>>> statGrowthMap
    ) {
       this.characterUUID = characterUUID;
       this.starRating = starRating;
@@ -191,8 +191,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       this.textureId = textureId;
    }
 
-   private AttributeType resolveType(Identifier id) {
-      return (AttributeType)((Registry)ModAttributes.ATTRIBUTES.getRegistry().get()).getValue(id);
+   private AttributeType resolveType(ResourceLocation id) {
+      return (AttributeType)((Registry)ModAttributes.ATTRIBUTES.getRegistry().get()).get(id);
    }
 
    public Class<? extends WeaponItem> getAllowedWeaponClass() {
@@ -579,7 +579,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
 
    private static boolean isBaseAttribute(AttributeType attr) {
       if (attr != null && attr.id() != null) {
-         AttributeType registryAttr = (AttributeType)ModRegistries.ATTRIBUTE_TYPE_REGISTRY.getValue(attr.id());
+         AttributeType registryAttr = (AttributeType)ModRegistries.ATTRIBUTE_TYPE_REGISTRY.get(attr.id());
          return registryAttr == ModAttributes.MAX_HP.get() || registryAttr == ModAttributes.ATK.get() || registryAttr == ModAttributes.DEF.get();
       } else {
          return false;
@@ -696,7 +696,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       }
    }
 
-   public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+   public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
       return Map.of();
    }
 
@@ -974,8 +974,8 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
          return this.elemental;
       } else if (this.elementalId != null && !this.elementalId.isEmpty()) {
          String[] parts = this.elementalId.split(":", 2);
-         Identifier id = Identifier.fromNamespaceAndPath(parts[0], parts[1]);
-         this.elemental = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.get(id).<GenshinElement>map(Reference::value).orElse(null);
+         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
+         this.elemental = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.get(id);
          return this.elemental;
       } else {
          return (GenshinElement)ModElements.FYSIKOS.get();

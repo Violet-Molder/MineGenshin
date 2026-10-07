@@ -10,8 +10,8 @@ package com.linweiyun.genshin.core.character.polearm.shenhe;
 
 import com.linweiyun.genshin.client.render.character.appearance.CharacterBoneVisibility;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import net.minecraft.world.entity.player.Player;
 
 public final class ShenheBoneVisibility extends CharacterBoneVisibility {
@@ -20,7 +20,7 @@ public final class ShenheBoneVisibility extends CharacterBoneVisibility {
    }
 
    @Override
-   public BoneUpdater<GeoRenderState> weaponUpdater(Player player, PGCharacter character) {
+   public BoneUpdater<BoneRenderState> weaponUpdater(Player player, PGCharacter character) {
       // 现在没有独有定制：沿用基类默认即可。需要定制时把这里换成申鹤自己的武器显隐逻辑。
       return super.weaponUpdater(player, character);
    }

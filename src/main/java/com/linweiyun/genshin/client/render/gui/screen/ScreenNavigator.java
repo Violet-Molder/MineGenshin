@@ -1,5 +1,3 @@
-// restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
-// the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.gui.screen;
 
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
@@ -15,12 +13,12 @@ import net.minecraft.world.entity.player.Player;
 public class ScreenNavigator {
    public static void openCharacterSelectScreen(Player player, int index) {
       ModularUI modularUI = ScreenCharacterSelect.createModularUI(player, index);
-      Minecraft.getInstance().setScreenAndShow(new ScreenCharacterSelect(modularUI));
+      Minecraft.getInstance().setScreen(new ScreenCharacterSelect(modularUI));
    }
 
    public static void openCharacterPartyScreen(Player player) {
       ModularUI modularUI = ScreenCharacterParty.createModularUI(player);
-      Minecraft.getInstance().setScreenAndShow(new ScreenCharacterParty(modularUI));
+      Minecraft.getInstance().setScreen(new ScreenCharacterParty(modularUI));
    }
 
    public static void openCharacterInfoScreen(Player player) {
@@ -29,7 +27,7 @@ public class ScreenNavigator {
 
    public static void openArtifactEquipScreen(Player player, int slotIndex) {
       ModularUI modularUI = CharacterEquipUI.createModularUI(player);
-      Minecraft.getInstance().setScreenAndShow(new ScreenCharacterEquip(modularUI, Component.translatable("gui.minegenshin.character_equip.title")));
+      Minecraft.getInstance().setScreen(new ScreenCharacterEquip(modularUI, Component.translatable("gui.minegenshin.character_equip.title")));
    }
 
    public static void openBackpackScreen(Player player) {
@@ -37,7 +35,7 @@ public class ScreenNavigator {
    }
 
    public static void openAscensionScreen(Player player) {
-      Minecraft.getInstance().setScreenAndShow(new ScreenAscension(player));
+      Minecraft.getInstance().setScreen(new ScreenAscension(player));
    }
 
    public static void openCharacterConfigScreen(Player player) {
@@ -49,7 +47,7 @@ public class ScreenNavigator {
          ICharacterConfigUI configUI = own != null ? own : CharacterConfigUI.INSTANCE;
          ModularUI modularUI = configUI.createConfigUI(player, character);
          if (modularUI != null) {
-            Minecraft.getInstance().setScreenAndShow(new ScreenCharacterConfig(modularUI, configUI.title()));
+            Minecraft.getInstance().setScreen(new ScreenCharacterConfig(modularUI, configUI.title()));
          }
       }
    }

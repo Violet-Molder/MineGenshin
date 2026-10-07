@@ -2,7 +2,7 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.combat.state;
 
-import com.geckolib.cache.animation.BakedAnimations;
+import software.bernie.geckolib.loading.object.BakedAnimations;
 import com.linweiyun.genshin.client.render.geo.AssetFallback;
 import com.linweiyun.genshin.client.render.geo.GenshinGeoCache;
 import com.linweiyun.genshin.asset.GenshinAssets;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +55,7 @@ public final class AnimationAvailability {
             return null;
          }
 
-         List<Identifier> files = new ArrayList<>(data.allAnimationPaths().size() + 1);
+         List<ResourceLocation> files = new ArrayList<>(data.allAnimationPaths().size() + 1);
          files.add(AssetFallback.animation(data.animationIdentifier(), GenshinAssets.defaultAnimation()));
 
          for (String extra : data.extraAnimationPaths()) {
@@ -105,6 +105,6 @@ public final class AnimationAvailability {
       }
    }
 
-   private record Cached(Identifier primary, @Nullable BakedAnimations[] baked, Set<String> names) {
+   private record Cached(ResourceLocation primary, @Nullable BakedAnimations[] baked, Set<String> names) {
    }
 }

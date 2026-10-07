@@ -4,40 +4,21 @@ import com.linweiyun.genshin.config.WorldTextColorConfig;
 import com.linweiyun.genshin.content.entities.area.StellarVortexEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.state.ExperienceOrbRenderState;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-public class StellarVortexRenderer extends EntityRenderer<StellarVortexEntity, ExperienceOrbRenderState> {
+public class StellarVortexRenderer extends EntityRenderer<StellarVortexEntity> {
 
-    private static final Identifier ORB_TEXTURE =
-            Identifier.withDefaultNamespace("textures/entity/experience/experience_orb.png");
-    private static final RenderType RENDER_TYPE =
-            RenderTypes.entityTranslucentCullItemTarget(ORB_TEXTURE);
+    private static final ResourceLocation ORB_TEXTURE =
+            ResourceLocation.withDefaultNamespace("textures/entity/experience/experience_orb.png");
+    private static final RenderType RENDER_TYPE = RenderType.itemEntityTranslucentCull(ORB_TEXTURE);
 
-    private static int getDefaultColor() {
-        return parseColor(WorldTextColorConfig.ANEMO_COLOR.get());
-    }
-
-    private static int getLevel3Color() {
-        return parseColor(WorldTextColorConfig.CYRO_COLOR.get());
-    }
-
-    private static int parseColor(String hex) {
-        try {
-            return Integer.decode(hex.startsWith("#") ? hex : "#" + hex);
-        } catch (NumberFormatException e) {
-            return 0xFFFFFF;
-        }
-    }
     private static final float BASE_SCALE = 0.3F;
     private static final float LEVEL3_SCALE = 0.9F;
 
@@ -47,45 +28,43 @@ public class StellarVortexRenderer extends EntityRenderer<StellarVortexEntity, E
         this.shadowStrength = 0.75F;
     }
 
-    private static class VortexRenderState extends ExperienceOrbRenderState {
-        int color = 0x80FFD7;
-        float scale = BASE_SCALE;
-    }
-
     @Override
     protected int getBlockLightLevel(StellarVortexEntity entity, BlockPos blockPos) {
         return Mth.clamp(super.getBlockLightLevel(entity, blockPos) + 7, 0, 15);
     }
 
     @Override
-    public void submit(ExperienceOrbRenderState state, PoseStack poseStack,
-                       SubmitNodeCollector collector, CameraRenderState camera) {
+    public void render(StellarVortexEntity entity, float entityYaw, float partialTicks, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
-        int icon = state.icon;
+        // 经验球图标表 4×4，这里固定取左上角那一格
+        int icon = 0;
         float u0 = (icon % 4 * 16) / 64.0F;
         float u1 = u0 + 16.0F / 64.0F;
         float v0 = (icon / 4 * 16) / 64.0F;
         float v1 = v0 + 16.0F / 64.0F;
 
-        VortexRenderState vState = (VortexRenderState) state;
-        int color = vState.color;
+        boolean level3 = entity.getVortexLevel() >= 3;
+        int color = level3 ? getLevel3Color() : getDefaultColor();
+        float scale = level3 ? LEVEL3_SCALE : BASE_SCALE;
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
         int alpha = 180;
 
         poseStack.translate(0.0F, 0.1F, 0.0F);
-        poseStack.mulPose(camera.orientation);
-        poseStack.scale(vState.scale, vState.scale, vState.scale);
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.scale(scale, scale, scale);
 
-        collector.submitCustomGeometry(poseStack, RENDER_TYPE, (pose, buffer) -> {
-            vertex(buffer, pose, -0.5F, -0.25F, r, g, b, alpha, u0, v1, state.lightCoords);
-            vertex(buffer, pose, 0.5F, -0.25F, r, g, b, alpha, u1, v1, state.lightCoords);
-            vertex(buffer, pose, 0.5F, 0.75F, r, g, b, alpha, u1, v0, state.lightCoords);
-            vertex(buffer, pose, -0.5F, 0.75F, r, g, b, alpha, u0, v0, state.lightCoords);
-        });
+        VertexConsumer buffer = bufferSource.getBuffer(RENDER_TYPE);
+        PoseStack.Pose pose = poseStack.last();
+        vertex(buffer, pose, -0.5F, -0.25F, r, g, b, alpha, u0, v1, packedLight);
+        vertex(buffer, pose, 0.5F, -0.25F, r, g, b, alpha, u1, v1, packedLight);
+        vertex(buffer, pose, 0.5F, 0.75F, r, g, b, alpha, u1, v0, packedLight);
+        vertex(buffer, pose, -0.5F, 0.75F, r, g, b, alpha, u0, v0, packedLight);
+
         poseStack.popPose();
-        super.submit(state, poseStack, collector, camera);
+        super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
     }
 
     private static void vertex(VertexConsumer buffer, PoseStack.Pose pose,
@@ -100,22 +79,23 @@ public class StellarVortexRenderer extends EntityRenderer<StellarVortexEntity, E
     }
 
     @Override
-    public ExperienceOrbRenderState createRenderState() {
-        return new VortexRenderState();
+    public ResourceLocation getTextureLocation(StellarVortexEntity entity) {
+        return ORB_TEXTURE;
     }
 
-    @Override
-    public void extractRenderState(StellarVortexEntity entity, ExperienceOrbRenderState state,
-                                    float partialTicks) {
-        super.extractRenderState(entity, state, partialTicks);
-        VortexRenderState vState = (VortexRenderState) state;
+    private static int getDefaultColor() {
+        return parseColor(WorldTextColorConfig.ANEMO_COLOR.get());
+    }
 
-        if (entity.getVortexLevel() >= 3) {
-            vState.color = getLevel3Color();
-            vState.scale = LEVEL3_SCALE;
-        } else {
-            vState.color = getDefaultColor();
-            vState.scale = BASE_SCALE;
+    private static int getLevel3Color() {
+        return parseColor(WorldTextColorConfig.CYRO_COLOR.get());
+    }
+
+    private static int parseColor(String hex) {
+        try {
+            return Integer.decode(hex.startsWith("#") ? hex : "#" + hex);
+        } catch (NumberFormatException e) {
+            return 0xFFFFFF;
         }
     }
 }

@@ -14,10 +14,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.function.Consumer;
+import java.util.List;
 
 /**
  * 蝶变（五星单手剑）。
@@ -125,13 +124,12 @@ public class BeyondTheChrysalis extends Sword {
     // ==================== 物品信息 ====================
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
-                                Consumer<Component> builder, TooltipFlag flag) {
-        super.appendHoverText(stack, context, display, builder, flag);
-        builder.accept(Component.empty());
-        builder.accept(Component.translatable("item.minegenshin.beyond_the_chrysalis.passive").withStyle(ChatFormatting.YELLOW));
-        builder.accept(Component.empty());
-        builder.accept(Component.literal("溢彩流光的长剑，曾有人以之破除束缚，\n剑风轻盈如同翩跹的蝶舞。"));
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> builder, TooltipFlag flag) {
+        super.appendHoverText(stack, context, builder, flag);
+        builder.add(Component.empty());
+        builder.add(Component.translatable("item.minegenshin.beyond_the_chrysalis.passive").withStyle(ChatFormatting.YELLOW));
+        builder.add(Component.empty());
+        builder.add(Component.literal("溢彩流光的长剑，曾有人以之破除束缚，\n剑风轻盈如同翩跹的蝶舞。"));
 
     }
 }

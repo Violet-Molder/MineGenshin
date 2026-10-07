@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.client.render.character.appearance;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import net.minecraft.world.entity.player.Player;
 
@@ -57,7 +57,7 @@ public class CharacterBonePhysics {
     }
 
     /** 唯一钩子：返回一个 BoneUpdater，在每帧动画结算后给骨骼快照叠加物理旋转。 */
-    public RenderPassInfo.BoneUpdater<GeoRenderState> clothUpdater(Player player, PGCharacter character) {
+    public BoneUpdater<BoneRenderState> clothUpdater(Player player, PGCharacter character) {
         return null;   // 默认无物理
     }
 }

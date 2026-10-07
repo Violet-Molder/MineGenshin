@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.attachment;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.mojang.serialization.Codec;
 import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
@@ -8,9 +10,7 @@ import com.lowdragmc.lowdraglib2.utils.PersistedParser;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.storage.TagValueOutput;
 
 public class AdventurerInfoAttachment implements IPersistedSerializable {
     public final static Codec<AdventurerInfoAttachment> CODEC = PersistedParser.createCodec(AdventurerInfoAttachment::new);
@@ -317,18 +317,12 @@ public class AdventurerInfoAttachment implements IPersistedSerializable {
     // ========== 同步方法 ==========
 
     public void syncToPlayer(ServerPlayer player) {
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.registryAccess());
-        serialize(output);
-        NetworkManager.setAdventurerInfoToPlayer(player, output.buildResult());
+        NetworkManager.setAdventurerInfoToPlayer(player, serializeNBT(player.registryAccess()));
     }
 
     public void syncToServer() {
         Player clientPlayer = ClientAttachmentSync.getClientPlayer();
-        TagValueOutput output = TagValueOutput.createWithContext(
-                ProblemReporter.DISCARDING,
-                clientPlayer.registryAccess());
-        serialize(output);
-        NetworkManager.setAdventurerInfoToServer(output.buildResult());
+        NetworkManager.setAdventurerInfoToServer(serializeNBT(clientPlayer.registryAccess()));
     }
 
     // ========== 工具方法 ==========

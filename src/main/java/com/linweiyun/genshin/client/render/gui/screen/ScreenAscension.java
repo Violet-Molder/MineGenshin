@@ -9,7 +9,6 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
-import com.lowdragmc.lowdraglib2.gui.ui.ModularUIClientAccess;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -17,7 +16,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
@@ -50,8 +49,8 @@ public class ScreenAscension extends Screen {
     @Override
     public void init() {
         super.init();
-        ModularUIClientAccess.setScreenAndInit(this.modularUI, this);
-        this.addRenderableWidget(ModularUIClientAccess.getWidget(modularUI));
+        this.modularUI.setScreenAndInit(this);
+        this.addRenderableWidget(this.modularUI.getWidget());
     }
 
     @Override
@@ -131,7 +130,7 @@ public class ScreenAscension extends Screen {
 
     private ModularUI createModularUI() {
         var stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(
-                Identifier.parse("minegenshin:lss/ascension.lss"));
+                ResourceLocation.parse("minegenshin:lss/ascension.lss"));
 
         AdventurerInfoAttachment advInfo = player.getData(AttachmentRegistration.ADVENTURER_INFO_ATTACHMENT);
         PlayerCharactersAttachment charAttachment = player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);

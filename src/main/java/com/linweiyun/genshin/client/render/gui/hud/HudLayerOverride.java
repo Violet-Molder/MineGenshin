@@ -3,16 +3,15 @@ package com.linweiyun.genshin.client.render.gui.hud;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.system.compat.PlayerStatBridge;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.gui.GuiLayer;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
 /**
@@ -24,12 +23,10 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  *       但 {@code leftHeight} 照旧 +10 占位，护甲行不会因此掉一格。</li>
  *   <li>{@code FOOD_LEVEL}：原版右侧食物图标不画（{@link GenshinBottomHud} 在经验条上方居中画），
  *       {@code rightHeight} +10 占位，氧气泡不会因此掉一行。</li>
- *   <li>{@code CONTEXTUAL_INFO_BAR_BACKGROUND} / {@code CONTEXTUAL_INFO_BAR} / {@code EXPERIENCE_LEVEL}：
- *       原版经验条、等级数字、定位条都占着屏幕正下方那一条，原神模式下那一条已经给了角色经验条，
+ *   <li>{@code EXPERIENCE_BAR} / {@code EXPERIENCE_LEVEL} / {@code JUMP_METER}：
+ *       原版经验条、等级数字、跳跃蓄力条都占着屏幕正下方那一条，原神模式下那一条已经给了角色经验条，
  *       所以整条都不画。</li>
  * </ul>
- * 已知取舍：原神模式下伤害吸收 / 困难模式血心的闪烁特效、以及定位条与跳跃蓄力条都不再显示 ——
- * 它们本来就和角色血条抢同一片位置。
  *
  * <h2>非原神模式</h2>
  * 只有「从原神模式退出来过」的玩家（{@link PlayerStatBridge#hasCharacterHealth}）才动：
@@ -41,12 +38,12 @@ public final class HudLayerOverride {
     /** 兼容模式下短血条用的三张贴图（都是 1200×60，按比例裁左侧一段来画） */
     private static final int BAR_TEXTURE_WIDTH = 1200;
     private static final int BAR_TEXTURE_HEIGHT = 60;
-    private static final Identifier COMPAT_BAR_BACKGROUND =
+    private static final ResourceLocation COMPAT_BAR_BACKGROUND =
             Minegenshin.id("gui/short_character_hp_green.png");
-    private static final Identifier COMPAT_BAR_FILL =
+    private static final ResourceLocation COMPAT_BAR_FILL =
             Minegenshin.id("gui/short_character_hp_bar_green.png");
     /** 拖尾层：白条乘拖尾色，和世界里怪物血条一个色 */
-    private static final Identifier COMPAT_BAR_TRAIL =
+    private static final ResourceLocation COMPAT_BAR_TRAIL =
             Minegenshin.id("gui/short_character_hp_bar_white.png");
     private static final int COMPAT_BAR_TRAIL_COLOR = 0xFFB3801A;
 
@@ -78,15 +75,14 @@ public final class HudLayerOverride {
     public static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
         event.wrapLayer(VanillaGuiLayers.PLAYER_HEALTH, HudLayerOverride::wrapPlayerHealth);
         event.wrapLayer(VanillaGuiLayers.FOOD_LEVEL, HudLayerOverride::wrapFoodLevel);
-        event.wrapLayer(VanillaGuiLayers.CONTEXTUAL_INFO_BAR_BACKGROUND,
-                HudLayerOverride::wrapContextualInfoBar);
-        event.wrapLayer(VanillaGuiLayers.CONTEXTUAL_INFO_BAR, HudLayerOverride::wrapContextualInfoBar);
+        event.wrapLayer(VanillaGuiLayers.EXPERIENCE_BAR, HudLayerOverride::wrapContextualInfoBar);
         event.wrapLayer(VanillaGuiLayers.EXPERIENCE_LEVEL, HudLayerOverride::wrapContextualInfoBar);
+        event.wrapLayer(VanillaGuiLayers.JUMP_METER, HudLayerOverride::wrapContextualInfoBar);
     }
 
     // ==================== 血量那一行 ====================
 
-    private static GuiLayer wrapPlayerHealth(GuiLayer original) {
+    private static LayeredDraw.Layer wrapPlayerHealth(LayeredDraw.Layer original) {
         return (graphics, deltaTracker) -> {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player == null || !canHurtPlayer()) {
@@ -111,7 +107,7 @@ public final class HudLayerOverride {
 
     /** 不画血心也要把那一行的高度记上，护甲 / 上方的原版叠层才不会整体往下挪。 */
     private static void reserveHealthRow() {
-        Minecraft.getInstance().gui.hud.leftHeight += 10;
+        Minecraft.getInstance().gui.leftHeight += 10;
     }
 
     /**
@@ -120,12 +116,12 @@ public final class HudLayerOverride {
      * <p>比例从玩家属性反推（角色那段血占角色生命上限多少），不是读角色数据 ——
      * 非原神模式下角色的 currentHP 是冻结的。
      */
-    private static void renderCompatHealthBar(GuiGraphicsExtractor graphics, LocalPlayer player) {
+    private static void renderCompatHealthBar(GuiGraphics graphics, LocalPlayer player) {
         float ratio = Mth.clamp(PlayerStatBridge.characterHealthRatio(player), 0.0f, 1.0f);
         float trail = tickCompatTrail(ratio);
 
         int x = graphics.guiWidth() / 2 - 91;
-        int y = graphics.guiHeight() - Minecraft.getInstance().gui.hud.leftHeight + COMPAT_BAR_TOP_OFFSET;
+        int y = graphics.guiHeight() - Minecraft.getInstance().gui.leftHeight + COMPAT_BAR_TOP_OFFSET;
 
         blitCropped(graphics, COMPAT_BAR_BACKGROUND, x, y, 1.0f, -1);
         if (trail > 0.0f) {
@@ -146,17 +142,25 @@ public final class HudLayerOverride {
      * @param ratio 要显示的比例（0~1）
      * @param color 染色，{@code -1} 表示原色
      */
-    private static void blitCropped(GuiGraphicsExtractor graphics, Identifier texture,
+    private static void blitCropped(GuiGraphics graphics, ResourceLocation texture,
                                     int x, int y, float ratio, int color) {
         int width = Math.round(COMPAT_BAR_WIDTH * ratio);
         if (width <= 0) {
             return;
         }
-        graphics.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, 0.0f, 0.0f,
-                width, COMPAT_BAR_HEIGHT,
+        boolean tinted = color != -1;
+        if (tinted) {
+            graphics.setColor((color >> 16 & 0xFF) / 255.0f,
+                    (color >> 8 & 0xFF) / 255.0f,
+                    (color & 0xFF) / 255.0f,
+                    (color >>> 24) / 255.0f);
+        }
+        graphics.blit(texture, x, y, width, COMPAT_BAR_HEIGHT, 0.0f, 0.0f,
                 Math.max(1, Math.round(BAR_TEXTURE_WIDTH * ratio)), BAR_TEXTURE_HEIGHT,
-                BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT,
-                color);
+                BAR_TEXTURE_WIDTH, BAR_TEXTURE_HEIGHT);
+        if (tinted) {
+            graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        }
     }
 
     /**
@@ -166,18 +170,19 @@ public final class HudLayerOverride {
      * 和别的界面看到的那个数一致；条本身画的是「角色那一截占了多少」，两者在最后那点
      * 玩家自己的血量（低于原版上限）上会略有出入。
      */
-    private static void renderCompatHealthText(GuiGraphicsExtractor graphics, LocalPlayer player,
+    private static void renderCompatHealthText(GuiGraphics graphics, LocalPlayer player,
                                                int x, int y) {
         String text = Math.round(player.getHealth()) + "/" + Math.round(player.getMaxHealth());
         Font font = Minecraft.getInstance().font;
 
         var pose = graphics.pose();
-        pose.pushMatrix();
+        pose.pushPose();
         pose.translate(x + COMPAT_BAR_WIDTH / 2.0f,
-                y + (COMPAT_BAR_HEIGHT - FONT_LINE_HEIGHT * COMPAT_BAR_TEXT_SCALE) / 2.0f);
-        pose.scale(COMPAT_BAR_TEXT_SCALE, COMPAT_BAR_TEXT_SCALE);
-        graphics.text(font, text, -font.width(text) / 2, 0, COMPAT_BAR_TEXT_COLOR, true);
-        pose.popMatrix();
+                y + (COMPAT_BAR_HEIGHT - FONT_LINE_HEIGHT * COMPAT_BAR_TEXT_SCALE) / 2.0f,
+                0.0f);
+        pose.scale(COMPAT_BAR_TEXT_SCALE, COMPAT_BAR_TEXT_SCALE, 1.0f);
+        graphics.drawString(font, text, -font.width(text) / 2, 0, COMPAT_BAR_TEXT_COLOR, true);
+        pose.popPose();
     }
 
     /**
@@ -205,20 +210,20 @@ public final class HudLayerOverride {
 
     // ==================== 饱食度 / 正下方那一条 ====================
 
-    private static GuiLayer wrapFoodLevel(GuiLayer original) {
+    private static LayeredDraw.Layer wrapFoodLevel(LayeredDraw.Layer original) {
         return (graphics, deltaTracker) -> {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player != null && canHurtPlayer() && isGenshinMode(player)) {
                 // 原神模式：饱食度挪到经验条上方居中，右侧那排空出来但高度照记
-                Minecraft.getInstance().gui.hud.rightHeight += 10;
+                Minecraft.getInstance().gui.rightHeight += 10;
                 return;
             }
             original.render(graphics, deltaTracker);
         };
     }
 
-    /** 原版经验条 / 等级数字 / 定位条 / 跳跃蓄力条都在屏幕正下方那一条，原神模式整条让给角色经验条。 */
-    private static GuiLayer wrapContextualInfoBar(GuiLayer original) {
+    /** 原版经验条 / 等级数字 / 跳跃蓄力条都在屏幕正下方那一条，原神模式整条让给角色经验条。 */
+    private static LayeredDraw.Layer wrapContextualInfoBar(LayeredDraw.Layer original) {
         return (graphics, deltaTracker) -> {
             LocalPlayer player = Minecraft.getInstance().player;
             if (player != null && isGenshinMode(player)) {

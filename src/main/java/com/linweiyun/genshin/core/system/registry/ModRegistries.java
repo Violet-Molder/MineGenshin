@@ -6,7 +6,7 @@ import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
 import com.linweiyun.genshin.content.items.artifact.ArtifactSet;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -23,19 +23,19 @@ public class ModRegistries {
 
     public static final ResourceKey<Registry<AttributeType>> ATTRIBUTE_TYPE_REGISTRY_KEY =
             ResourceKey.createRegistryKey(
-                    Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "attribute_types"));
+                    ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "attribute_types"));
 
     public static final ResourceKey<Registry<PGCharacter>> CHARACTER_REGISTRY_KEY =
             ResourceKey.createRegistryKey(
-                    Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "characters"));
+                    ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "characters"));
 
     public static final ResourceKey<Registry<ICharacterEffect>> CHARACTER_EFFECT_REGISTRY_KEY =
             ResourceKey.createRegistryKey(
-                    Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "character_effects"));
+                    ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "character_effects"));
 
     public static final ResourceKey<Registry<ArtifactSet>> ARTIFACT_SET_REGISTRY_KEY =
             ResourceKey.createRegistryKey(
-                    Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "artifact_sets"));
+                    ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "artifact_sets"));
 
     // ======== 注册表 ========
     public static final Registry<AttributeType> ATTRIBUTE_TYPE_REGISTRY =

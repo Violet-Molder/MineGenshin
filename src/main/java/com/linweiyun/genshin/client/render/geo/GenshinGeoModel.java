@@ -2,31 +2,30 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.geo;
 
-import com.geckolib.animatable.GeoAnimatable;
-import com.geckolib.cache.animation.Animation;
-import com.geckolib.cache.model.BakedGeoModel;
-import com.geckolib.model.GeoModel;
-import com.geckolib.renderer.base.GeoRenderState;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animation.Animation;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 import com.linweiyun.genshin.asset.GenshinAssets;
 import com.linweiyun.genshin.asset.GeoAssetKind;
 import com.linweiyun.genshin.asset.GeoPathOverrides;
 import java.util.List;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<T> implements GenshinAssets.CharacterAssetOwner {
-   private Identifier defaultModel;
-   private Identifier defaultTexture;
-   private Identifier defaultAnimation;
-   private Identifier declaredModel;
-   private Identifier declaredTexture;
-   private Identifier declaredAnimation;
-   private Identifier sharedModel;
-   private Identifier sharedTexture;
-   private Identifier sharedAnimation;
+   private ResourceLocation defaultModel;
+   private ResourceLocation defaultTexture;
+   private ResourceLocation defaultAnimation;
+   private ResourceLocation declaredModel;
+   private ResourceLocation declaredTexture;
+   private ResourceLocation declaredAnimation;
+   private ResourceLocation sharedModel;
+   private ResourceLocation sharedTexture;
+   private ResourceLocation sharedAnimation;
    @Nullable
    private String characterId;
-   private Identifier[] animationFallbacks = new Identifier[0];
+   private ResourceLocation[] animationFallbacks = new ResourceLocation[0];
 
    protected GenshinGeoModel() {
    }
@@ -35,7 +34,7 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
       this.setCharacterId(characterId);
    }
 
-   public void setPaths(@Nullable Identifier model, @Nullable Identifier texture, @Nullable Identifier animation) {
+   public void setPaths(@Nullable ResourceLocation model, @Nullable ResourceLocation texture, @Nullable ResourceLocation animation) {
       if (model != null) {
          this.defaultModel = model;
       }
@@ -49,7 +48,7 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
       }
    }
 
-   public void setDeclaredPaths(@Nullable Identifier model, @Nullable Identifier texture, @Nullable Identifier animation) {
+   public void setDeclaredPaths(@Nullable ResourceLocation model, @Nullable ResourceLocation texture, @Nullable ResourceLocation animation) {
       if (model != null) {
          this.declaredModel = model;
       }
@@ -63,7 +62,7 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
       }
    }
 
-   public void setSharedPaths(@Nullable Identifier model, @Nullable Identifier texture, @Nullable Identifier animation) {
+   public void setSharedPaths(@Nullable ResourceLocation model, @Nullable ResourceLocation texture, @Nullable ResourceLocation animation) {
       if (model != null) {
          this.sharedModel = model;
       }
@@ -93,20 +92,20 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
          this.animationFallbacks = relativePaths.stream()
             .filter(p -> p != null && !p.isEmpty())
             .map(GenshinAssets::fromAnimationPath)
-            .toArray(Identifier[]::new);
+            .toArray(ResourceLocation[]::new);
       } else {
-         this.animationFallbacks = new Identifier[0];
+         this.animationFallbacks = new ResourceLocation[0];
       }
    }
 
-   public Identifier[] getAnimationResourceFallbacks(T animatable) {
+   public ResourceLocation[] getAnimationResourceFallbacks(T animatable) {
       return this.animationFallbacks;
    }
 
-   public Identifier[] allAnimationFiles(T animatable) {
-      Identifier primary = this.getAnimationResource(animatable);
-      Identifier[] fallbacks = this.getAnimationResourceFallbacks(animatable);
-      Identifier[] all = new Identifier[fallbacks.length + 1];
+   public ResourceLocation[] allAnimationFiles(T animatable) {
+      ResourceLocation primary = this.getAnimationResource(animatable);
+      ResourceLocation[] fallbacks = this.getAnimationResourceFallbacks(animatable);
+      ResourceLocation[] all = new ResourceLocation[fallbacks.length + 1];
       all[0] = primary;
       System.arraycopy(fallbacks, 0, all, 1, fallbacks.length);
       return all;
@@ -119,21 +118,21 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
    }
 
    @Nullable
-   public Identifier defaultModelResource() {
+   public ResourceLocation defaultModelResource() {
       return this.defaultModel;
    }
 
    @Nullable
-   public Identifier defaultTextureResource() {
+   public ResourceLocation defaultTextureResource() {
       return this.defaultTexture;
    }
 
    @Nullable
-   public Identifier defaultAnimationResource() {
+   public ResourceLocation defaultAnimationResource() {
       return this.defaultAnimation;
    }
 
-   public Identifier getModelResource(GeoRenderState renderState) {
+   public ResourceLocation getModelResource(T animatable) {
       return AssetFallback.model(
          this.rewrite(GeoAssetKind.MODEL, this.defaultModel),
          this.rewrite(GeoAssetKind.MODEL, this.declaredModel),
@@ -141,7 +140,7 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
       );
    }
 
-   public Identifier getTextureResource(GeoRenderState renderState) {
+   public ResourceLocation getTextureResource(T animatable) {
       return AssetFallback.texture(
          this.rewrite(GeoAssetKind.TEXTURE, this.defaultTexture),
          this.rewrite(GeoAssetKind.TEXTURE, this.declaredTexture),
@@ -149,7 +148,7 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
       );
    }
 
-   public Identifier getAnimationResource(T animatable) {
+   public ResourceLocation getAnimationResource(T animatable) {
       return AssetFallback.animation(
          this.rewrite(GeoAssetKind.ANIMATION, this.defaultAnimation),
          this.rewrite(GeoAssetKind.ANIMATION, this.declaredAnimation),
@@ -158,11 +157,11 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
    }
 
    @Nullable
-   private Identifier rewrite(GeoAssetKind kind, @Nullable Identifier original) {
+   private ResourceLocation rewrite(GeoAssetKind kind, @Nullable ResourceLocation original) {
       return original == null ? null : GeoPathOverrides.resolve(kind, this, original);
    }
 
-   public BakedGeoModel getBakedModel(Identifier location) {
+   public BakedGeoModel getBakedModel(ResourceLocation location) {
       BakedGeoModel own = GenshinGeoCache.model(location);
       return own != null ? own : super.getBakedModel(location);
    }
@@ -170,6 +169,6 @@ public abstract class GenshinGeoModel<T extends GeoAnimatable> extends GeoModel<
    @Nullable
    public Animation getBakedAnimation(T animatable, String name) throws RuntimeException {
       Animation own = GenshinGeoCache.animation(this.getAnimationResource(animatable), this.getAnimationResourceFallbacks(animatable), name);
-      return own != null ? own : super.getBakedAnimation(animatable, name);
+      return own != null ? own : super.getAnimation(animatable, name);
    }
 }

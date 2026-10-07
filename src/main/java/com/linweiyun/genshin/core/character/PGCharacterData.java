@@ -768,7 +768,7 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
    public void syncToClient() {
       if (this.parentCharacter != null) {
          if (this.getOwnerPlayer() instanceof ServerPlayer serverPlayer) {
-            ServerLevel serverLevel = serverPlayer.level();
+            ServerLevel serverLevel = serverPlayer.serverLevel();
 
             for (IRef<?> field : this.syncStorage.getNonLazyFields()) {
                field.update();
@@ -801,8 +801,8 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
    }
 
    void receiveFromServer(CompoundTag payload, RegistryAccess registryAccess) {
-      BitSet changed = BitSet.valueOf(payload.getLongArray("changed").orElse(new long[0]));
-      byte[] buf = payload.getByteArray("data").orElse(new byte[0]);
+      BitSet changed = BitSet.valueOf(payload.getLongArray("changed"));
+      byte[] buf = payload.getByteArray("data");
       ByteBufUtil.readCustomData(buf, buffer -> {
          IRef<?>[] syncedFields = this.syncStorage.getSyncFields();
 

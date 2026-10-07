@@ -49,7 +49,7 @@ public interface ISyncCharacter extends IManaged, IManagedHolder, IPersistManage
         var character = getSelfCharacter();
         var player = character.getData().getOwnerPlayer();
         if (!(player instanceof ServerPlayer serverPlayer)) return;
-        ServerLevel serverLevel = serverPlayer.level();
+        ServerLevel serverLevel = serverPlayer.serverLevel();
 
         var rootStorage = getRootStorage();
         for (var field : rootStorage.getNonLazyFields()) {
@@ -83,8 +83,8 @@ public interface ISyncCharacter extends IManaged, IManagedHolder, IPersistManage
     }
 
     default void handleCharacterSyncPacket(CompoundTag payload) {
-        var changed = BitSet.valueOf(payload.getLongArray("changed").orElse(new long[0]));
-        var data = payload.getByteArray("data").orElse(new byte[0]);
+        var changed = BitSet.valueOf(payload.getLongArray("changed"));
+        var data = payload.getByteArray("data");
 
         var player = getSelfCharacter().getData().getOwnerPlayer();
         if (player == null) return;

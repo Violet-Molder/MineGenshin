@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class Linweiyun extends AllWeaponCharacter {
    public static final String ID = "linweiyun";
@@ -60,7 +60,7 @@ public class Linweiyun extends AllWeaponCharacter {
    }
 
    @Override
-   public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+   public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
       return Map.of(
          ModAttributes.MAX_HP.getId(),
          LinweiyunAttributeConfig::getAllHp,

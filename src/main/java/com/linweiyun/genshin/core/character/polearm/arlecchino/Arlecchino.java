@@ -7,7 +7,7 @@ import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.character.polearm.PolearmCharacter;
 import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
 import java.util.Map;
@@ -42,7 +42,7 @@ public class Arlecchino extends PolearmCharacter {
     }
 
     @Override
-    public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+    public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
         return Map.of(
                 ModAttributes.MAX_HP.getId(), ArlecchinoAttributeConfig::getAllHp,
                 ModAttributes.ATK.getId(), ArlecchinoAttributeConfig::getAllAtk,

@@ -9,9 +9,7 @@ import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import com.mojang.blaze3d.platform.InputConstants.Type;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.KeyMapping.Category;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -22,7 +20,7 @@ import net.neoforged.neoforge.common.util.Lazy;
 
 @EventBusSubscriber(Dist.CLIENT)
 public class KeyMappingRegistry {
-   public static final Category CATEGORY = new Category(Identifier.fromNamespaceAndPath("minegenshin", "category"));
+   public static final String CATEGORY = "key.categories.minegenshin";
    public static final Lazy<KeyMapping> ATTACK_KEY = Lazy.of(() -> new KeyMappingRegistry.ActionKey("key.minegenshin.attack", Type.MOUSE, 0) {
       @Override
       protected void onPressed(LocalPlayer player) {
@@ -80,7 +78,6 @@ public class KeyMappingRegistry {
 
    @SubscribeEvent
    public static void registerBindings(RegisterKeyMappingsEvent event) {
-      event.registerCategory(CATEGORY);
       event.register((KeyMapping)ATTACK_KEY.get());
       event.register((KeyMapping)C_KEY.get());
       event.register((KeyMapping)X_KEY.get());

@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
@@ -34,19 +34,19 @@ public final class AssetRedirects {
    private static final String GEO_SUFFIX = ".geo.json";
    private static final String ANIMATION_SUFFIX = ".animation.json";
    private static final String ANIMATIONS_SUFFIX = ".animations.json";
-   private static final Map<Identifier, Identifier> BLOCK_ITEM_OVERRIDES = new ConcurrentHashMap<>();
+   private static final Map<ResourceLocation, ResourceLocation> BLOCK_ITEM_OVERRIDES = new ConcurrentHashMap<>();
    private static final Map<String, Integer> LAST_LOGGED = new ConcurrentHashMap<>();
 
    private AssetRedirects() {
    }
 
-   public static void registerBlockItem(Identifier blockId, Identifier itemId) {
+   public static void registerBlockItem(ResourceLocation blockId, ResourceLocation itemId) {
       if (blockId != null && itemId != null) {
          BLOCK_ITEM_OVERRIDES.put(itemId, blockId);
       }
    }
 
-   public static Map<Identifier, Resource> resolve(@Nullable String vanillaDirectory, @Nullable ResourceManager manager) {
+   public static Map<ResourceLocation, Resource> resolve(@Nullable String vanillaDirectory, @Nullable ResourceManager manager) {
       if (vanillaDirectory != null && manager != null) {
          String directory = trimSlashes(vanillaDirectory);
          int slash = directory.indexOf(47);
@@ -55,7 +55,7 @@ public final class AssetRedirects {
             return Map.of();
          }
 
-         Map<Identifier, Identifier> plan = switch (root) {
+         Map<ResourceLocation, ResourceLocation> plan = switch (root) {
             case "blockstates" -> blockStateEntries();
             case "items" -> itemDefinitionEntries();
             case "models" -> mirrorEntries(manager, directory, ".json", true, "models/", false);
@@ -68,10 +68,10 @@ public final class AssetRedirects {
       }
    }
 
-   private static Map<Identifier, Identifier> blockStateEntries() {
-      Map<Identifier, Identifier> plan = new LinkedHashMap<>();
+   private static Map<ResourceLocation, ResourceLocation> blockStateEntries() {
+      Map<ResourceLocation, ResourceLocation> plan = new LinkedHashMap<>();
 
-      for (Identifier blockId : BuiltInRegistries.BLOCK.keySet()) {
+      for (ResourceLocation blockId : BuiltInRegistries.BLOCK.keySet()) {
          if (isOurs(blockId)) {
             plan.put(id("blockstates/" + blockId.getPath() + ".json"), id(ModAssetPaths.dir(AssetCategory.BLOCK, blockId.getPath()) + "/blockstate.json"));
          }
@@ -80,16 +80,16 @@ public final class AssetRedirects {
       return plan;
    }
 
-   private static Map<Identifier, Identifier> itemDefinitionEntries() {
-      Map<Identifier, Identifier> plan = new LinkedHashMap<>();
+   private static Map<ResourceLocation, ResourceLocation> itemDefinitionEntries() {
+      Map<ResourceLocation, ResourceLocation> plan = new LinkedHashMap<>();
 
-      for (Identifier itemId : BuiltInRegistries.ITEM.keySet()) {
+      for (ResourceLocation itemId : BuiltInRegistries.ITEM.keySet()) {
          if (isOurs(itemId)) {
             plan.put(id("items/" + itemId.getPath() + ".json"), id(ModAssetPaths.dir(AssetCategory.ITEM, itemId.getPath()) + "/definition.json"));
          }
       }
 
-      for (Identifier blockId : BuiltInRegistries.BLOCK.keySet()) {
+      for (ResourceLocation blockId : BuiltInRegistries.BLOCK.keySet()) {
          if (isOurs(blockId)) {
             plan.putIfAbsent(id("items/" + blockId.getPath() + ".json"), id(ModAssetPaths.blockItemDir(blockId.getPath()) + "/definition.json"));
          }
@@ -101,20 +101,20 @@ public final class AssetRedirects {
       return plan;
    }
 
-   private static Map<Identifier, Identifier> mirrorEntries(
+   private static Map<ResourceLocation, ResourceLocation> mirrorEntries(
       ResourceManager manager, String directory, String suffix, boolean models, String vanillaPrefix, boolean stripLayoutTextureDir
    ) {
       String[] roots = MIRROR_DIRECTORIES.get(directory);
       if (roots != null && roots.length != 0) {
-         Map<Identifier, Identifier> plan = new LinkedHashMap<>();
+         Map<ResourceLocation, ResourceLocation> plan = new LinkedHashMap<>();
 
-         for (Identifier file : listLayout(manager, suffix, roots)) {
+         for (ResourceLocation file : listLayout(manager, suffix, roots)) {
             String path = file.getPath();
             if (!models || !isNonModel(path)) {
-               Identifier vanillaId = id(vanillaPrefix + (stripLayoutTextureDir ? stripTextureDir(path) : path));
-               Identifier mirrored = id(path);
+               ResourceLocation vanillaId = id(vanillaPrefix + (stripLayoutTextureDir ? stripTextureDir(path) : path));
+               ResourceLocation mirrored = id(path);
                if (!vanillaId.equals(mirrored)) {
-                  Identifier previous = plan.get(vanillaId);
+                  ResourceLocation previous = plan.get(vanillaId);
                   if (previous == null || ModAssetPaths.isLocalFile(file) && !ModAssetPaths.isLocalFile(previous)) {
                      plan.put(vanillaId, mirrored);
                   }
@@ -147,8 +147,8 @@ public final class AssetRedirects {
       return at < 0 ? path : path.substring(0, at) + "/" + path.substring(at + marker.length());
    }
 
-   private static List<Identifier> listLayout(ResourceManager manager, String suffix, String... roots) {
-      List<Identifier> found = new ArrayList<>();
+   private static List<ResourceLocation> listLayout(ResourceManager manager, String suffix, String... roots) {
+      List<ResourceLocation> found = new ArrayList<>();
 
       for (String root : roots) {
          manager.listResources(root, candidate -> candidate.getPath().startsWith(root + "/") && candidate.getPath().endsWith(suffix))
@@ -163,14 +163,14 @@ public final class AssetRedirects {
       return found;
    }
 
-   private static Map<Identifier, Resource> materialize(String directory, Map<Identifier, Identifier> plan, ResourceManager manager) {
+   private static Map<ResourceLocation, Resource> materialize(String directory, Map<ResourceLocation, ResourceLocation> plan, ResourceManager manager) {
       if (plan.isEmpty()) {
          return Map.of();
       }
 
-      Map<Identifier, Resource> resolved = new LinkedHashMap<>();
+      Map<ResourceLocation, Resource> resolved = new LinkedHashMap<>();
 
-      for (Entry<Identifier, Identifier> entry : plan.entrySet()) {
+      for (Entry<ResourceLocation, ResourceLocation> entry : plan.entrySet()) {
          Resource resource = (Resource)manager.getResource(entry.getValue()).orElse(null);
          if (resource != null) {
             resolved.put(entry.getKey(), resource);
@@ -181,12 +181,12 @@ public final class AssetRedirects {
       return resolved;
    }
 
-   private static void logInjection(String directory, Map<Identifier, Resource> resolved) {
+   private static void logInjection(String directory, Map<ResourceLocation, Resource> resolved) {
       Integer previous = LAST_LOGGED.put(directory, resolved.size());
       if (!resolved.isEmpty() && (previous == null || previous != resolved.size())) {
          List<String> samples = new ArrayList<>(3);
 
-         for (Entry<Identifier, Resource> entry : resolved.entrySet()) {
+         for (Entry<ResourceLocation, Resource> entry : resolved.entrySet()) {
             if (samples.size() >= 3) {
                break;
             }
@@ -198,7 +198,7 @@ public final class AssetRedirects {
       }
    }
 
-   private static boolean isOurs(@Nullable Identifier id) {
+   private static boolean isOurs(@Nullable ResourceLocation id) {
       return id != null && "minegenshin".equals(id.getNamespace());
    }
 
@@ -216,7 +216,7 @@ public final class AssetRedirects {
       return trimmed;
    }
 
-   private static Identifier id(String path) {
-      return Identifier.fromNamespaceAndPath("minegenshin", path);
+   private static ResourceLocation id(String path) {
+      return ResourceLocation.fromNamespaceAndPath("minegenshin", path);
    }
 }

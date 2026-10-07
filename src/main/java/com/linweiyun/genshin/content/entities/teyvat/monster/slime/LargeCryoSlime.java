@@ -1,14 +1,14 @@
 package com.linweiyun.genshin.content.entities.teyvat.monster.slime;
 
-import com.geckolib.animatable.GeoAnimatable;
-import com.geckolib.animatable.GeoEntity;
-import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animatable.manager.AnimatableManager;
-import com.geckolib.animation.AnimationController;
-import com.geckolib.animation.RawAnimation;
-import com.geckolib.animation.object.PlayState;
-import com.geckolib.animation.state.AnimationTest;
-import com.geckolib.util.GeckoLibUtil;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.util.GeckoLibUtil;
 import com.linweiyun.genshin.config.entity.MobBehaviorConfig;
 import com.linweiyun.genshin.content.entities.ai.control.WriggleMoveControl;
 import com.linweiyun.genshin.content.entities.ai.goal.ApproachTargetGoal;
@@ -37,7 +37,7 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.npc.villager.AbstractVillager;
+import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -86,9 +86,9 @@ public class LargeCryoSlime extends TeyvatMonster implements ElementalCreature, 
     /**
      * 破盾：把 {@code hat} 骨骼缩放成 0，等于不渲染它。播完停在最后一帧。
      *
-     * <p>GeckoLib 5 没有 {@code GeoBone.setHidden}（骨骼显隐由动画/渲染趟的
-     * {@code frameSnapshot} 决定），所以「隐藏一根骨骼」最省事、最稳的做法就是
-     * 用一段动画把它缩成 0 —— 不碰渲染器、不用改模型文件。
+     * <p>{@code GeoBone} 没有「隐藏」开关（骨骼显隐由动画/渲染趟的快照决定），
+     * 所以「隐藏一根骨骼」最省事、最稳的做法就是用一段动画把它缩成 0 ——
+     * 不碰渲染器、不用改模型文件。
      */
     private static final RawAnimation SHIELD_DOWN = RawAnimation.begin().thenPlayAndHold("shield.down");
 
@@ -316,11 +316,11 @@ public class LargeCryoSlime extends TeyvatMonster implements ElementalCreature, 
     /** 现有资源只有一条 {@code move.jump}，浮空时播它；盾没了再叠一层 {@code shield.down}。 */
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>("jump", 0, this::jumpingState));
-        controllers.add(new AnimationController<>("shield", 0, this::shieldState));
+        controllers.add(new AnimationController<>(this, "jump", 0, this::jumpingState));
+        controllers.add(new AnimationController<>(this, "shield", 0, this::shieldState));
     }
 
-    private PlayState jumpingState(AnimationTest<GeoAnimatable> test) {
+    private PlayState jumpingState(AnimationState<LargeCryoSlime> test) {
         if (!this.onGround()) {
             return test.setAndContinue(JUMPING);
         }
@@ -340,7 +340,7 @@ public class LargeCryoSlime extends TeyvatMonster implements ElementalCreature, 
      * 所以：第一帧只记录、不播；之后只在状态翻转时切到 {@code shield.down} / {@code shield.up}，
      * 两段动画都 {@code thenPlayAndHold}（停在最后一帧），谁也不用循环。
      */
-    private PlayState shieldState(AnimationTest<GeoAnimatable> test) {
+    private PlayState shieldState(AnimationState<LargeCryoSlime> test) {
         boolean shielded = this.hasShield();
         if (!this.shieldAnimInitialized) {
             this.shieldAnimInitialized = true;

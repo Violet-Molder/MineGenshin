@@ -124,7 +124,7 @@ public final class IceMistField {
             if (victim == field.caster || !victim.isAlive()) {
                 continue;
             }
-            victim.hurtServer(field.level, source, 0f);
+            victim.hurt(source, 0f);
         }
     }
 

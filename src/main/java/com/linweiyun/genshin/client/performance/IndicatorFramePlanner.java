@@ -3,7 +3,6 @@ package com.linweiyun.genshin.client.performance;
 import com.linweiyun.genshin.client.damage.DamageIndicator;
 import com.linweiyun.genshin.config.PerformanceConfig;
 import net.minecraft.client.gui.Font;
-import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -26,14 +25,14 @@ import java.util.List;
  * </ol>
  *
  * <p>整个过程复用同一批 {@link Entry} 与 {@link Matrix4f} 实例、相机参数都以接口传入，
- * <b>稳态下每帧零分配</b>（早先这里每帧都要新建一个相机朝向的 {@code Vec3}）。</p>
+ * <b>稳态下每帧零分配</b>。</p>
  *
  * <p>耗时与条数交给 {@link IndicatorPerfStats}，按 F3 可以直接看到这两项：
  * 规划本身是几十微秒量级，飘字的真实开销在顶点生产那边。</p>
  */
 public final class IndicatorFramePlanner {
 
-    /** 旧 HUD 的 scale 以 GUI 像素为单位，换算到世界空间按 1080p / 自动 GUI 尺度校准 */
+    /** 飘字 scale 以 GUI 像素为单位，换算到世界空间按 1080p / 自动 GUI 尺度校准 */
     public static final float GUI_PIXEL_TO_BLOCK = 0.0155f;
 
     /** 超过该距离不再提交几何（服务端广播半径 48，留足余量） */

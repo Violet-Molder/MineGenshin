@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.content.entities.misc;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
@@ -14,7 +16,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
@@ -22,8 +24,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +35,8 @@ import net.minecraft.core.particles.ParticleTypes;
  *
  * <h2>为什么不用 {@code Display.BlockDisplay}</h2>
  * 原版展示实体看起来最合适（自带 {@code Transformation} 旋转、自动同步），
- * 但 26.2 里 {@code Display#setTransformation} / {@code BlockDisplay#setBlockState}
- * <b>全是 private</b> —— 只能通过 {@code /summon} 的 NBT 配置，
+ * 但 {@code Display#setTransformation} / {@code BlockDisplay#setBlockState}
+ * <b>都是 private</b> —— 只能通过 {@code /summon} 的 NBT 配置，
  * 代码里既设不了方块也改不了旋转。所以走自定义实体 + 自定义渲染器。
  *
  * <h2>两个阶段</h2>
@@ -137,7 +137,7 @@ public class IceBlockProjectile extends Entity {
     @Nullable
     public static IceBlockProjectile create(Level level, LivingEntity caster, @Nullable LivingEntity target,
                                             float scale, int chargeTicks) {
-        IceBlockProjectile projectile = ModEntities.ICE_BLOCK.get().create(level, EntitySpawnReason.EVENT);
+        IceBlockProjectile projectile = ModEntities.ICE_BLOCK.get().create(level);
         if (projectile == null) {
             return null;
         }
@@ -196,16 +196,16 @@ public class IceBlockProjectile extends Entity {
 
     /** 投射物是瞬态的，不存档。 */
     @Override
-    protected void readAdditionalSaveData(ValueInput input) {
+    protected void readAdditionalSaveData(CompoundTag input) {
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput output) {
+    protected void addAdditionalSaveData(CompoundTag output) {
     }
 
     /** 打不掉：它不是可以被攻击的对象。 */
     @Override
-    public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 
@@ -327,7 +327,7 @@ public class IceBlockProjectile extends Entity {
             if (victim == this.caster || !victim.isAlive()) {
                 continue;
             }
-            victim.hurtServer(level, source, 0f);
+            victim.hurt(source, 0f);
         }
 
         this.discard();

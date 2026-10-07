@@ -34,7 +34,7 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -196,7 +196,7 @@ public class SwirlReaction extends ElementalReaction {
     }
 
     private boolean isSwirlable(GenshinElement element) {
-        Identifier key = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.getKey(element);
+        ResourceLocation key = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.getKey(element);
         return key != null && SWIRLABLE_IDS.contains(key.toString());
     }
 
@@ -247,9 +247,8 @@ public class SwirlReaction extends ElementalReaction {
     private void applySwirlDamage(ReactionContext ctx, GenshinElement spreadElement, LivingEntity target) {
         ModDamageSpec spec = ModDamageSpec.transformative(type(), spreadElement, AttackType.SWIRL);
         ModDamageSource source = ModDamageSource.from(spec, ctx.attackerEntity());
-        // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
         if (target.level() instanceof ServerLevel serverLevel) {
-            target.hurtServer(serverLevel, source, 0f);
+            target.hurt(source, 0f);
         }
         DamageIndicatorFactory.reaction(target, type());
     }
@@ -268,7 +267,7 @@ public class SwirlReaction extends ElementalReaction {
                 e -> e != target && e.isAlive() && target.distanceToSqr(e) <= rSq)) {
 
             ModDamageSource dmgSource = ModDamageSource.from(dmgSpec, ctx.attackerEntity());
-            nearby.hurtServer(level, dmgSource, 0f);
+            nearby.hurt(dmgSource, 0f);
             DamageIndicatorFactory.reaction(nearby, type());
 
             StatusContainer nearbyContainer = ElementalAttachments.container(nearby);

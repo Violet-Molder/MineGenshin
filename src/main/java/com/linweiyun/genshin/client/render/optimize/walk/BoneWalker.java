@@ -1,11 +1,10 @@
 package com.linweiyun.genshin.client.render.optimize.walk;
 
-import com.geckolib.animation.state.BoneSnapshot;
-import com.geckolib.cache.model.GeoBone;
-import com.geckolib.cache.model.GeoQuad;
-import com.geckolib.cache.model.GeoVertex;
-import com.geckolib.cache.model.cuboid.GeoCube;
-import com.geckolib.renderer.base.RenderPassInfo;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.cache.object.GeoCube;
+import software.bernie.geckolib.cache.object.GeoQuad;
+import software.bernie.geckolib.cache.object.GeoVertex;
+import software.bernie.geckolib.util.RenderUtil;
 import com.linweiyun.genshin.client.render.optimize.RenderOptimize;
 import com.linweiyun.genshin.client.render.optimize.geo.CompiledBone;
 import com.linweiyun.genshin.client.render.optimize.geo.CompiledGeoModel;
@@ -17,37 +16,30 @@ import org.joml.Vector4f;
 import org.jspecify.annotations.Nullable;
 
 /**
- * 骨骼遍历 + 顶点写出 —— GeckoLib {@code BakedGeoModel#render} 那条链的等价实现。
+ * 骨骼遍历 + 顶点写出：把 {@link CompiledGeoModel} 的几何按骨骼树顺序写进顶点缓冲。
  *
- * <h2>与原路径逐项对齐的地方</h2>
+ * <h2>输出与 GeckoLib 渲染链对齐的地方</h2>
  * <ol>
- *   <li><b>遍历顺序</b>：顶层骨骼顺序 → 每根骨骼「先自己、再子树」，与原版
- *       {@code positionAndRender} / {@code renderChildren} 一致，所以顶点写出的<b>顺序</b>不变；</li>
- *   <li><b>显隐</b>：{@code frameSnapshot.isHidden()} 跳过自己的几何、
- *       {@code areChildrenHidden()} 跳过子树，与 {@code CuboidGeoBone#render} /
- *       {@code GeoBone#renderChildren} 的判据一一对应；</li>
- *   <li><b>骨骼位姿</b>：动画位移 → 平移到自己轴心 → 基础旋转＋动画旋转（ZYX）→
- *       动画缩放 → 骨骼位置监听 → 平移回轴心。顺序与
- *       {@code RenderUtil#prepMatrixForBoneAndUpdateListeners} 完全相同；</li>
- *   <li><b>法线符号修正</b>：{@code fixInvertedFlatCube} 的三条判据照做，
- *       而且是在法线变换到世界空间之后才判 —— 与原版同一时机；</li>
+ *   <li><b>遍历顺序</b>：顶层骨骼顺序 → 每根骨骼「先自己、再子树」，即深度优先前序；</li>
+ *   <li><b>显隐</b>：{@code GeoBone#isHidden()} 跳过这根骨骼自己的几何，
+ *       {@code GeoBone#isHidingChildren()} 跳过它的子树；</li>
+ *   <li><b>骨骼位姿</b>：{@code RenderUtil#prepMatrixForBone} 的那一串顺序；</li>
+ *   <li><b>法线符号修正</b>：按 {@code RenderUtil#fixInvertedFlatCube} 的三条判据，
+ *       在法线变换到世界空间之后再判符号；</li>
  *   <li><b>顶点属性</b>：位置 / 颜色 / UV / UV1(overlay) / UV2(方块光) / 法线，
- *       走的是 {@code VertexConsumer} 的组合式 {@code addVertex}，与原版调用的是同一个方法。</li>
+ *       走 {@code VertexConsumer} 的组合式 {@code addVertex}。</li>
  * </ol>
  *
- * <h2>与原路径不同的地方（只有两处，都是刻意的）</h2>
+ * <h2>写法上刻意做的两件事</h2>
  * <ul>
  *   <li><b>cube 层不再进 PoseStack</b>：cube 的轴心平移与旋转在编译期已经折进顶点表
- *       （见 {@link CompiledBone}）。语义等价，浮点结合顺序不同，误差在 1e-6 量级；</li>
+ *       （见 {@link CompiledBone}），只有「预编译关掉」的兜底档才现场做；</li>
  *   <li><b>不再 new 临时向量</b>：顶点位置内联矩阵乘法算，法线用一个 float 三元组，
  *       旋转复用四元数（见 {@link Rotations}）。</li>
  * </ul>
  *
- * <h2>为什么递归而不是显式栈</h2>
- * 递归本身不产生堆分配，栈深等于骨骼树的深度（角色模型不到 10 层）；
- * 而「用深度槽位数组替代 PoseStack」这一步省下的只是几十字节的矩阵拷贝，
- * 却要让骨骼位置监听、{@code PerBoneRender} 这些依赖 PoseStack 的扩展点跟着改。
- * 热路径上真正贵的是那 1.1 万次堆分配，先把它干掉。
+ * <p>骨骼位姿直接读 {@code GeoBone} 自己的 pos / rot / scale：在本路径被调用之前，
+ * 动画与 {@code client.render.character.bones} 那一层的骨骼规则已经把这一帧的位姿写进去了。</p>
  */
 public final class BoneWalker {
 
@@ -58,17 +50,17 @@ public final class BoneWalker {
      * 把整个模型的几何写进顶点缓冲。
      *
      * @param poseStack 已经摆好「模型根位姿」的栈（调用方负责 push/set/pop）
-     * @param info      当前渲染趟的信息，用于派发骨骼位置监听；没有监听时传 {@code null} 也行
+     * @param info      渲染趟上下文占位；本实现不读取，可为 {@code null}
      * @param flags     {@link RenderOptimize} 的子项位掩码
      * @return 实际写出的顶点数（骨骼被隐藏时小于模型的顶点总数）
      */
-    public static int render(CompiledGeoModel model, PoseStack poseStack, @Nullable RenderPassInfo<?> info,
+    public static int render(CompiledGeoModel model, PoseStack poseStack, @Nullable Object info,
                              VertexConsumer sink, int packedLight, int packedOverlay, int renderColor,
                              int flags) {
         final CompiledBone[] roots = model.roots;
         int written = 0;
         for (int i = 0; i < roots.length; i++) {
-            written += walk(roots[i], poseStack, info, sink, packedLight, packedOverlay, renderColor, flags);
+            written += walk(roots[i], poseStack, sink, packedLight, packedOverlay, renderColor, flags);
         }
         return written;
     }
@@ -76,38 +68,31 @@ public final class BoneWalker {
     /**
      * 只写「{@code target} 及其子树」的几何 —— 骨骼挂点层要的「把那根骨骼从源模型里抠出来」。
      *
-     * <h2>为什么等价于「整模型隐藏 + 只开这一支」</h2>
-     * GeckoLib 的做法是给全树建 {@code BoneSnapshot} 并标记隐藏，再整模型渲染一次。
-     * 但「隐藏」只是让 {@code positionAndRender} 跳过几何，<b>祖先链的骨骼位姿照样逐级乘进
-     * PoseStack</b> —— 也就是说，目标骨骼最终拿到的矩阵是
+     * <h2>祖先链为什么必须照样摆</h2>
+     * 隐藏一棵骨骼只影响它的几何写不写，<b>不影响位姿</b>：目标骨骼最终拿到的矩阵是
      * {@code 模型根位姿 · Π(根→目标的每根祖先的 prepMatrixForBone)}，
      * 然后才在它自己的 {@code prepMatrixForBone} 里画自己的几何。
      *
      * <p>所以这里正是这么做的：先沿 {@link CompiledBone#pathFromRoot()} 把祖先链压栈并逐级
      * {@code prepBone}，再让 {@link #walk} 处理目标骨骼本身（它会自己做 push/prep/几何/子级/pop）。
-     * 路径是编译期常量，全程零递归查找、零 {@code BoneSnapshot} 分配，
-     * 也不再遍历 83 根骨骼去做隐藏标记。</p>
+     * 路径是编译期常量，这里不做递归查找、不分配快照，也不遍历整棵树去做隐藏标记。</p>
      *
-     * <p>祖先链上每一级的 prep 都带上 {@code info}，所以骨骼位置监听（若有）照旧被派发，
-     * 与 {@code RenderUtil#prepMatrixForBoneAndUpdateListeners} 的时机一致。</p>
-     *
+     * @param info 渲染趟上下文占位；本实现不读取，可为 {@code null}
      * @return 实际写出的顶点数
      */
     public static int renderBoneSubtree(CompiledBone target, PoseStack poseStack,
-                                        @Nullable RenderPassInfo<?> info, VertexConsumer sink,
+                                        @Nullable Object info, VertexConsumer sink,
                                         int packedLight, int packedOverlay, int renderColor, int flags) {
         final CompiledBone[] path = target.pathFromRoot();
-        final boolean reuseRotation = (flags & RenderOptimize.FLAG_ZERO_ALLOC_WALK) != 0;
 
         int pushed = 0;
         for (int i = 0; i < path.length - 1; i++) {
-            final CompiledBone node = path[i];
             poseStack.pushPose();
-            prepBone(poseStack, node.source, node.source.frameSnapshot, info, reuseRotation);
+            prepBone(poseStack, path[i].source);
             pushed++;
         }
 
-        final int written = walk(target, poseStack, info, sink, packedLight, packedOverlay, renderColor, flags);
+        final int written = walk(target, poseStack, sink, packedLight, packedOverlay, renderColor, flags);
 
         for (int i = 0; i < pushed; i++) {
             poseStack.popPose();
@@ -117,31 +102,26 @@ public final class BoneWalker {
 
     // ==================== 骨骼 ====================
 
-    private static int walk(CompiledBone bone, PoseStack poseStack, @Nullable RenderPassInfo<?> info,
+    private static int walk(CompiledBone bone, PoseStack poseStack,
                             VertexConsumer sink, int packedLight, int packedOverlay, int renderColor,
                             int flags) {
         final GeoBone source = bone.source;
-        final BoneSnapshot snapshot = source.frameSnapshot;
-
-        final boolean selfHidden = snapshot != null && snapshot.isHidden();
-        final boolean childrenHidden = snapshot != null && snapshot.areChildrenHidden();
 
         poseStack.pushPose();
-        prepBone(poseStack, source, snapshot, info,
-                (flags & RenderOptimize.FLAG_ZERO_ALLOC_WALK) != 0);
+        prepBone(poseStack, source);
 
         int written = 0;
-        if (!selfHidden) {
+        if (!source.isHidden()) {
             final boolean directVertex = (flags & RenderOptimize.FLAG_DIRECT_VERTEX) != 0;
             written = (flags & RenderOptimize.FLAG_GEO_PRECOMPILE) != 0
                     ? writePrecompiled(bone, poseStack, sink, packedLight, packedOverlay, renderColor, directVertex)
                     : writeLive(bone, poseStack, sink, packedLight, packedOverlay, renderColor, directVertex);
         }
 
-        if (!childrenHidden) {
+        if (!source.isHidingChildren()) {
             final CompiledBone[] children = bone.children;
             for (int i = 0; i < children.length; i++) {
-                written += walk(children[i], poseStack, info, sink, packedLight, packedOverlay, renderColor, flags);
+                written += walk(children[i], poseStack, sink, packedLight, packedOverlay, renderColor, flags);
             }
         }
 
@@ -152,40 +132,19 @@ public final class BoneWalker {
     /**
      * 把一根骨骼的位姿摆到 PoseStack 上。
      *
-     * <p>逐句对应 {@code RenderUtil#prepMatrixForBoneAndUpdateListeners}：
-     * 动画位移（{@code BoneSnapshot#translate}，内部已经是 {@code (-x/16, y/16, z/16)}）→
-     * 平移到轴心 → 旋转 → 动画缩放 → 通知监听者 → 平移回轴心。</p>
+     * <p>逐句对应 {@code RenderUtil#prepMatrixForBone}：
+     * 动画位移（{@code -posX/16, posY/16, posZ/16}）→ 平移到轴心 → 旋转（ZYX）→
+     * 缩放 → 平移回轴心。</p>
      *
      * <p>缩放刻意仍然走 {@code PoseStack.scale}：非均匀缩放会顺带把法线矩阵改成
      * 「乘 1/s 并标记不可信」，那是原版的语义，自己手写一遍只会引入偏差。</p>
      */
-    public static void prepBone(PoseStack poseStack, GeoBone bone, @Nullable BoneSnapshot snapshot,
-                                @Nullable RenderPassInfo<?> info, boolean reuseRotation) {
-        if (snapshot != null) {
-            snapshot.translate(poseStack);
-        }
-
-        bone.translateToPivotPoint(poseStack);
-
-        float xRot = bone.baseRotX();
-        float yRot = bone.baseRotY();
-        float zRot = bone.baseRotZ();
-        if (snapshot != null) {
-            xRot += snapshot.getRotX();
-            yRot += snapshot.getRotY();
-            zRot += snapshot.getRotZ();
-        }
-        Rotations.rotateZYX(poseStack, zRot, yRot, xRot, reuseRotation);
-
-        if (snapshot != null) {
-            snapshot.scale(poseStack);
-        }
-
-        if (info != null) {
-            bone.updateBonePositionListeners(poseStack, info);
-        }
-
-        bone.translateAwayFromPivotPoint(poseStack);
+    public static void prepBone(PoseStack poseStack, GeoBone bone) {
+        RenderUtil.translateMatrixToBone(poseStack, bone);
+        RenderUtil.translateToPivotPoint(poseStack, bone);
+        RenderUtil.rotateMatrixAroundBone(poseStack, bone);
+        RenderUtil.scaleMatrixForBone(poseStack, bone);
+        RenderUtil.translateAwayFromPivotPoint(poseStack, bone);
     }
 
     // ==================== 几何：预编译模式 ====================
@@ -199,7 +158,7 @@ public final class BoneWalker {
         }
 
         // 矩阵元素一律走 JOML 的访问器，不碰字段：字段可见性会随 joml 的版本与
-        // 打包方式变化（本仓库这一版就编不过），访问器才是稳定 API。
+        // 打包方式变化，访问器才是稳定 API。
         // 在循环外读一次到局部量，循环体里就只剩纯算术。
         final Matrix4f pose = poseStack.last().pose();
         final float p00 = pose.m00();
@@ -305,9 +264,9 @@ public final class BoneWalker {
             }
 
             poseStack.pushPose();
-            cube.translateToPivotPoint(poseStack);
-            cube.rotate(poseStack);
-            cube.translateAwayFromPivotPoint(poseStack);
+            RenderUtil.translateToPivotPoint(poseStack, cube);
+            RenderUtil.rotateMatrixAroundCube(poseStack, cube);
+            RenderUtil.translateAwayFromPivotPoint(poseStack, cube);
 
             final Matrix4f pose = poseStack.last().pose();
             final float p00 = pose.m00();
@@ -342,9 +301,9 @@ public final class BoneWalker {
                     continue;
                 }
 
-                final float nx = quad.normalX();
-                final float ny = quad.normalY();
-                final float nz = quad.normalZ();
+                final float nx = quad.normal().x();
+                final float ny = quad.normal().y();
+                final float nz = quad.normal().z();
 
                 // 与 writePrecompiled 同一套系数顺序（见那里的注释）
                 float wx = n00 * nx + n10 * ny + n20 * nz;
@@ -364,9 +323,9 @@ public final class BoneWalker {
                 final GeoVertex[] vertices = quad.vertices();
                 for (int k = 0; k < vertices.length; k++) {
                     final GeoVertex vertex = vertices[k];
-                    final float x = vertex.posX();
-                    final float y = vertex.posY();
-                    final float z = vertex.posZ();
+                    final float x = vertex.position().x();
+                    final float y = vertex.position().y();
+                    final float z = vertex.position().z();
                     final float u = vertex.texU();
                     final float v = vertex.texV();
 

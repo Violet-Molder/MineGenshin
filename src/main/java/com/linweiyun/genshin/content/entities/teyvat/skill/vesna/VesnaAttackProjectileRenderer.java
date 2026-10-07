@@ -2,30 +2,26 @@ package com.linweiyun.genshin.content.entities.teyvat.skill.vesna;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.state.ExperienceOrbRenderState;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 /**
  * 薇斯娜攻击投射物渲染器 —— 渲染成绿色经验球样式。
  */
-public class VesnaAttackProjectileRenderer extends EntityRenderer<VesnaAttackProjectile, ExperienceOrbRenderState> {
+public class VesnaAttackProjectileRenderer extends EntityRenderer<VesnaAttackProjectile> {
 
     /** 经验球纹理（使用原版经验球贴图） */
-    private static final Identifier ORB_TEXTURE =
-            Identifier.withDefaultNamespace("textures/entity/experience/experience_orb.png");
+    private static final ResourceLocation ORB_TEXTURE =
+            ResourceLocation.withDefaultNamespace("textures/entity/experience/experience_orb.png");
 
-    /** 渲染类型：半透明、可剔除、可被物品目标 */
-    private static final RenderType RENDER_TYPE =
-            RenderTypes.entityTranslucentCullItemTarget(ORB_TEXTURE);
+    /** 渲染类型：半透明、可剔除 */
+    private static final RenderType RENDER_TYPE = RenderType.itemEntityTranslucentCull(ORB_TEXTURE);
 
     /** 绿色经验球颜色（RGB: 0x00FF00） */
     private static final int GREEN_COLOR = 0x00FF00;
@@ -36,13 +32,6 @@ public class VesnaAttackProjectileRenderer extends EntityRenderer<VesnaAttackPro
         this.shadowStrength = 0.75F;
     }
 
-    /**
-     * 自定义渲染状态，携带颜色信息。
-     */
-    private static class ProjectileRenderState extends ExperienceOrbRenderState {
-        int orbColor = GREEN_COLOR;
-    }
-
     @Override
     protected int getBlockLightLevel(VesnaAttackProjectile entity, BlockPos blockPos) {
         // 经验球自带发光效果，+7亮度
@@ -50,38 +39,37 @@ public class VesnaAttackProjectileRenderer extends EntityRenderer<VesnaAttackPro
     }
 
     @Override
-    public void submit(ExperienceOrbRenderState state, PoseStack poseStack,
-                       SubmitNodeCollector collector, CameraRenderState camera) {
+    public void render(VesnaAttackProjectile entity, float entityYaw, float partialTicks, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
 
-        // 计算纹理UV坐标
-        int icon = state.icon;
+        // 计算纹理UV坐标：图标表 4×4，固定取左上角那一格
+        int icon = 0;
         float u0 = (icon % 4 * 16) / 64.0F;
         float u1 = u0 + 16.0F / 64.0F;
         float v0 = (icon / 4 * 16) / 64.0F;
         float v1 = v0 + 16.0F / 64.0F;
 
         // 获取颜色
-        int color = ((ProjectileRenderState) state).orbColor;
+        int color = GREEN_COLOR;
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
 
         // 变换矩阵：上移、面向相机、缩放
         poseStack.translate(0.0F, 0.1F, 0.0F);
-        poseStack.mulPose(camera.orientation);
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
         poseStack.scale(0.3F, 0.3F, 0.3F);
 
-        // 提交自定义几何体（四边形面片）
-        collector.submitCustomGeometry(poseStack, RENDER_TYPE, (pose, buffer) -> {
-            vertex(buffer, pose, -0.5F, -0.25F, r, g, b, u0, v1, state.lightCoords);
-            vertex(buffer, pose, 0.5F, -0.25F, r, g, b, u1, v1, state.lightCoords);
-            vertex(buffer, pose, 0.5F, 0.75F, r, g, b, u1, v0, state.lightCoords);
-            vertex(buffer, pose, -0.5F, 0.75F, r, g, b, u0, v0, state.lightCoords);
-        });
+        VertexConsumer buffer = bufferSource.getBuffer(RENDER_TYPE);
+        PoseStack.Pose pose = poseStack.last();
+        vertex(buffer, pose, -0.5F, -0.25F, r, g, b, u0, v1, packedLight);
+        vertex(buffer, pose, 0.5F, -0.25F, r, g, b, u1, v1, packedLight);
+        vertex(buffer, pose, 0.5F, 0.75F, r, g, b, u1, v0, packedLight);
+        vertex(buffer, pose, -0.5F, 0.75F, r, g, b, u0, v0, packedLight);
 
         poseStack.popPose();
-        super.submit(state, poseStack, collector, camera);
+        super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
     }
 
     /**
@@ -99,15 +87,7 @@ public class VesnaAttackProjectileRenderer extends EntityRenderer<VesnaAttackPro
     }
 
     @Override
-    public ExperienceOrbRenderState createRenderState() {
-        return new ProjectileRenderState();
-    }
-
-    @Override
-    public void extractRenderState(VesnaAttackProjectile entity, ExperienceOrbRenderState state,
-                                   float partialTicks) {
-        super.extractRenderState(entity, state, partialTicks);
-        // 设置固定绿色
-        ((ProjectileRenderState) state).orbColor = GREEN_COLOR;
+    public ResourceLocation getTextureLocation(VesnaAttackProjectile entity) {
+        return ORB_TEXTURE;
     }
 }

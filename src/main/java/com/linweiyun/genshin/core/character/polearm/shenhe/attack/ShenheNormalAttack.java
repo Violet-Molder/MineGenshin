@@ -70,11 +70,11 @@ public final class ShenheNormalAttack {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
 
                 // 收招段双倍结算
                 if (stage == 3) {
-                    target.hurtServer(serverLevel, source, 0f);
+                    target.hurt(source, 0f);
                 }
             }
         }

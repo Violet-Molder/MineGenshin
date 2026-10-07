@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.character;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterBoneVisibility;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterFaceBones;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterPropBones;
@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -35,7 +34,7 @@ import org.slf4j.Logger;
 public final class FirstPersonCharacterRenderer {
    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
    private static final String HEAD_BONE = "head";
-   private static final BoneUpdater<GeoRenderState> HIDE_HEAD = (renderPassInfo, snapshots) -> snapshots.ifPresent("head", head -> {
+   private static final BoneUpdater<BoneRenderState> HIDE_HEAD = (renderPassInfo, snapshots) -> snapshots.ifPresent("head", head -> {
       head.skipRender(true);
       head.skipChildrenRender(true);
    });
@@ -99,15 +98,12 @@ public final class FirstPersonCharacterRenderer {
          if (camera.roll() != 0.0F) {
             poseStack.mulPose(Axis.ZP.rotationDegrees(camera.roll()));
          }
-
-         CameraRenderState cameraState = Minecraft.getInstance().gameRenderer.gameRenderState().levelRenderState.cameraRenderState;
          target.renderer()
             .performRenderPass(
                target.animatable(),
                player,
                poseStack,
-               event.getSubmitNodeCollector(),
-               cameraState,
+               event.getMultiBufferSource(),
                event.getPackedLight(),
                event.getPartialTick(),
                CharacterRenderDispatcher.combine(

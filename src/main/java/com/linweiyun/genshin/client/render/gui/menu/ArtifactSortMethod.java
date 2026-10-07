@@ -2,8 +2,7 @@ package com.linweiyun.genshin.client.render.gui.menu;
 
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 import java.util.Comparator;
 
@@ -64,7 +63,7 @@ public enum ArtifactSortMethod {
      * level                        等级
      * setId                        套装编号
      * typeOrdinal                  部位序数 0=花 1=羽 2=沙 3=杯 4=冠
-     * handler                      该物品所在容器的 ResourceHandler
+     * handler                      该物品所在容器的物品槽
      * containerSlot                该物品在所属容器内的索引
      * key                          稳定标识，用于在多次刷新之间保持选中状态
      * equippedByCharacterName      装备该圣遗物的角色显示名；未装备时为 null
@@ -73,7 +72,7 @@ public enum ArtifactSortMethod {
     public record Entry(ItemStack stack, int globalSlot, boolean equipped,
                         boolean activated,
                         int star, int level, int setId, int typeOrdinal,
-                        ResourceHandler<ItemResource> handler, int containerSlot,
+                        IItemHandlerModifiable handler, int containerSlot,
                         String key,
                         String equippedByCharacterName,
                         String equippedByCharacterTextureId) {}

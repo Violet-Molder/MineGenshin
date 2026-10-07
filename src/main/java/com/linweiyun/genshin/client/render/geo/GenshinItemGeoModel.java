@@ -1,11 +1,10 @@
 package com.linweiyun.genshin.client.render.geo;
 
-import com.geckolib.animatable.GeoAnimatable;
-import com.geckolib.renderer.base.GeoRenderState;
+import software.bernie.geckolib.animatable.GeoAnimatable;
 import com.linweiyun.genshin.asset.GenshinAssets;
 import com.linweiyun.genshin.asset.GeoAssetKind;
 import com.linweiyun.genshin.asset.GeoPathOverrides;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * MOD 自己的 GeckoLib <b>物品</b>模型基类 —— 路径按 {@code item/<物品名>/<物品名>.*} 推。
@@ -20,9 +19,9 @@ import net.minecraft.resources.Identifier;
  */
 public abstract class GenshinItemGeoModel<T extends GeoAnimatable> extends GenshinGeoModel<T> {
 
-    private final Identifier modelId;
-    private final Identifier textureId;
-    private final Identifier animationId;
+    private final ResourceLocation modelId;
+    private final ResourceLocation textureId;
+    private final ResourceLocation animationId;
 
     /**
      * @param itemName 物品名（注册名去掉命名空间），如 {@code test_sword}
@@ -35,19 +34,19 @@ public abstract class GenshinItemGeoModel<T extends GeoAnimatable> extends Gensh
     }
 
     @Override
-    public Identifier getModelResource(GeoRenderState renderState) {
+    public ResourceLocation getModelResource(T animatable) {
         return GeoPathOverrides.resolve(
                 GeoAssetKind.MODEL, this, modelId);
     }
 
     @Override
-    public Identifier getTextureResource(GeoRenderState renderState) {
+    public ResourceLocation getTextureResource(T animatable) {
         return GeoPathOverrides.resolve(
                 GeoAssetKind.TEXTURE, this, textureId);
     }
 
     @Override
-    public Identifier getAnimationResource(T animatable) {
+    public ResourceLocation getAnimationResource(T animatable) {
         return GeoPathOverrides.resolve(
                 GeoAssetKind.ANIMATION, this, animationId);
     }

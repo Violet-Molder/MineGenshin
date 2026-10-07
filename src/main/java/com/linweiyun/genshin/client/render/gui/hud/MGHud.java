@@ -30,7 +30,7 @@ import dev.vfyjxf.taffy.style.TaffyDirection;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -58,7 +58,7 @@ public class MGHud {
         event.registerAbove(
                 VanillaGuiLayers.HOTBAR,
                 Minegenshin.id("genshin_bottom_hud"),
-                (GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) ->
+                (GuiGraphics graphics, DeltaTracker deltaTracker) ->
                         GenshinBottomHud.render(graphics));
         HudLayerOverride.onRegisterGuiLayers(event);
     }

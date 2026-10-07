@@ -13,22 +13,14 @@ import org.jspecify.annotations.Nullable;
  *   <li>{@code walk}：这些渲染里「骨骼遍历 + 写顶点」的 CPU 时间合计；
  *       不含 GeckoLib 的动画求值（那部分在 {@code renderPosed} 之前就做完了）；</li>
  *   <li>{@code v}：实际写进顶点缓冲的顶点数（骨骼被隐藏时会小于模型顶点总数）；</li>
- *   <li>{@code gpu}：这些渲染里有几次走的是 GPU 蒙皮（顶点常驻显存、每帧只上传骨骼矩阵）。
- *       它的 CPU 时间只有「算骨骼调色板」那一段，所以同样并进 {@code walk} ——
- *       这样同一条读数就能直接对比 CPU 蒙皮与 GPU 蒙皮的每模型开销；</li>
+ *   <li>{@code gpu}：这些渲染里有几次走的是 GPU 蒙皮（由 {@link #recordGpu} 累计，
+ *       没有调用时恒为 0）；</li>
  *   <li>{@code us/model}：单个模型平摊下来多少微秒，多角色场景下看这个更直观；</li>
  *   <li>{@code (x.x% of frame)}：{@code walk} 占一帧总时间的百分比。
  *       绝对微秒数会随场景规模一起变，占比才是能横向比的东西 —— 帧时间取自
  *       {@link FrameTimeStats}（每个 {@code FlipFrameEvent} 采一次）；</li>
- *   <li>{@code gpu}：本模组这批 GPU 蒙皮绘制在 GPU 上占的时间轴跨度
- *       （{@link com.linweiyun.genshin.client.render.optimize.gpu.SkinnedGpuTimer}）。
- *       它才是「顶点搬到显存之后 GPU 有没有变贵」的答案，{@code walk} 只说明 CPU 省了多少。
- *       设备不支持时间戳查询时这一栏整体不显示；</li>
- *   <li>{@code gpu off (原因)}：这一帧走了优化路径，但 GPU 蒙皮被环境挡下了
- *       （{@code shader pack} = 光影包正在生效，{@code vertex format} = 管线被外部改过）。
- *       两者都会让 GPU 路径自带的顶点格式与运行时实际使用的布局对不上，
- *       所以自动让位给 CPU 蒙皮 —— 见
- *       {@link com.linweiyun.genshin.client.render.optimize.gpu.SkinnedPipelineGuard}；</li>
+ *   <li>{@code gpu off (原因)}：GPU 蒙皮被环境挡下的原因（光影包 / 管线被外部改过）。
+ *       原因传 {@code null} 时这一栏不显示；</li>
  *   <li>{@code fallback}：本窗口里因为「编译不了」而回退 GeckoLib 原路径的次数，
  *       正常应恒为 0。</li>
  * </ul>

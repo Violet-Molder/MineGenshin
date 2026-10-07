@@ -2,7 +2,7 @@ package com.linweiyun.genshin.core.system.combat.action.data;
 
 
 import com.linweiyun.genshin.core.character.PGCharacter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ import java.util.function.Function;
  *   <li>{@link #fixed(ItemStack)} —— 写死一个物品</li>
  *   <li>{@link #of(Function)} —— 自定义逻辑（读配置、读别的实体……）</li>
  *   <li>{@link #weaponSubBone(String)} —— <b>武器槽物品的某一根骨骼</b>（拆剑身/剑鞘用）</li>
- *   <li>{@link #subModel(Identifier, Identifier, String)} —— 任意 geo 模型的一根骨骼</li>
+ *   <li>{@link #subModel(ResourceLocation, ResourceLocation, String)} —— 任意 geo 模型的一根骨骼</li>
  * </ul>
  *
  * <p>返回 {@code null} 或 {@link BoneMountContent#isEmpty()} 表示这次不挂东西：
@@ -95,7 +95,7 @@ public interface BoneMountSource {
      * @param textureId  贴图 id，如 {@code minegenshin:textures/item/test_sword.png}
      * @param sourceBone 取哪根骨骼
      */
-    static BoneMountSource subModel(Identifier modelId, Identifier textureId, String sourceBone) {
+    static BoneMountSource subModel(ResourceLocation modelId, ResourceLocation textureId, String sourceBone) {
         BoneMountContent content = BoneMountContent.model(modelId, textureId, sourceBone);
         return (player, character) -> content;
     }

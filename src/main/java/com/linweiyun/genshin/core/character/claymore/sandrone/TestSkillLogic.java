@@ -19,7 +19,7 @@ import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -68,9 +68,9 @@ final class TestSkillLogic {
                         .build();
                 ModDamageSource source = ModDamageSource.from(spec, player);
                 if (target.level() instanceof ServerLevel serverLevel) {
-                    target.hurtServer(serverLevel, source, 0f);
+                    target.hurt(source, 0f);
                     if (stage == maxCombo()) {
-                        target.hurtServer(serverLevel, source, 0f);
+                        target.hurt(source, 0f);
                     }
                 }
             }
@@ -106,7 +106,7 @@ final class TestSkillLogic {
                         .build();
                 ModDamageSource source = ModDamageSource.from(spec, player);
                 if (hitEntity.level() instanceof ServerLevel serverLevel) {
-                    hitEntity.hurtServer(serverLevel, source, 0f);
+                    hitEntity.hurt(source, 0f);
                 }
             });
 
@@ -134,7 +134,7 @@ final class TestSkillLogic {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
 
@@ -166,7 +166,7 @@ final class TestSkillLogic {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
 
@@ -175,7 +175,7 @@ final class TestSkillLogic {
         PGCharacter currentChar = attachment.getCurrentCharacter();
 
         TalismanSpiritArea field = ModEntities.FIELD_TALISMAN_SPIRIT.get()
-                .create(level, EntitySpawnReason.EVENT);
+                .create(level);
         if (field != null) {
             field.setPos(player.position());
             if (currentChar != null) {

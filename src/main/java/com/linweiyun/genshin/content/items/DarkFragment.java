@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,15 +25,16 @@ public class DarkFragment extends Item {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
-        if (level.isClientSide()) return InteractionResult.SUCCESS;
-        if (!(level instanceof ServerLevel serverLevel)) return InteractionResult.SUCCESS;
-        if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.SUCCESS;
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+        ItemStack heldStack = player.getItemInHand(hand);
+        if (level.isClientSide()) return InteractionResultHolder.success(heldStack);
+        if (!(level instanceof ServerLevel serverLevel)) return InteractionResultHolder.success(heldStack);
+        if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResultHolder.success(heldStack);
 
         TeyvatWorldInvasion invasion = TeyvatWorldInvasion.get(serverLevel);
         if (invasion.isInvaded()) {
             serverPlayer.sendSystemMessage(Component.translatable("message.minegenshin.world_already_invaded"));
-            return InteractionResult.FAIL;
+            return InteractionResultHolder.fail(heldStack);
         }
 
         invasion.setInvaded(true);
@@ -51,13 +52,12 @@ public class DarkFragment extends Item {
             playerData.syncToPlayer(serverPlayer);
         }
 
-        ItemStack stack = player.getItemInHand(hand);
-        stack.shrink(1);
+        heldStack.shrink(1);
 
         serverPlayer.sendSystemMessage(Component.translatable("message.minegenshin.world_invasion_activated"));
         serverLevel.getServer().getPlayerList().broadcastSystemMessage(
                 Component.translatable("message.minegenshin.world_invasion_broadcast"), false);
 
-        return InteractionResult.CONSUME;
+        return InteractionResultHolder.consume(heldStack);
     }
 }

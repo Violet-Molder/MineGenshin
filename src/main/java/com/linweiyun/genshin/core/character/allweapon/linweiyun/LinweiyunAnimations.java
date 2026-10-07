@@ -6,7 +6,7 @@ import com.linweiyun.genshin.core.character.allweapon.AllWeaponCharacter;
 import com.linweiyun.genshin.core.character.util.appearance.WeaponAppearance;
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
 import com.linweiyun.genshin.core.system.combat.animation.config.LocomotionAnims;
-import com.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.RawAnimation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 

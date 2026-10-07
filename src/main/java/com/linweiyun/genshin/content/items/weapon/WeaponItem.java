@@ -15,7 +15,7 @@ import com.linweiyun.elementlib.core.system.about.ElementalAttachmentHelper;
 import com.linweiyun.genshin.core.system.combat.action.ActionKind;
 import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
-import java.util.function.Consumer;
+import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
@@ -25,7 +25,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Item.Properties;
 import net.minecraft.world.item.Item.TooltipContext;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class WeaponItem extends TeyvatItem {
@@ -158,21 +157,21 @@ public class WeaponItem extends TeyvatItem {
       };
    }
 
-   public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
+   public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> builder, TooltipFlag flag) {
       WeaponStatsComponent stats = this.getOrInitStats(stack);
-      builder.accept(Component.literal("★".repeat(this.star)).withStyle(ChatFormatting.GOLD));
+      builder.add(Component.literal("★".repeat(this.star)).withStyle(ChatFormatting.GOLD));
       if (stats.refinementRank > 1) {
-         builder.accept(Component.translatable("item.minegenshin.weapon.refinement_rank", new Object[]{stats.refinementRank}).withStyle(ChatFormatting.AQUA));
+         builder.add(Component.translatable("item.minegenshin.weapon.refinement_rank", new Object[]{stats.refinementRank}).withStyle(ChatFormatting.AQUA));
       }
 
       if (stats.mainStat != null && stats.mainStat.isInitialized()) {
          ChatFormatting starColor = this.getStarColor();
-         builder.accept(Component.literal(this.buildStatText(stats.mainStat)).withStyle(new ChatFormatting[]{starColor, ChatFormatting.BOLD}));
+         builder.add(Component.literal(this.buildStatText(stats.mainStat)).withStyle(new ChatFormatting[]{starColor, ChatFormatting.BOLD}));
       }
 
       if (stats.subStat != null && stats.subStat.isInitialized()) {
-         builder.accept(Component.empty());
-         builder.accept(Component.literal(this.buildStatText(stats.subStat)).withStyle(ChatFormatting.GRAY));
+         builder.add(Component.empty());
+         builder.add(Component.literal(this.buildStatText(stats.subStat)).withStyle(ChatFormatting.GRAY));
       }
    }
 

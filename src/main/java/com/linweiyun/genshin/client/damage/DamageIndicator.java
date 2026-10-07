@@ -5,7 +5,6 @@ import com.linweiyun.genshin.client.performance.IndicatorGlyphCache;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.locale.Language;
-import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -127,10 +126,10 @@ public class DamageIndicator {
     /**
      * 把这一帧渲染要用的量<b>一次算完</b>写进规划条目：相机相对位置、缩放、透明度。
      *
-     * <p>这是渲染热路径上每帧每飘字都要走的唯一一段动画计算。过去拆成
-     * {@code getCurrentPosition()} + {@code getScale()} + {@code getAlpha()} 三次调用，
-     * 就对应三次 {@code System.currentTimeMillis()} 和两三个临时 {@link Vec3}；
-     * 现在一批飘字共用一个 {@code now}，结果直接落到条目字段（连坐标都用 float 存）。</p>
+     * <p>这是渲染热路径上每帧每飘字都要走的唯一一段动画计算：一批飘字共用一个 {@code now}，
+     * 结果直接落到条目字段（连坐标都用 float 存），不必再分别调用
+     * {@code getCurrentPosition()} / {@code getScale()} / {@code getAlpha()}
+     * 去各取一次时钟、各建一个临时 {@link Vec3}。</p>
      *
      * @param now  本帧统一的时间戳（毫秒）
      * @param camX 相机位置（世界空间，用来算相对坐标）
@@ -152,7 +151,12 @@ public class DamageIndicator {
 
         float alpha = getAlpha(now);
         out.alpha = alpha;
-        out.alpha8 = ARGB.as8BitChannel(Math.min(1f, alpha));
+        out.alpha8 = to8BitChannel(Math.min(1f, alpha));
+    }
+
+    /** 0~1 的透明度换算成 0~255 的通道值。 */
+    private static int to8BitChannel(float value) {
+        return Math.max(0, Math.min(255, (int)(value * 255.0f + 0.5f)));
     }
 
     /** lifetimeMs 为 0（配置写坏）时不至于除以 0 得到 NaN */

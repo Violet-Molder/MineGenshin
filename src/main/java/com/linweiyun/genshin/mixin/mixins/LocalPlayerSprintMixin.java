@@ -1,42 +1,38 @@
-// restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
-// the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.mixin.mixins;
 
-import net.minecraft.client.player.ClientInput;
+import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.player.Input;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+/**
+ * 疾跑不再要求「朝前」：只要移动向量非零，就当作可以起跑 / 可以保持疾跑。
+ *
+ * <p>替掉两处 {@code Input#hasForwardImpulse()} 判断：一处是 {@code aiStep} 里
+ * 「保持疾跑」的判据，一处是 {@code hasEnoughImpulseToStartSprinting} 里
+ * 「能不能起跑」的判据。两处都换成 {@link #minegenshin$isMoving(Input)}，
+ * 于是横向、后退移动也能进入并保持疾跑。</p>
+ */
 @Mixin(LocalPlayer.class)
 public abstract class LocalPlayerSprintMixin {
-   @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
-   private boolean minegenshin$sprintWindowAcceptsAnyDirection(ClientInput input) {
-      return minegenshin$isMoving(input);
-   }
 
-   @Redirect(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
-   private boolean minegenshin$canStartSprintingInAnyDirection(ClientInput input) {
-      return minegenshin$isMoving(input);
-   }
+    /** {@code aiStep} 里的「保持疾跑」判据。 */
+    @Redirect(method = "aiStep",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/Input;hasForwardImpulse()Z"))
+    private boolean minegenshin$keepSprintingInAnyDirection(Input input) {
+        return minegenshin$isMoving(input);
+    }
 
-   @Redirect(method = "shouldStopRunSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
-   private boolean minegenshin$keepRunSprintingInAnyDirection(ClientInput input) {
-      return minegenshin$isMoving(input);
-   }
+    /** {@code hasEnoughImpulseToStartSprinting} 里的「能不能起跑」判据。 */
+    @Redirect(method = "hasEnoughImpulseToStartSprinting",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/Input;hasForwardImpulse()Z"))
+    private boolean minegenshin$startSprintingInAnyDirection(Input input) {
+        return minegenshin$isMoving(input);
+    }
 
-   @Redirect(method = "shouldStopSwimSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/ClientInput;hasForwardImpulse()Z"))
-   private boolean minegenshin$keepSwimSprintingInAnyDirection(ClientInput input) {
-      return minegenshin$isMoving(input);
-   }
-
-   @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Input;backward()Z"))
-   private boolean minegenshin$backwardKeepsSprintWindow(Input input) {
-      return false;
-   }
-
-   private static boolean minegenshin$isMoving(ClientInput input) {
-      return input.getMoveVector().lengthSquared() > 0.0F;
-   }
+    /** 本帧有没有位移输入。 */
+    private static boolean minegenshin$isMoving(Input input) {
+        return input.getMoveVector().lengthSquared() > 0.0F;
+    }
 }

@@ -85,7 +85,7 @@ public final class RaidenShogunElementalSkill {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
 
@@ -119,7 +119,7 @@ public final class RaidenShogunElementalSkill {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
 

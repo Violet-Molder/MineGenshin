@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MultiPackResourceManager.class)
 public class MultiPackResourceManagerBundleMixin {
    @Inject(method = "getResource", at = @At("HEAD"), cancellable = true)
-   private void minegenshin$bundleResource(Identifier location, CallbackInfoReturnable<Optional<Resource>> cir) {
+   private void minegenshin$bundleResource(ResourceLocation location, CallbackInfoReturnable<Optional<Resource>> cir) {
       Resource bundled = GeoPackResources.resolve(this.minegenshin$manager(), location);
       if (bundled != null) {
          cir.setReturnValue(Optional.of(bundled));
@@ -28,7 +28,7 @@ public class MultiPackResourceManagerBundleMixin {
    }
 
    @Inject(method = "getResourceStack", at = @At("HEAD"), cancellable = true)
-   private void minegenshin$bundleResourceStack(Identifier location, CallbackInfoReturnable<List<Resource>> cir) {
+   private void minegenshin$bundleResourceStack(ResourceLocation location, CallbackInfoReturnable<List<Resource>> cir) {
       Resource bundled = GeoPackResources.resolve(this.minegenshin$manager(), location);
       if (bundled != null) {
          cir.setReturnValue(List.of(bundled));
@@ -36,10 +36,10 @@ public class MultiPackResourceManagerBundleMixin {
    }
 
    @Inject(method = "listResources", at = @At("RETURN"), cancellable = true)
-   private void minegenshin$bundleListResources(String directory, Predicate<Identifier> filter, CallbackInfoReturnable<Map<Identifier, Resource>> cir) {
-      Map<Identifier, Resource> bundled = GeoPackResources.under(this.minegenshin$manager(), directory, filter);
+   private void minegenshin$bundleListResources(String directory, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Map<ResourceLocation, Resource>> cir) {
+      Map<ResourceLocation, Resource> bundled = GeoPackResources.under(this.minegenshin$manager(), directory, filter);
       if (!bundled.isEmpty()) {
-         Map<Identifier, Resource> merged = new LinkedHashMap<>((Map<? extends Identifier, ? extends Resource>)cir.getReturnValue());
+         Map<ResourceLocation, Resource> merged = new LinkedHashMap<>((Map<? extends ResourceLocation, ? extends Resource>)cir.getReturnValue());
          bundled.forEach(merged::putIfAbsent);
          cir.setReturnValue(merged);
       }
@@ -47,11 +47,11 @@ public class MultiPackResourceManagerBundleMixin {
 
    @Inject(method = "listResourceStacks", at = @At("RETURN"), cancellable = true)
    private void minegenshin$bundleListResourceStacks(
-      String directory, Predicate<Identifier> filter, CallbackInfoReturnable<Map<Identifier, List<Resource>>> cir
+      String directory, Predicate<ResourceLocation> filter, CallbackInfoReturnable<Map<ResourceLocation, List<Resource>>> cir
    ) {
-      Map<Identifier, Resource> bundled = GeoPackResources.under(this.minegenshin$manager(), directory, filter);
+      Map<ResourceLocation, Resource> bundled = GeoPackResources.under(this.minegenshin$manager(), directory, filter);
       if (!bundled.isEmpty()) {
-         Map<Identifier, List<Resource>> merged = new LinkedHashMap<>((Map<? extends Identifier, ? extends List<Resource>>)cir.getReturnValue());
+         Map<ResourceLocation, List<Resource>> merged = new LinkedHashMap<>((Map<? extends ResourceLocation, ? extends List<Resource>>)cir.getReturnValue());
          bundled.forEach((location, resource) -> merged.putIfAbsent(location, List.of(resource)));
          cir.setReturnValue(merged);
       }

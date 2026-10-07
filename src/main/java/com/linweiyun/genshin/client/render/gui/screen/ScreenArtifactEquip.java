@@ -1,5 +1,3 @@
-// restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
-// the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.gui.screen;
 
 import com.linweiyun.genshin.content.items.artifact.ArtifactItem;
@@ -22,7 +20,6 @@ import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
-import com.lowdragmc.lowdraglib2.gui.ui.ModularUIClientAccess;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Button;
@@ -36,7 +33,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
@@ -63,8 +60,8 @@ public class ScreenArtifactEquip extends Screen {
 
    public void init() {
       super.init();
-      ModularUIClientAccess.setScreenAndInit(this.modularUI, this);
-      this.addRenderableWidget(ModularUIClientAccess.getWidget(this.modularUI));
+      this.modularUI.setScreenAndInit(this);
+      this.addRenderableWidget(this.modularUI.getWidget());
       LOG.info("ScreenArtifactEquip init() → LDLib2 UI已注册");
    }
 
@@ -98,7 +95,7 @@ public class ScreenArtifactEquip extends Screen {
    }
 
    public static ModularUI createModularUI(Player player, int slotIndex) {
-      Stylesheet ss = StylesheetManager.INSTANCE.getStylesheetSafe(Identifier.parse("minegenshin:lss/artifact_equip.lss"));
+      Stylesheet ss = StylesheetManager.INSTANCE.getStylesheetSafe(ResourceLocation.parse("minegenshin:lss/artifact_equip.lss"));
       PlayerCharactersAttachment ca = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
       PGCharacter cc = ca.getCurrentCharacter();
       UIElement root = new UIElement().setId("root");

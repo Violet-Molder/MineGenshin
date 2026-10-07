@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.client.combat;
 
 import com.linweiyun.genshin.Minegenshin;
+import com.linweiyun.genshin.client.combat.state.ActionInputFreeze;
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
@@ -8,7 +9,6 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.flight.GenshinFlight;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -163,7 +163,7 @@ public final class GenshinFlightController {
         if (!windingUp || !(event.getEntity() instanceof LocalPlayer)) {
             return;
         }
-        event.getInput().keyPresses = Input.EMPTY;
+        ActionInputFreeze.clear(event.getInput());
     }
 
     // ==================== 前摇 ====================

@@ -6,7 +6,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.EntityLootSubProvider;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -44,9 +44,9 @@ public class ModEntityLootSubProvider extends EntityLootSubProvider {
 
   @Override
   protected void add(EntityType<?> entityType, LootTable.Builder builder) {
-    Identifier entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
-    Identifier lootTableId =
-            Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "entities/" + entityId.getPath());
+    ResourceLocation entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entityType);
+    ResourceLocation lootTableId =
+            ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "entities/" + entityId.getPath());
     output.accept(ResourceKey.create(Registries.LOOT_TABLE, lootTableId), builder);
   }
 

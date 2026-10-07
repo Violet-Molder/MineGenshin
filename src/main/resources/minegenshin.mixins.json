@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.linweiyun.genshin.mixin.mixins",
-  "compatibilityLevel": "JAVA_25",
+  "compatibilityLevel": "JAVA_21",
   "plugin": "com.linweiyun.genshin.mixin.MixinConfig",
   "mixins": [
     "AccessorRangedAttribute",
@@ -25,10 +25,8 @@
     "RavagerActionMixin"
   ],
   "client": [
-    "AvatarRendererMixin",
     "CameraTypeMixin",
     "EntityTurnMixin",
-    "GeoRendererSubmitTasksMixin",
     "LivingEntityTickHeadTurnMixin",
     "LocalPlayerSprintMixin",
     "RenderPassScissorGuardMixin",

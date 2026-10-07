@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.character.appearance;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.combat.state.AnimationStateSync;
 import com.linweiyun.genshin.core.character.polearm.shenhe.ShenheResources;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -53,7 +53,7 @@ public final class CharacterPropBones {
       return player != null && ShenheResources.TEA_ANIMATIONS.contains(AnimationStateSync.stateOf(player));
    }
 
-   public static BoneUpdater<GeoRenderState> updaterFor(@Nullable Player player) {
+   public static BoneUpdater<BoneRenderState> updaterFor(@Nullable Player player) {
       boolean mount = showMount(player);
       boolean fjo = showFjo(player);
       boolean screen = showScreen(player);
@@ -90,11 +90,11 @@ public final class CharacterPropBones {
       }
    }
 
-   public static BoneUpdater<GeoRenderState> hideAllUpdater() {
+   public static BoneUpdater<BoneRenderState> hideAllUpdater() {
       return makeUpdater(PROP_BONES);
    }
 
-   private static BoneUpdater<GeoRenderState> makeUpdater(List<String> hidden) {
+   private static BoneUpdater<BoneRenderState> makeUpdater(List<String> hidden) {
       return (renderPassInfo, snapshots) -> {
          for (String bone : hidden) {
             snapshots.ifPresent(bone, snapshot -> {

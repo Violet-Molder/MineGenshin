@@ -1,10 +1,8 @@
 package com.linweiyun.genshin.client.render.geo;
 
-import com.geckolib.cache.GeckoLibResources;
-import com.geckolib.cache.animation.Animation;
-import com.geckolib.cache.animation.BakedAnimations;
-import com.geckolib.cache.model.BakedGeoModel;
-import com.geckolib.loading.math.MathParser;
+import software.bernie.geckolib.animation.Animation;
+import software.bernie.geckolib.loading.object.BakedAnimations;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.asset.GenshinAssets;
 import com.linweiyun.genshin.asset.ModAssetPaths;
@@ -12,12 +10,15 @@ import com.linweiyun.genshin.asset.pack.GeoPackSource;
 import com.linweiyun.genshin.asset.pack.GenshinGsonLoader;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
+import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
+import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -29,6 +30,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 本 MOD 自己的 GeckoLib 资源缓存（模型 + 动画）。
@@ -70,11 +73,16 @@ public final class GenshinGeoCache implements PreparableReloadListener {
     private static final String MODEL_SUFFIX = ".geo.json";
     private static final String ANIMATION_SUFFIX = ".animation.json";
 
-    /** 烘培好的模型：键是剥掉前缀后缀的资源路径（与 GeckoLib 的缓存键一致）。 */
-    private static volatile Map<Identifier, BakedGeoModel> models = Map.of();
+    /** 剥掉 {@code geckolib/models|animations/} 这一段目录前缀。 */
+    private static final Pattern PREFIX_STRIPPER = Pattern.compile("^(geckolib/)((animations/)|(models/))?");
+    /** 剥掉 {@code .geo.json} / {@code .animation.json} / {@code .json} 后缀。 */
+    private static final Pattern SUFFIX_STRIPPER = Pattern.compile("((\\.geo)|((\\.animation)s?))?(\\.json)$");
+
+    /** 烘培好的模型：键是剥掉前缀后缀的资源路径。 */
+    private static volatile Map<ResourceLocation, BakedGeoModel> models = Map.of();
 
     /** 烘培好的动画文件：键同上，值是整个文件。 */
-    private static volatile Map<Identifier, BakedAnimations> animations = Map.of();
+    private static volatile Map<ResourceLocation, BakedAnimations> animations = Map.of();
 
     /**
      * 重载监听器有没有跑过。
@@ -91,17 +99,18 @@ public final class GenshinGeoCache implements PreparableReloadListener {
 
     /** @return 我们自己烘的模型；没有就返回 null（调用方回落到 GeckoLib 的缓存） */
     @Nullable
-    public static BakedGeoModel model(Identifier location) {
+    public static BakedGeoModel model(ResourceLocation location) {
         if (location == null) {
             return null;
         }
         ensureLoaded();
-        return models.get(location);
+        BakedGeoModel found = models.get(location);
+        return found != null ? found : models.get(stripPrefixAndSuffix(location));
     }
 
     /** 从我们自己的动画文件里取一条动画。 */
     @Nullable
-    public static Animation animation(Identifier animationFile, String name) {
+    public static Animation animation(ResourceLocation animationFile, String name) {
         BakedAnimations baked = animationFile(animationFile);
         return baked == null || name == null ? null : baked.getAnimation(name);
     }
@@ -115,12 +124,12 @@ public final class GenshinGeoCache implements PreparableReloadListener {
      * @param fallbacks 回退文件；传 null 或空数组表示只查主文件
      */
     @Nullable
-    public static Animation animation(Identifier animationFile, @Nullable Identifier[] fallbacks, String name) {
+    public static Animation animation(ResourceLocation animationFile, @Nullable ResourceLocation[] fallbacks, String name) {
         Animation found = animation(animationFile, name);
         if (found != null || fallbacks == null) {
             return found;
         }
-        for (Identifier fallback : fallbacks) {
+        for (ResourceLocation fallback : fallbacks) {
             found = animation(fallback, name);
             if (found != null) {
                 return found;
@@ -130,17 +139,17 @@ public final class GenshinGeoCache implements PreparableReloadListener {
     }
 
     /** 从一组动画文件里把所有动画名收集起来（供 {@code AnimationAvailability} 校验用）。 */
-    public static void collectAnimationNames(Identifier primary, @Nullable Identifier[] fallbacks,
+    public static void collectAnimationNames(ResourceLocation primary, @Nullable ResourceLocation[] fallbacks,
                                              java.util.Set<String> out) {
         collectFrom(primary, out);
         if (fallbacks != null) {
-            for (Identifier fallback : fallbacks) {
+            for (ResourceLocation fallback : fallbacks) {
                 collectFrom(fallback, out);
             }
         }
     }
 
-    private static void collectFrom(Identifier file, java.util.Set<String> out) {
+    private static void collectFrom(ResourceLocation file, java.util.Set<String> out) {
         BakedAnimations baked = animationFile(file);
         if (baked != null) {
             out.addAll(baked.animations().keySet());
@@ -149,12 +158,30 @@ public final class GenshinGeoCache implements PreparableReloadListener {
 
     /** 整个动画文件；没有就返回 null。 */
     @Nullable
-    public static BakedAnimations animationFile(Identifier animationFile) {
+    public static BakedAnimations animationFile(ResourceLocation animationFile) {
         if (animationFile == null) {
             return null;
         }
         ensureLoaded();
-        return animations.get(animationFile);
+        BakedAnimations found = animations.get(animationFile);
+        return found != null ? found : animations.get(stripPrefixAndSuffix(animationFile));
+    }
+
+    /**
+     * 资源路径 → 缓存键：去掉 {@code geckolib/models|animations/} 前缀与
+     * {@code .geo.json} / {@code .animation.json} 后缀。
+     *
+     * <p>缓存里存的是剥过的键；{@link #model(ResourceLocation)} /
+     * {@link #animationFile(ResourceLocation)} 查不到原样路径时会再查一次这个键，
+     * 所以调用方传「带后缀的完整路径」或「剥过的短路径」都能命中。</p>
+     */
+    private static ResourceLocation stripPrefixAndSuffix(ResourceLocation path) {
+        String newPath = path.getPath();
+        Matcher prefixMatcher = PREFIX_STRIPPER.matcher(newPath);
+        newPath = prefixMatcher.find() ? newPath.substring(prefixMatcher.end()) : newPath;
+        Matcher suffixMatcher = SUFFIX_STRIPPER.matcher(newPath);
+        newPath = suffixMatcher.find() ? newPath.substring(0, suffixMatcher.start()) : newPath;
+        return newPath.length() == path.getPath().length() ? path : path.withPath(newPath);
     }
 
     /**
@@ -197,32 +224,30 @@ public final class GenshinGeoCache implements PreparableReloadListener {
     // ==================== 资源重载 ====================
 
     @Override
-    public CompletableFuture<Void> reload(SharedState sharedState, Executor prepExecutor,
-                                          PreparationBarrier barrier, Executor applyExecutor) {
-        ResourceManager resourceManager = sharedState.resourceManager();
-
+    public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager,
+                                          ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
+                                          Executor prepExecutor, Executor applyExecutor) {
         return CompletableFuture
                 .supplyAsync(() -> scan(resourceManager), prepExecutor)
                 .thenCompose(barrier::wait)
                 .thenAcceptAsync(this::apply, applyExecutor);
     }
 
-    private record Scanned(Map<Identifier, BakedGeoModel> models,
-                           Map<Identifier, BakedAnimations> animations) {
+    private record Scanned(Map<ResourceLocation, BakedGeoModel> models,
+                           Map<ResourceLocation, BakedAnimations> animations) {
     }
 
     private Scanned scan(ResourceManager resourceManager) {
-        Map<Identifier, BakedGeoModel> foundModels = new HashMap<>(models);
-        Map<Identifier, BakedAnimations> foundAnimations = new HashMap<>(animations);
-        MathParser mathParser = MathParser.createWithDeduplication();
+        Map<ResourceLocation, BakedGeoModel> foundModels = new HashMap<>(models);
+        Map<ResourceLocation, BakedAnimations> foundAnimations = new HashMap<>(animations);
 
         // 整包里的条目：同名时用哪一份由 GeoPackSource.usePacked 裁定（整包优先，local/ 例外）
-        Map<Identifier, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
+        Map<ResourceLocation, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
 
         for (String root : ROOTS) {
             // 扫描阶段不受门禁影响：缓存始终全量扫描，
             // 角色 Geo 是否启用的门禁只在校验渲染执行时生效（见 CharacterRenderDispatcher）。
-            Map<Identifier, Resource> resources;
+            Map<ResourceLocation, Resource> resources;
             try {
                 resources = resourceManager.listResources(root, id -> id.getNamespace().equals(Minegenshin.MOD_ID));
             } catch (Exception e) {
@@ -230,17 +255,17 @@ public final class GenshinGeoCache implements PreparableReloadListener {
                 continue;
             }
 
-            Set<Identifier> candidates = new LinkedHashSet<>(resources.keySet());
-            for (Identifier packed : packedEntries.keySet()) {
+            Set<ResourceLocation> candidates = new LinkedHashSet<>(resources.keySet());
+            for (ResourceLocation packed : packedEntries.keySet()) {
                 if (packed.getPath().startsWith(root + "/") && !resources.containsKey(packed)) {
                     candidates.add(packed);
                 }
             }
 
             // 免打包目录（<对象目录>/local/）里的文件最后处理：两边同名时由 local/ 那份覆盖包里那份
-            List<Identifier> ordered = new ArrayList<>(candidates.size());
-            List<Identifier> localFiles = new ArrayList<>(0);
-            for (Identifier candidate : candidates) {
+            List<ResourceLocation> ordered = new ArrayList<>(candidates.size());
+            List<ResourceLocation> localFiles = new ArrayList<>(0);
+            for (ResourceLocation candidate : candidates) {
                 if (ModAssetPaths.isLocalFile(candidate)) {
                     localFiles.add(candidate);
                 } else {
@@ -252,7 +277,7 @@ public final class GenshinGeoCache implements PreparableReloadListener {
             int before = foundModels.size() + foundAnimations.size();
             int fromDisk = 0;
             int fromPack = 0;
-            for (Identifier raw : ordered) {
+            for (ResourceLocation raw : ordered) {
                 String path = raw.getPath();
 
                 // 只收这两个后缀：既是格式判断，也顺手挡掉 assets/minegenshin/items/xxx.json 这类同前缀文件
@@ -266,7 +291,7 @@ public final class GenshinGeoCache implements PreparableReloadListener {
                 }
 
                 // 免打包目录不算资源身份：character/x/local/y 与 character/x/y 是同一个键
-                Identifier key = ModAssetPaths.withoutLocalDir(GeckoLibResources.stripPrefixAndSuffix(raw));
+                ResourceLocation key = ModAssetPaths.withoutLocalDir(stripPrefixAndSuffix(raw));
 
                 // 两个来源二选一：判据统一在 GeoPackSource.usePacked（整包优先、local/ 例外）。
                 // 同名位置在磁盘上另有一份随包副本，两份不等价，不能按「磁盘优先」来挑。
@@ -288,12 +313,12 @@ public final class GenshinGeoCache implements PreparableReloadListener {
                         var json = onDisk != null
                                 ? LOADER.deserializeGeckoLibModelFile(raw, onDisk)
                                 : LOADER.readPacked(raw, packed);
-                        foundModels.put(key, LOADER.bakeGeckoLibModelFile(raw, json));
+                        foundModels.put(key, GeoAssetBakery.model(raw, json));
                     } else {
                         var json = onDisk != null
                                 ? LOADER.deserializeGeckoLibAnimationFile(raw, onDisk)
                                 : LOADER.readPacked(raw, packed);
-                        foundAnimations.put(key, LOADER.bakeGeckoLibAnimationsFile(raw, json, mathParser));
+                        foundAnimations.put(key, GeoAssetBakery.animations(json));
                     }
                 } catch (Exception e) {
                     LOGGER.error("[GenshinGeoCache] 烘培失败：{}", raw, e);
@@ -318,9 +343,9 @@ public final class GenshinGeoCache implements PreparableReloadListener {
         // 把实际拿到的键打出来 —— 路径对不上时一眼就能看出是「没扫到」还是「键不一致」
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("[GenshinGeoCache] 模型键: {}", models.keySet().stream()
-                    .map(Identifier::toString).sorted().toList());
+                    .map(ResourceLocation::toString).sorted().toList());
             LOGGER.info("[GenshinGeoCache] 动画键: {}", animations.keySet().stream()
-                    .map(Identifier::toString).sorted().toList());
+                    .map(ResourceLocation::toString).sorted().toList());
         }
     }
 

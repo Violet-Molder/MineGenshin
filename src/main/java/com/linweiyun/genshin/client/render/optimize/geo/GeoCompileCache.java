@@ -1,13 +1,13 @@
 package com.linweiyun.genshin.client.render.optimize.geo;
 
-import com.geckolib.cache.model.BakedGeoModel;
-import com.geckolib.cache.model.GeoBone;
-import com.geckolib.cache.model.GeoQuad;
-import com.geckolib.cache.model.GeoVertex;
-import com.geckolib.cache.model.cuboid.CuboidGeoBone;
-import com.geckolib.cache.model.cuboid.GeoCube;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.cache.object.GeoQuad;
+import software.bernie.geckolib.cache.object.GeoVertex;
+import software.bernie.geckolib.cache.object.GeoCube;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
+import java.util.List;
 import org.joml.Matrix3f;
 import org.joml.Quaternionf;
 import org.jspecify.annotations.Nullable;
@@ -31,10 +31,9 @@ import java.util.WeakHashMap;
  * 条目永不回收，每次重载都会多留一份预编译几何。
  *
  * <h2>编译不了怎么办</h2>
- * 任何异常、或者遇到非 {@link CuboidGeoBone} 的骨骼实现，都记一次日志并把该模型
- * 记进 {@link #UNSUPPORTED}：这个模型此后<b>永远</b>走 GeckoLib 原路径，
- * 不会每帧重试、也不会刷屏。角色模型全部由 CuboidGeoBone 组成，
- * 这条兜底只对「别的 MOD 塞进来的自定义 GeoBone」有意义。
+ * 任何异常都记一次日志并把该模型记进 {@link #UNSUPPORTED}：这个模型此后<b>永远</b>
+ * 走 GeckoLib 原路径，不会每帧重试、也不会刷屏。另外，遇到「一个面不是 4 个顶点」
+ * 这类几何（本模组的立方体模型不会出现，别的 MOD 的自定义几何可能出现）也不接管。
  */
 public final class GeoCompileCache {
 
@@ -55,7 +54,7 @@ public final class GeoCompileCache {
 
     /** 取（必要时编译）某个模型的预编译几何；返回 {@code null} 表示这个模型只能走原路径。 */
     public static @Nullable CompiledGeoModel get(BakedGeoModel model) {
-        if (model == null || model.isMissingno()) {
+        if (model == null) {
             return null;
         }
         synchronized (LOCK) {
@@ -103,14 +102,14 @@ public final class GeoCompileCache {
             boolean[] supported = {true};
             int[] counters = new int[3]; // 骨骼数 / quad 数 / 顶点数
 
-            GeoBone[] roots = model.topLevelBones();
-            CompiledBone[] compiledRoots = new CompiledBone[roots.length];
-            for (int i = 0; i < roots.length; i++) {
-                compiledRoots[i] = compileBone(roots[i], null, supported, counters);
+            List<GeoBone> roots = model.topLevelBones();
+            CompiledBone[] compiledRoots = new CompiledBone[roots.size()];
+            for (int i = 0; i < roots.size(); i++) {
+                compiledRoots[i] = compileBone(roots.get(i), null, supported, counters);
             }
 
             if (!supported[0]) {
-                LOGGER.warn("[RenderOptimize] 模型 '{}' 含非 CuboidGeoBone 的骨骼实现，"
+                LOGGER.warn("[RenderOptimize] 模型 '{}' 含非立方体面（面顶点数不是 4），"
                                 + "整体回退 GeckoLib 原路径", model.properties().identifier());
                 return null;
             }
@@ -130,10 +129,9 @@ public final class GeoCompileCache {
         float[] normals = NO_FLOATS;
         byte[] fixMask = NO_MASKS;
         int quadCount = 0;
-        GeoCube @Nullable [] cubes = null;
+        List<GeoCube> cubes = bone.getCubes();
 
-        if (bone instanceof CuboidGeoBone cuboid) {
-            cubes = cuboid.cubes;
+        if (cubes != null && !cubes.isEmpty()) {
             int vertexCount = 0;
             for (GeoCube cube : cubes) {
                 if (cube == null || cube.quads() == null) {
@@ -158,25 +156,25 @@ public final class GeoCompileCache {
                 fixMask = new byte[quadCount];
                 bakeGeometry(cubes, vertices, normals, fixMask);
             }
-        } else {
-            // GeckoLib 5.5.6 里 CuboidGeoBone 是唯一实现；出现别的实现就不接管这个模型
-            supported[0] = false;
         }
 
         counters[1] += quadCount;
         counters[2] += quadCount * 4;
 
-        CompiledBone compiled = new CompiledBone(bone, parent, vertices, normals, fixMask, quadCount, cubes);
+        // 「现场模式」用的原始 cube 表（{@code geo-precompile} 关掉时走这条路）；
+        // getCubes() 给的是 List，这里转成数组存进 CompiledBone。
+        GeoCube[] cubeArray = cubes == null || cubes.isEmpty() ? null : cubes.toArray(new GeoCube[0]);
+        CompiledBone compiled = new CompiledBone(bone, parent, vertices, normals, fixMask, quadCount, cubeArray);
         // 「先自己、再子树」的前序编号：counters[0] 在进这个方法时已经自增过一次，
         // 所以这一层拿到的下标就是 counters[0] - 1；递归子级时自然接着往下发号。
         // 顶点表与 children 也是同一个前序，于是「顶点缓冲里的一段」正好对应「一根骨骼」。
         compiled.index = counters[0] - 1;
 
-        GeoBone[] children = bone.children();
-        CompiledBone[] compiledChildren = new CompiledBone[children.length];
+        List<GeoBone> children = bone.getChildBones();
+        CompiledBone[] compiledChildren = new CompiledBone[children.size()];
         int subtreeVertices = quadCount * 4;
-        for (int i = 0; i < children.length; i++) {
-            compiledChildren[i] = compileBone(children[i], compiled, supported, counters);
+        for (int i = 0; i < children.size(); i++) {
+            compiledChildren[i] = compileBone(children.get(i), compiled, supported, counters);
             subtreeVertices += compiledChildren[i].subtreeVertexCount;
         }
         compiled.children = compiledChildren;
@@ -192,7 +190,7 @@ public final class GeoCompileCache {
      * {@code R} 为 cube 旋转），与 GeckoLib 在 PoseStack 上做那三下完全等价 ——
      * 差别只在浮点结合顺序，量级在 1e-6 以内。</p>
      */
-    private static void bakeGeometry(GeoCube[] cubes, float[] vertices, float[] normals, byte[] fixMask) {
+    private static void bakeGeometry(List<GeoCube> cubes, float[] vertices, float[] normals, byte[] fixMask) {
         int vi = 0;
         int ni = 0;
         int qi = 0;
@@ -223,18 +221,18 @@ public final class GeoCompileCache {
                     continue;
                 }
 
-                final float nx = quad.normalX();
-                final float ny = quad.normalY();
-                final float nz = quad.normalZ();
+                final float nx = quad.normal().x();
+                final float ny = quad.normal().y();
+                final float nz = quad.normal().z();
                 normals[ni] = r00 * nx + r10 * ny + r20 * nz;
                 normals[ni + 1] = r01 * nx + r11 * ny + r21 * nz;
                 normals[ni + 2] = r02 * nx + r12 * ny + r22 * nz;
                 fixMask[qi] = mask;
 
                 for (GeoVertex vertex : quad.vertices()) {
-                    final float x = vertex.posX() - px;
-                    final float y = vertex.posY() - py;
-                    final float z = vertex.posZ() - pz;
+                    final float x = vertex.position().x() - px;
+                    final float y = vertex.position().y() - py;
+                    final float z = vertex.position().z() - pz;
                     vertices[vi] = r00 * x + r10 * y + r20 * z + px;
                     vertices[vi + 1] = r01 * x + r11 * y + r21 * z + py;
                     vertices[vi + 2] = r02 * x + r12 * y + r22 * z + pz;

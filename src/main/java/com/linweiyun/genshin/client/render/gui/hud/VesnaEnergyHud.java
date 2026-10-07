@@ -4,24 +4,24 @@ import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 
 /**
@@ -39,8 +39,8 @@ public class VesnaEnergyHud {
     // 第三人称世界几何参数
     // ============================================================
 
-    private static final Identifier WHITE_TEXTURE =
-            Identifier.fromNamespaceAndPath("minegenshin", "gui/short_character_hp_bar_white.png");
+    private static final ResourceLocation WHITE_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/short_character_hp_bar_white.png");
 
     /** 每格尺寸（方块） */
     private static final float SEG_WIDTH  = 0.35f;
@@ -51,6 +51,9 @@ public class VesnaEnergyHud {
     /** 相对玩家位置的偏移：RIGHT 负 = 屏幕左 */
     private static final double OFFSET_RIGHT = -0.7;
     private static final double OFFSET_UP    =  0.0;
+
+    /** 第三人称能量条几何用的顶点缓冲块大小（字节） */
+    private static final int BUFFER_SIZE = 4096;
 
     // ============================================================
     // 第一人称 HUD 参数
@@ -70,6 +73,18 @@ public class VesnaEnergyHud {
     /** 每格能量值 */
     private static final float SEGMENT_SIZE = 6f;
 
+    /** 本模组自己的顶点缓冲，只有渲染主线程会碰 */
+    private static ByteBufferBuilder buffer;
+    private static MultiBufferSource.BufferSource bufferSource;
+
+    private static MultiBufferSource.BufferSource bufferSource() {
+        if (bufferSource == null) {
+            buffer = new ByteBufferBuilder(BUFFER_SIZE);
+            bufferSource = MultiBufferSource.immediate(buffer);
+        }
+        return bufferSource;
+    }
+
     // ============================================================
     // 第一人称：HUD 层
     // ============================================================
@@ -78,11 +93,11 @@ public class VesnaEnergyHud {
     public static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
         event.registerAboveAll(
                 Minegenshin.id("vesna_energy_hud_first_person"),
-                (GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) ->
+                (GuiGraphics graphics, DeltaTracker deltaTracker) ->
                         renderFirstPersonHud(graphics));
     }
 
-    private static void renderFirstPersonHud(GuiGraphicsExtractor g) {
+    private static void renderFirstPersonHud(GuiGraphics g) {
         if (!isVisible()) return;
         if (!isFirstPerson()) return;
 
@@ -122,7 +137,10 @@ public class VesnaEnergyHud {
     // ============================================================
 
     @SubscribeEvent
-    public static void onSubmitCustomGeometry(SubmitCustomGeometryEvent event) {
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+            return;
+        }
         if (!isVisible()) return;
         if (isFirstPerson()) return;
 
@@ -135,13 +153,13 @@ public class VesnaEnergyHud {
         if (!(character instanceof Vesna vesna)) return;
 
         float energy = vesna.getVesnaEnergy();
-        float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
 
-        var camera = mc.gameRenderer.mainCamera();
-        Vec3 camPos = camera.position();
+        var camera = mc.gameRenderer.getMainCamera();
+        Vec3 camPos = camera.getPosition();
 
         Vec3 playerPos = player.getPosition(partialTick);
-        float yaw = camera.yRot();
+        float yaw = camera.getYRot();
         double yawRad = Math.toRadians(yaw);
         Vec3 camRight = new Vec3(-Math.cos(yawRad), 0, -Math.sin(yawRad));
         Vec3 anchor = playerPos
@@ -151,14 +169,15 @@ public class VesnaEnergyHud {
         Vec3 relative = anchor.subtract(camPos);
 
         PoseStack poseStack = event.getPoseStack();
-        SubmitNodeCollector collector = event.getSubmitNodeCollector();
+        MultiBufferSource.BufferSource collector = bufferSource();
 
         poseStack.pushPose();
         poseStack.translate(relative.x, relative.y, relative.z);
         poseStack.mulPose(camera.rotation());
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
 
-        RenderType type = RenderTypes.entityTranslucent(WHITE_TEXTURE);
+        RenderType type = RenderType.entityTranslucent(WHITE_TEXTURE);
+        Matrix4f matrix = poseStack.last().pose();
 
         float halfW = SEG_WIDTH * 0.5f;
         float baseY = -TOTAL_HEIGHT * 0.5f;
@@ -167,27 +186,22 @@ public class VesnaEnergyHud {
             float yLow = baseY + i * (SEG_HEIGHT + SEG_GAP);
             float yHigh = yLow + SEG_HEIGHT;
 
-            collector.submitCustomGeometry(poseStack, type, (pose, buffer) -> {
-                Matrix4f matrix = pose.pose();
-                drawRect(buffer, matrix, 0,
-                        -halfW, yLow, halfW, yHigh,
-                        0.10f, 0.10f, 0.15f, 0.60f);
-            });
+            drawRect(collector.getBuffer(type), matrix, 0,
+                    -halfW, yLow, halfW, yHigh,
+                    0.10f, 0.10f, 0.15f, 0.60f);
 
             float segLow = i * SEGMENT_SIZE;
             float fillRatio = Math.max(0f, Math.min(1f, (energy - segLow) / SEGMENT_SIZE));
             if (fillRatio > 0.001f) {
                 float fillYHigh = yLow + SEG_HEIGHT * fillRatio;
-                collector.submitCustomGeometry(poseStack, type, (pose, buffer) -> {
-                    Matrix4f poseMatrix = pose.pose();
-                    drawRect(buffer, poseMatrix, -0.001f,
-                            -halfW, yLow, halfW, fillYHigh,
-                            1.0f, 0.82f, 0.35f, 1.0f);
-                });
+                drawRect(collector.getBuffer(type), matrix, -0.001f,
+                        -halfW, yLow, halfW, fillYHigh,
+                        1.0f, 0.82f, 0.35f, 1.0f);
             }
         }
 
         poseStack.popPose();
+        collector.endBatch();
     }
 
     private static void drawRect(VertexConsumer consumer, Matrix4f matrix, float z,

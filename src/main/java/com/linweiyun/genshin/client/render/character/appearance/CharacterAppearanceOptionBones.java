@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.character.appearance;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.combat.state.AnimationStateSync;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.util.appearance.CharacterAppearanceData;
@@ -39,7 +39,7 @@ public final class CharacterAppearanceOptionBones {
    }
 
    @Nullable
-   public static BoneUpdater<GeoRenderState> updaterFor(@Nullable Player player, @Nullable PGCharacter character) {
+   public static BoneUpdater<BoneRenderState> updaterFor(@Nullable Player player, @Nullable PGCharacter character) {
       if (player != null && character != null) {
          String state = AnimationStateSync.stateOf(player);
          boolean normalState = "default".equals(state);
@@ -72,7 +72,7 @@ public final class CharacterAppearanceOptionBones {
       }
    }
 
-   public static BoneUpdater<GeoRenderState> updaterForPreview(int mask, PGCharacter character) {
+   public static BoneUpdater<BoneRenderState> updaterForPreview(int mask, PGCharacter character) {
       return updater(character.appearanceData().normalStateBones(mask, character.currentWeaponType()), true);
    }
 
@@ -123,7 +123,7 @@ public final class CharacterAppearanceOptionBones {
       return bones;
    }
 
-   private static BoneUpdater<GeoRenderState> updater(Map<String, Boolean> bones, boolean normalState) {
+   private static BoneUpdater<BoneRenderState> updater(Map<String, Boolean> bones, boolean normalState) {
       if (!normalState || bones.isEmpty()) {
          return (renderPassInfo, snapshots) -> {};
       }

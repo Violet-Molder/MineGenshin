@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.character.claymore.sandrone;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.render.character.appearance.CharacterBonePhysics;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import net.minecraft.world.entity.player.Player;
@@ -58,7 +58,7 @@ public class SandroneBonePhysics extends CharacterBonePhysics {
     }
 
     @Override
-    public BoneUpdater<GeoRenderState> clothUpdater(Player player, PGCharacter character) {
+    public BoneUpdater<BoneRenderState> clothUpdater(Player player, PGCharacter character) {
         // 物理已停用：改为在 walk/run 动画里直接驱动骨骼。返回 null = 无物理叠加，保留文件以便日后恢复。
         return null;
     }

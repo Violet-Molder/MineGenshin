@@ -14,7 +14,7 @@ import com.lowdragmc.photon.client.fx.FXHelper;
 import com.lowdragmc.photon.client.fx.FXRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -86,10 +86,10 @@ public final class TestCharacterFx {
 
     // ==================== 特效资源 id ====================
 
-    public static final Identifier FX_BODY = fx("aura_body");
-    public static final Identifier FX_WEAPON = fx("aura_weapon");
-    public static final Identifier FX_ATTACK_TIP = fx("attack_tip");
-    public static final Identifier FX_SKILL_PROJECTILE = fx("skill_projectile");
+    public static final ResourceLocation FX_BODY = fx("aura_body");
+    public static final ResourceLocation FX_WEAPON = fx("aura_weapon");
+    public static final ResourceLocation FX_ATTACK_TIP = fx("attack_tip");
+    public static final ResourceLocation FX_SKILL_PROJECTILE = fx("skill_projectile");
 
     // ==================== 可调参数 ====================
 
@@ -369,7 +369,7 @@ public final class TestCharacterFx {
         }
     }
 
-    private static Identifier fx(String path) {
+    private static ResourceLocation fx(String path) {
         return Minegenshin.id("character/test/" + path);
     }
 

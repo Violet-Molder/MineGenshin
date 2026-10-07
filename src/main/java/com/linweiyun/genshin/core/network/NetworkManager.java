@@ -41,17 +41,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.Permissions;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.TagValueInput;
 import org.slf4j.Logger;
 
 public class NetworkManager {
@@ -115,7 +112,7 @@ public class NetworkManager {
       } else {
          ServerPlayer player = Objects.requireNonNull(sender.asPlayer());
          AdventurerInfoAttachment attachment = (AdventurerInfoAttachment)player.getData(AttachmentRegistration.ADVENTURER_INFO_ATTACHMENT);
-         attachment.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, player.registryAccess(), data));
+         attachment.deserializeNBT(player.registryAccess(), data);
       }
    }
 
@@ -217,7 +214,7 @@ public class NetworkManager {
       } else {
          ServerPlayer player = Objects.requireNonNull(sender.asPlayer());
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
-         attachment.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, player.registryAccess(), data));
+         attachment.deserializeNBT(player.registryAccess(), data);
          attachment.fixCharacterTypes();
          attachment.bindAllOwners(player);
       }
@@ -240,7 +237,7 @@ public class NetworkManager {
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
          PGCharacter character = attachment.getCharacterByUUID(uuid);
          if (character != null) {
-            character.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, player.registryAccess(), data));
+            character.deserializeNBT(player.registryAccess(), data);
          }
       }
    }
@@ -340,7 +337,7 @@ public class NetworkManager {
          ServerPlayer player = Objects.requireNonNull(sender.asPlayer());
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
          PGCharacter character = new PGCharacter();
-         character.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, player.registryAccess(), characterData));
+         character.deserializeNBT(player.registryAccess(), characterData);
          attachment.addCharacter(character, player);
       }
    }
@@ -772,7 +769,7 @@ public class NetworkManager {
    public static void upgradeConstellationRPCPacket(RPCSender sender) {
       if (!sender.isServer()) {
          ServerPlayer player = Objects.requireNonNull(sender.asPlayer());
-         if (player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)) {
+         if (player.hasPermissions(2)) {
             PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
             PGCharacter character = writeTarget(player, attachment);
             if (character == null) {
@@ -799,7 +796,7 @@ public class NetworkManager {
             return;
          }
 
-         PlayerUIMenuType.openUI(serverPlayer, Identifier.fromNamespaceAndPath("minegenshin", "backpack"));
+         PlayerUIMenuType.openUI(serverPlayer, ResourceLocation.fromNamespaceAndPath("minegenshin", "backpack"));
       }
    }
 

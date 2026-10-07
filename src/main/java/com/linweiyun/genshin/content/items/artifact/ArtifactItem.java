@@ -14,18 +14,16 @@ import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.Random;
-import java.util.function.Consumer;
 
 public class ArtifactItem extends TeyvatItem {
     private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
@@ -37,7 +35,7 @@ public class ArtifactItem extends TeyvatItem {
     }
 
     @Override
-    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack artifactStack = player.getItemInHand(hand);
         ArtifactItem.initializeArtifactStackIfNeeded(artifactStack);
         return super.use(level, player, hand);
@@ -77,19 +75,19 @@ public class ArtifactItem extends TeyvatItem {
         return new ArtifactStatsComponent(0, 0, mainStat, subStats);
     }
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag flag) {
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> builder, TooltipFlag flag) {
         ArtifactStatsComponent stats = stack.getOrDefault(ModDataComponents.ARTIFACT_STATS.get(), ArtifactStatsComponent.DEFAULT);
 
         // 第一行：小字，圣遗物类型
-        builder.accept(Component.translatable("artifact.type." + type.name().toLowerCase()).withStyle(ChatFormatting.GRAY));
-        builder.accept(Component.literal("★".repeat(star)).withStyle(ChatFormatting.GOLD));
-        builder.accept(Component.literal("+" + stats.level).withStyle(ChatFormatting.GRAY));
+        builder.add(Component.translatable("artifact.type." + type.name().toLowerCase()).withStyle(ChatFormatting.GRAY));
+        builder.add(Component.literal("★".repeat(star)).withStyle(ChatFormatting.GOLD));
+        builder.add(Component.literal("+" + stats.level).withStyle(ChatFormatting.GRAY));
 
         // 主词条（大字 + 星级颜色）
         // mainStat.getAttribute() 为 null 说明未初始化（创造栏默认组件），跳过不显示
         if (stats.mainStat != null && stats.mainStat.isInitialized()) {
             ChatFormatting starColor = getStarColor();
-            builder.accept(Component.literal(buildStatText(stats.mainStat)).withStyle(starColor, ChatFormatting.BOLD));
+            builder.add(Component.literal(buildStatText(stats.mainStat)).withStyle(starColor, ChatFormatting.BOLD));
         }
 
         // 副词条
@@ -99,14 +97,14 @@ public class ArtifactItem extends TeyvatItem {
                 // attribute 为 null 跳过这个空壳子属性
                 if (!stat.isInitialized()) continue;
                 if (!hasUnlocked) {
-                    builder.accept(Component.empty());
+                    builder.add(Component.empty());
                     hasUnlocked = true;
                 }
                 String text = buildStatText(stat);
                 if (stat.isUnlocked()) {
-                    builder.accept(Component.literal(text).withStyle(ChatFormatting.GRAY));
+                    builder.add(Component.literal(text).withStyle(ChatFormatting.GRAY));
                 } else {
-                    builder.accept(Component.literal(text).withStyle(ChatFormatting.DARK_GRAY));
+                    builder.add(Component.literal(text).withStyle(ChatFormatting.DARK_GRAY));
                 }
             }
         }
@@ -114,24 +112,24 @@ public class ArtifactItem extends TeyvatItem {
         // 套装信息
         if (set != null) {
             ArtifactSet artifactSet = set.get();
-            builder.accept(Component.empty());
+            builder.add(Component.empty());
             var setKey = ModRegistries.ARTIFACT_SET_REGISTRY.getKey(artifactSet);
             String setNameKey = setKey != null ? "artifact_set." + setKey.getPath() : "artifact_set.unknown";
-            builder.accept(Component.translatable(setNameKey).withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
+            builder.add(Component.translatable(setNameKey).withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
 
             var twoPc = artifactSet.twoPcEffect().get();
             if (twoPc instanceof ArtifactSetEffect setEffect) {
-                builder.accept(Component.translatable("artifact_set.effect.2pc").withStyle(ChatFormatting.YELLOW).append(": ").append(setEffect.getDescription()));
+                builder.add(Component.translatable("artifact_set.effect.2pc").withStyle(ChatFormatting.YELLOW).append(": ").append(setEffect.getDescription()));
             }
             if (star >= 4 && artifactSet.hasFourPcEffect()) {
                 var fourPc = artifactSet.fourPcEffect().get();
                 if (fourPc instanceof ArtifactSetEffect setEffect) {
-                    builder.accept(Component.translatable("artifact_set.effect.4pc").withStyle(ChatFormatting.YELLOW).append(": ").append(setEffect.getDescription()));
+                    builder.add(Component.translatable("artifact_set.effect.4pc").withStyle(ChatFormatting.YELLOW).append(": ").append(setEffect.getDescription()));
                 }
             }
             // 圣遗物文本
             if (setKey != null) {
-                builder.accept(Component.translatable("artifact.desc."+ setKey.getPath() +"." + type.name().toLowerCase()).withStyle(ChatFormatting.WHITE));
+                builder.add(Component.translatable("artifact.desc."+ setKey.getPath() +"." + type.name().toLowerCase()).withStyle(ChatFormatting.WHITE));
             }
         }
 

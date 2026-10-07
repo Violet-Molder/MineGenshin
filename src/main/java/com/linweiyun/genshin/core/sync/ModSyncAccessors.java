@@ -11,10 +11,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.storage.TagValueInput;
-import net.minecraft.world.level.storage.TagValueOutput;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.ArrayList;
@@ -106,14 +103,14 @@ public final class ModSyncAccessors {
      */
     private static void migrateLegacyItemIds(Tag tag) {
         if (tag instanceof CompoundTag compound) {
-            String id = compound.getString("id").orElse(null);
+            String id = compound.contains("id") ? compound.getString("id") : null;
             if (id != null) {
                 String replacement = LEGACY_ITEM_IDS.get(id);
                 if (replacement != null) {
                     compound.putString("id", replacement);
                 }
             }
-            for (String key : new ArrayList<>(compound.keySet())) {
+            for (String key : new ArrayList<>(compound.getAllKeys())) {
                 Tag child = compound.get(key);
                 if (child != null) {
                     migrateLegacyItemIds(child);
@@ -131,7 +128,7 @@ public final class ModSyncAccessors {
      */
     private static PGCharacter deserializeFromTag(CompoundTag tag, HolderLookup.Provider access) {
         migrateLegacyItemIds(tag);
-        var className = tag.getString(TAG_CLASS).orElse("");
+        var className = tag.getString(TAG_CLASS);
         PGCharacter c;
         if (!className.isEmpty()) {
             try {
@@ -143,7 +140,7 @@ public final class ModSyncAccessors {
         } else {
             c = new PGCharacter();
         }
-        c.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, access, tag));
+        c.deserializeNBT(access, tag);
         return c;
     }
 
@@ -151,9 +148,7 @@ public final class ModSyncAccessors {
      * Serialize a PGCharacter to NBT, recording the actual subclass name.
      */
     private static CompoundTag serializeToTag(PGCharacter c, HolderLookup.Provider access) {
-        var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, access);
-        c.serialize(output);
-        var tag = output.buildResult();
+        var tag = c.serializeNBT(access);
         tag.putString(TAG_CLASS, c.getClass().getName());
         return tag;
     }

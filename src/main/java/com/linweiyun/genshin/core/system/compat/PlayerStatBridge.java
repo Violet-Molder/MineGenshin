@@ -7,7 +7,7 @@ import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
@@ -51,10 +51,10 @@ public final class PlayerStatBridge {
     /** 角色基础攻击力里「玩家原版攻击力 × 15」那一条的来源名 */
     public static final String MINECRAFT_ATTACK_SOURCE = "minecraft";
 
-    private static final Identifier CHARACTER_ATTACK_MODIFIER =
-            Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "compat_character_attack");
-    private static final Identifier CHARACTER_HEALTH_MODIFIER =
-            Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "compat_character_health");
+    private static final ResourceLocation CHARACTER_ATTACK_MODIFIER =
+            ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "compat_character_attack");
+    private static final ResourceLocation CHARACTER_HEALTH_MODIFIER =
+            ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "compat_character_health");
 
     private PlayerStatBridge() {
     }
@@ -317,7 +317,7 @@ public final class PlayerStatBridge {
     }
 
     private static void setModifier(LivingEntity entity, Holder<Attribute> attribute,
-                                    Identifier id, double amount) {
+                                    ResourceLocation id, double amount) {
         AttributeInstance instance = entity.getAttribute(attribute);
         if (instance == null) {
             return;
@@ -330,7 +330,7 @@ public final class PlayerStatBridge {
                 new AttributeModifier(id, amount, AttributeModifier.Operation.ADD_VALUE));
     }
 
-    private static void removeModifier(LivingEntity entity, Holder<Attribute> attribute, Identifier id) {
+    private static void removeModifier(LivingEntity entity, Holder<Attribute> attribute, ResourceLocation id) {
         AttributeInstance instance = entity.getAttribute(attribute);
         if (instance != null) {
             instance.removeModifier(id);

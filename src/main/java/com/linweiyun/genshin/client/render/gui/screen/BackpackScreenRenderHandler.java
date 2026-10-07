@@ -5,10 +5,9 @@ import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -39,7 +38,7 @@ public class BackpackScreenRenderHandler {
     }
 
     private static void renderPrimogemOnInventory(
-            GuiGraphicsExtractor guiGraphics,
+            GuiGraphics guiGraphics,
             Player player,
             boolean isCreativeInventory,
             int screenWidth,
@@ -60,8 +59,8 @@ public class BackpackScreenRenderHandler {
         String text = ":";
         String count = String.valueOf(primogemCount);
         Font font = Minecraft.getInstance().font;
-        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, Minegenshin.id("item/primogem/textures/icon.png"), x, y, 0, 0, 16, 16, 16, 16);
-        guiGraphics.text(font, text, x + 18, y + 5, 0xFF000000, false);
-        guiGraphics.text(font, count, x + 21, y + 6, 0xFF000000, false);
+        guiGraphics.blit(Minegenshin.id("item/primogem/textures/icon.png"), x, y, 0, 0, 16, 16);
+        guiGraphics.drawString(font, text, x + 18, y + 5, 0xFF000000, false);
+        guiGraphics.drawString(font, count, x + 21, y + 6, 0xFF000000, false);
     }
 }

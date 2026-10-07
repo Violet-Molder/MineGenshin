@@ -12,6 +12,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import com.lowdragmc.lowdraglib2.utils.TagBuilder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -181,17 +182,17 @@ public interface ISyncManagedEntity extends IManaged, IManagedHolder, IPersistMa
      * Deserialize initial data on the client when entity is first created.
      */
     default void deserializeInitialData(HolderLookup.Provider provider, CompoundTag tag) {
-        var customTag = tag.getCompoundOrEmpty("custom");
+        var customTag = tag.getCompound("custom");
         readCustomSyncData(provider, customTag);
 
-        var list = tag.getListOrEmpty("managed");
+        var list = tag.getList("managed", Tag.TAG_COMPOUND);
         var syncedFields = getRootStorage().getSyncFields();
         if (syncedFields.length != list.size()) {
             return;
         }
         var ctx = provider.createSerializationContext(NbtOps.INSTANCE);
         for (int i = 0; i < list.size(); i++) {
-            var data = list.getCompoundOrEmpty(i).get("d");
+            var data = list.getCompound(i).get("d");
             syncedFields[i].writeInitialSync(ctx, data);
         }
     }

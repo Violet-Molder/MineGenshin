@@ -2,7 +2,7 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.asset;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public final class GenshinAssets {
@@ -33,15 +33,15 @@ public final class GenshinAssets {
       return "character/linweiyun/linweiyun.animation.json";
    }
 
-   public static Identifier defaultModel() {
+   public static ResourceLocation defaultModel() {
       return fromModelPath(defaultModelPath());
    }
 
-   public static Identifier defaultTexture() {
+   public static ResourceLocation defaultTexture() {
       return fromTexturePath(defaultTexturePath());
    }
 
-   public static Identifier defaultAnimation() {
+   public static ResourceLocation defaultAnimation() {
       return fromAnimationPath(defaultAnimationPath());
    }
 
@@ -69,27 +69,27 @@ public final class GenshinAssets {
       return characterId + ".png";
    }
 
-   public static Identifier fromModelPath(String relativePath) {
+   public static ResourceLocation fromModelPath(String relativePath) {
       return id(stripSuffix(relativePath, ".geo.json"));
    }
 
-   public static Identifier fromAnimationPath(String relativePath) {
+   public static ResourceLocation fromAnimationPath(String relativePath) {
       return id(stripAnimationSuffix(relativePath));
    }
 
-   public static Identifier fromTexturePath(String relativePath) {
+   public static ResourceLocation fromTexturePath(String relativePath) {
       return id(relativePath);
    }
 
-   public static Identifier characterModel(String characterId, String fileName) {
+   public static ResourceLocation characterModel(String characterId, String fileName) {
       return id("character/" + characterId + "/" + stripSuffix(fileName, ".geo.json"));
    }
 
-   public static Identifier characterAnimation(String characterId, String fileName) {
+   public static ResourceLocation characterAnimation(String characterId, String fileName) {
       return id("character/" + characterId + "/" + stripAnimationSuffix(fileName));
    }
 
-   public static Identifier characterTexture(String characterId, String fileName) {
+   public static ResourceLocation characterTexture(String characterId, String fileName) {
       return ModAssetPaths.textureIn("character/" + characterId, fileName);
    }
 
@@ -105,27 +105,27 @@ public final class GenshinAssets {
       return itemName + ".png";
    }
 
-   public static Identifier itemModel(String itemName, String fileName) {
+   public static ResourceLocation itemModel(String itemName, String fileName) {
       return id("item/" + itemName + "/" + stripSuffix(fileName, ".geo.json"));
    }
 
-   public static Identifier itemAnimation(String itemName, String fileName) {
+   public static ResourceLocation itemAnimation(String itemName, String fileName) {
       return id("item/" + itemName + "/" + stripAnimationSuffix(fileName));
    }
 
-   public static Identifier itemTexture(String itemName, String fileName) {
+   public static ResourceLocation itemTexture(String itemName, String fileName) {
       return ModAssetPaths.textureIn("item/" + itemName, fileName);
    }
 
-   public static Identifier entityModel(String entityName, String fileName) {
+   public static ResourceLocation entityModel(String entityName, String fileName) {
       return id("entity/" + entityName + "/" + stripSuffix(fileName, ".geo.json"));
    }
 
-   public static Identifier entityAnimation(String entityName, String fileName) {
+   public static ResourceLocation entityAnimation(String entityName, String fileName) {
       return id("entity/" + entityName + "/" + stripAnimationSuffix(fileName));
    }
 
-   public static Identifier entityTexture(String entityName, String fileName) {
+   public static ResourceLocation entityTexture(String entityName, String fileName) {
       return ModAssetPaths.textureIn("entity/" + entityName, fileName);
    }
 
@@ -137,20 +137,20 @@ public final class GenshinAssets {
       return "character/" + characterId + "/sounds.json";
    }
 
-   public static Identifier characterSound(String characterId, String fileName) {
+   public static ResourceLocation characterSound(String characterId, String fileName) {
       return id(characterSoundsDir(characterId) + "/" + fileName.replace('\\', '/'));
    }
 
-   public static Identifier soundAssetPath(Identifier location) {
+   public static ResourceLocation soundAssetPath(ResourceLocation location) {
       if (location == null) {
          return null;
       }
 
       String path = location.getPath();
-      return path.endsWith(".ogg") ? location : Identifier.fromNamespaceAndPath(location.getNamespace(), path + ".ogg");
+      return path.endsWith(".ogg") ? location : ResourceLocation.fromNamespaceAndPath(location.getNamespace(), path + ".ogg");
    }
 
-   public static boolean isCharacterSound(@Nullable Identifier location) {
+   public static boolean isCharacterSound(@Nullable ResourceLocation location) {
       if (location == null) {
          return false;
       }
@@ -159,13 +159,13 @@ public final class GenshinAssets {
       return path.startsWith("character/") && path.contains("/sounds/");
    }
 
-   public static Identifier characterSoundEvent(String characterId, String key) {
+   public static ResourceLocation characterSoundEvent(String characterId, String key) {
       if (key == null || key.isEmpty()) {
          return null;
       }
 
       if (key.indexOf(58) >= 0) {
-         return Identifier.tryParse(key);
+         return ResourceLocation.tryParse(key);
       }
 
       String path = key.startsWith(characterId + "_") ? key : characterId + "_" + key;
@@ -173,7 +173,7 @@ public final class GenshinAssets {
    }
 
    @Nullable
-   public static String characterIdOfSoundDefinition(@Nullable Identifier definitionFile) {
+   public static String characterIdOfSoundDefinition(@Nullable ResourceLocation definitionFile) {
       if (definitionFile != null && "minegenshin".equals(definitionFile.getNamespace())) {
          String path = definitionFile.getPath();
          String prefix = "character/";
@@ -189,11 +189,11 @@ public final class GenshinAssets {
       }
    }
 
-   public static Identifier icon(String category, String name) {
+   public static ResourceLocation icon(String category, String name) {
       return id("icon/" + category + "/" + stripSuffix(name, ".png") + ".png");
    }
 
-   public static Identifier itemIcon(String itemName) {
+   public static ResourceLocation itemIcon(String itemName) {
       return icon("item", itemName);
    }
 
@@ -230,8 +230,8 @@ public final class GenshinAssets {
       });
    }
 
-   public static Identifier id(String path) {
-      return Identifier.fromNamespaceAndPath("minegenshin", path);
+   public static ResourceLocation id(String path) {
+      return ResourceLocation.fromNamespaceAndPath("minegenshin", path);
    }
 
    @Nullable

@@ -4,14 +4,13 @@ import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.ModularUI;
-import com.lowdragmc.lowdraglib2.gui.ui.ModularUIClientAccess;
 import com.lowdragmc.lowdraglib2.gui.ui.UI;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 public class ScreenCharacterParty extends Screen {
@@ -24,13 +23,13 @@ public class ScreenCharacterParty extends Screen {
 
   public void init() {
     super.init();
-    ModularUIClientAccess.setScreenAndInit(this.modularUI, this);
-    this.addRenderableWidget(ModularUIClientAccess.getWidget(modularUI));
+    this.modularUI.setScreenAndInit(this);
+    this.addRenderableWidget(this.modularUI.getWidget());
   }
 
   public static ModularUI createModularUI(Player player) {
     var stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(
-            Identifier.parse("minegenshin:lss/character_party.lss"));
+            ResourceLocation.parse("minegenshin:lss/character_party.lss"));
     var charactersAttachment = player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
 
     UIElement root = new UIElement().setId("root");

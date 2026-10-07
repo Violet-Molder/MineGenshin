@@ -13,7 +13,7 @@ import com.lowdragmc.lowdraglib2.integration.kjs.KJSBindings;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import com.lowdragmc.lowdraglib2.syncdata.ISubscription;
 import dev.vfyjxf.taffy.style.TaffyPosition;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.LinkedHashMap;
@@ -61,7 +61,7 @@ public class SkillProgressBar extends ProgressBar {
                     layout.positionType(TaffyPosition.ABSOLUTE);
                 })
                 .style(s -> s.background(SpriteTexture.of(
-                        Identifier.fromNamespaceAndPath("minegenshin", "gui/empty.png"))));
+                        ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/empty.png"))));
         bar.addChild(barIcon = new UIElement().layout(layout -> {
             layout.width(width);
             layout.height(height);
@@ -93,11 +93,11 @@ public class SkillProgressBar extends ProgressBar {
         if (character == null) return;
         String textureId = character.getTextureId();
         this.barContainer.style(s -> s.background(
-                SpriteTexture.of(Identifier.fromNamespaceAndPath("minegenshin",
+                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("minegenshin",
                         "character/" + textureId + "/textures/burst.png"))));
 
         this.barIcon.style(s -> s.background(
-                SpriteTexture.of(Identifier.fromNamespaceAndPath("minegenshin", "gui/skill_cd.png"))));
+                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/skill_cd.png"))));
     }
 
     private void setCharacterSkill(PGCharacter character) {
@@ -105,10 +105,10 @@ public class SkillProgressBar extends ProgressBar {
         if (character == null) return;
         String textureId = character.getTextureId();
         this.barContainer.style(s -> s.background(
-                SpriteTexture.of(Identifier.fromNamespaceAndPath("minegenshin",
+                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("minegenshin",
                         "character/" + textureId + "/textures/skill.png"))));
         this.barIcon.style(s -> s.background(
-                SpriteTexture.of(Identifier.fromNamespaceAndPath("minegenshin", "gui/skill_cd.png"))));
+                SpriteTexture.of(ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/skill_cd.png"))));
     }
 
     public SkillProgressBar unbindCharacterSource(IDataProvider<PGCharacterData> dataProvider) {

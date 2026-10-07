@@ -26,7 +26,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
  *
  * @param <T> 使用这套走法的生物类型
  */
-public class WriggleMoveControl<T extends Mob> extends MoveControl<T> {
+public class WriggleMoveControl<T extends Mob> extends MoveControl {
 
     /** 每 tick 最大转向角度 —— 蠕动时身体转不快，这也是「蠕动感」的一部分。 */
     private final float turnSpeed;

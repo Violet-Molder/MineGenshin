@@ -3,9 +3,9 @@ package com.linweiyun.genshin.core.system.poise;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.content.entities.teyvat.ITeyvatBoss;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.wither.WitherBoss;
@@ -93,12 +93,12 @@ public final class PoiseTiers {
      * 只按体型判断，与是不是精英怪无关。
      */
     private static final Set<EntityType<?>> LARGE_VANILLA_TYPES = Set.of(
-            EntityTypes.RAVAGER,
-            EntityTypes.IRON_GOLEM,
-            EntityTypes.GHAST,
-            EntityTypes.ELDER_GUARDIAN,
-            EntityTypes.HOGLIN,
-            EntityTypes.ZOGLIN);
+            EntityType.RAVAGER,
+            EntityType.IRON_GOLEM,
+            EntityType.GHAST,
+            EntityType.ELDER_GUARDIAN,
+            EntityType.HOGLIN,
+            EntityType.ZOGLIN);
 
     private PoiseTiers() {
     }
@@ -123,7 +123,7 @@ public final class PoiseTiers {
         }
 
         EntityType<?> type = target.getType();
-        Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
         if (id == null) {
             // 没进注册表（理论上不该发生）：按最宽松处理，别让它变成隐形免疫
             return VANILLA_RESIST;
@@ -150,13 +150,13 @@ public final class PoiseTiers {
      * 不要让它变成隐形免疫。
      */
     public static boolean isForeign(LivingEntity target) {
-        Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(target.getType());
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(target.getType());
         if (id == null) {
             return false;
         }
         String namespace = id.getNamespace();
         return !Minegenshin.MOD_ID.equals(namespace)
-                && !Identifier.DEFAULT_NAMESPACE.equals(namespace);
+                && !ResourceLocation.DEFAULT_NAMESPACE.equals(namespace);
     }
 
     /**

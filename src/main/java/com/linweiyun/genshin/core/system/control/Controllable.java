@@ -8,7 +8,7 @@ import com.linweiyun.genshin.core.system.poise.PoiseService;
 import com.linweiyun.genshin.core.system.poise.PoiseTiers;
 import com.linweiyun.genshin.core.system.poise.impact.ImpactLevel;
 import com.linweiyun.genshin.core.system.poise.impact.ImpactSolver;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -82,7 +82,7 @@ public interface Controllable {
      * 女巫喝药减速的修饰符 id —— 原版 {@code Witch} 用它加 -25% 移速，
      * <b>只在「喝完」时才拆</b>；打断时要照同一个 id 帮它拆掉（见 {@link #cancelWitchDrink}）。
      */
-    Identifier WITCH_DRINKING_MODIFIER = Identifier.withDefaultNamespace("drinking");
+    ResourceLocation WITCH_DRINKING_MODIFIER = ResourceLocation.withDefaultNamespace("drinking");
 
     /** 这一次请求的判定结果。 */
     enum Verdict {
@@ -320,7 +320,8 @@ public interface Controllable {
         }
         cancelOngoingAction(mob);
         stopRunningGoals(mob);
-        mob.getMoveControl().setWait();
+        // 把移动目标点设成当前位置：MoveControl 下一 tick 就会停住，等同于「原地待命」
+        mob.getMoveControl().setWantedPosition(mob.getX(), mob.getY(), mob.getZ(), 0.0D);
         mob.getNavigation().stop();
         haltMovement(mob);
         ControlService.openStandStill(mob, hold);
@@ -465,7 +466,7 @@ public interface Controllable {
      */
     static void stopRunningGoals(Mob mob) {
         List<WrappedGoal> running = null;
-        for (WrappedGoal wrapped : mob.getGoalSelector().getAvailableGoals()) {
+        for (WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
             if (wrapped.isRunning()) {
                 if (running == null) {
                     running = new ArrayList<>(4);

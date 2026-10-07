@@ -25,9 +25,9 @@ import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
-import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
@@ -82,8 +82,8 @@ public class Backpack implements IPersistedSerializable, Container, IContainerUI
     public void setOnChange(Runnable onChange) {
         this.onChange = onChange;
     }
-    public ResourceHandler<ItemResource> asResourceHandler() {
-        return VanillaContainerWrapper.of(this);
+    public IItemHandlerModifiable asResourceHandler() {
+        return new InvWrapper(this);
     }
 
     // ==================== slot 路由辅助方法 ====================

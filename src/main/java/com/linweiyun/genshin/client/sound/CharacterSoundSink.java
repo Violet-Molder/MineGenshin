@@ -2,7 +2,7 @@ package com.linweiyun.genshin.client.sound;
 
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 
 import java.util.Map;
@@ -42,8 +42,8 @@ import java.util.Map;
 public interface CharacterSoundSink {
 
     /** 事件表：{@code SoundManager.registry}。 */
-    Map<Identifier, WeighedSoundEvents> genshin$soundEvents();
+    Map<ResourceLocation, WeighedSoundEvents> genshin$soundEvents();
 
     /** 文件表：{@code SoundManager.soundCache}（key 是 {@link Sound#getPath()} 那种完整资源路径）。 */
-    Map<Identifier, Resource> genshin$soundFiles();
+    Map<ResourceLocation, Resource> genshin$soundFiles();
 }

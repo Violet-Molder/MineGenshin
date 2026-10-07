@@ -7,7 +7,7 @@ import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.DescSynced;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 
@@ -69,7 +69,7 @@ public class Vodyanitsa extends CatalystCharacter {
     }
 
     @Override
-    public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+    public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
         return Map.of(
                 ModAttributes.MAX_HP.getId(), VodyanitsaAttributeConfig::getAllHp,
                 ModAttributes.ATK.getId(), VodyanitsaAttributeConfig::getAllAtk,

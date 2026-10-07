@@ -12,7 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.valueproviders.ConstantFloat;
@@ -127,7 +127,7 @@ public final class CharacterSounds {
     }
 
     /** 扫出来的结果：事件表 + 声音文件表（都要并进原版那两张表里）。 */
-    public record Loaded(Map<Identifier, WeighedSoundEvents> events, Map<Identifier, Resource> files) {
+    public record Loaded(Map<ResourceLocation, WeighedSoundEvents> events, Map<ResourceLocation, Resource> files) {
 
         public static final Loaded EMPTY = new Loaded(Map.of(), Map.of());
 
@@ -156,8 +156,8 @@ public final class CharacterSounds {
             return Loaded.EMPTY;
         }
 
-        Map<Identifier, WeighedSoundEvents> events = new LinkedHashMap<>();
-        Map<Identifier, Resource> files = new LinkedHashMap<>();
+        Map<ResourceLocation, WeighedSoundEvents> events = new LinkedHashMap<>();
+        Map<ResourceLocation, Resource> files = new LinkedHashMap<>();
 
         int auto = scanSoundFiles(resources, events, files);
         int defined = scanDefinitions(resources, events, files);
@@ -175,16 +175,16 @@ public final class CharacterSounds {
 
     /** @return 登记了几个文件 */
     private static int scanSoundFiles(ResourceManager resources,
-                                      Map<Identifier, WeighedSoundEvents> events,
-                                      Map<Identifier, Resource> files) {
-        Map<Identifier, Resource> found = resources.listResources(
+                                      Map<ResourceLocation, WeighedSoundEvents> events,
+                                      Map<ResourceLocation, Resource> files) {
+        Map<ResourceLocation, Resource> found = resources.listResources(
                 GenshinAssets.CHARACTER_ROOT,
                 id -> GenshinAssets.MOD_ID.equals(id.getNamespace())
                         && id.getPath().endsWith(".ogg")
                         && GenshinAssets.isCharacterSound(id));
 
         int count = 0;
-        for (Map.Entry<Identifier, Resource> entry : found.entrySet()) {
+        for (Map.Entry<ResourceLocation, Resource> entry : found.entrySet()) {
             String characterId = characterIdOfSoundFile(entry.getKey());
             String fileName = fileNameOf(entry.getKey());
             if (characterId == null || fileName == null) {
@@ -193,8 +193,8 @@ public final class CharacterSounds {
 
             // character/vesna/sounds/attack_1.ogg → 声音位置 minegenshin:character/vesna/sounds/attack_1
             //                                   → 事件 minegenshin:vesna_attack_1
-            Identifier location = GenshinAssets.characterSound(characterId, fileName);
-            Identifier eventId = GenshinAssets.characterSoundEvent(characterId, fileName);
+            ResourceLocation location = GenshinAssets.characterSound(characterId, fileName);
+            ResourceLocation eventId = GenshinAssets.characterSoundEvent(characterId, fileName);
             if (location == null || eventId == null) {
                 continue;
             }
@@ -213,7 +213,7 @@ public final class CharacterSounds {
      * @param soundFile 形如 {@code minegenshin:character/vesna/sounds/attack_1.ogg}
      */
     @Nullable
-    private static String characterIdOfSoundFile(Identifier soundFile) {
+    private static String characterIdOfSoundFile(ResourceLocation soundFile) {
         String path = soundFile.getPath();
         String prefix = GenshinAssets.CHARACTER_ROOT + "/";
         String marker = "/" + GenshinAssets.SOUNDS_DIR + "/";
@@ -230,7 +230,7 @@ public final class CharacterSounds {
 
     /** 取文件名（不含目录与 {@code .ogg}）。 */
     @Nullable
-    private static String fileNameOf(Identifier soundFile) {
+    private static String fileNameOf(ResourceLocation soundFile) {
         String path = soundFile.getPath();
         int slash = path.lastIndexOf('/');
         String name = slash < 0 ? path : path.substring(slash + 1);
@@ -244,15 +244,15 @@ public final class CharacterSounds {
 
     /** @return 有几个角色写了定义文件 */
     private static int scanDefinitions(ResourceManager resources,
-                                       Map<Identifier, WeighedSoundEvents> events,
-                                       Map<Identifier, Resource> files) {
-        Map<Identifier, Resource> definitions = resources.listResources(
+                                       Map<ResourceLocation, WeighedSoundEvents> events,
+                                       Map<ResourceLocation, Resource> files) {
+        Map<ResourceLocation, Resource> definitions = resources.listResources(
                 GenshinAssets.CHARACTER_ROOT,
                 id -> GenshinAssets.MOD_ID.equals(id.getNamespace())
                         && id.getPath().endsWith("/" + GenshinAssets.SOUND_DEFINITION_FILE));
 
         int count = 0;
-        for (Map.Entry<Identifier, Resource> entry : definitions.entrySet()) {
+        for (Map.Entry<ResourceLocation, Resource> entry : definitions.entrySet()) {
             String characterId = GenshinAssets.characterIdOfSoundDefinition(entry.getKey());
             if (characterId == null) {
                 continue;
@@ -266,8 +266,8 @@ public final class CharacterSounds {
     // ==================== 解析 ====================
 
     private static void readDefinition(String characterId, Resource definition, ResourceManager resources,
-                                       Map<Identifier, WeighedSoundEvents> events,
-                                       Map<Identifier, Resource> files) {
+                                       Map<ResourceLocation, WeighedSoundEvents> events,
+                                       Map<ResourceLocation, Resource> files) {
         try (Reader reader = definition.openAsReader()) {
             JsonElement root = GSON.fromJson(reader, JsonElement.class);
             if (root == null || !root.isJsonObject()) {
@@ -285,14 +285,14 @@ public final class CharacterSounds {
 
     private static void readEvent(String characterId, String key, JsonElement value,
                                   ResourceManager resources,
-                                  Map<Identifier, WeighedSoundEvents> events,
-                                  Map<Identifier, Resource> files) {
+                                  Map<ResourceLocation, WeighedSoundEvents> events,
+                                  Map<ResourceLocation, Resource> files) {
         if (value == null || !value.isJsonObject()) {
             return;
         }
         JsonObject object = value.getAsJsonObject();
 
-        Identifier eventId = GenshinAssets.characterSoundEvent(characterId, key);
+        ResourceLocation eventId = GenshinAssets.characterSoundEvent(characterId, key);
         if (eventId == null) {
             return;
         }
@@ -322,8 +322,8 @@ public final class CharacterSounds {
     }
 
     @Nullable
-    private static Sound readSound(String characterId, JsonElement element, Identifier eventId,
-                                   ResourceManager resources, Map<Identifier, Resource> files) {
+    private static Sound readSound(String characterId, JsonElement element, ResourceLocation eventId,
+                                   ResourceManager resources, Map<ResourceLocation, Resource> files) {
         String name;
         float volume = 1.0F;
         float pitch = 1.0F;
@@ -352,15 +352,15 @@ public final class CharacterSounds {
             return null;
         }
 
-        Identifier location = name.indexOf(':') >= 0
-                ? Identifier.tryParse(name)
+        ResourceLocation location = name.indexOf(':') >= 0
+                ? ResourceLocation.tryParse(name)
                 : GenshinAssets.characterSound(characterId, name);
         if (location == null) {
             LOGGER.warn("[MineGenshin] 角色 '{}' 的音效名 '{}' 非法，已跳过", characterId, name);
             return null;
         }
 
-        Identifier assetPath = GenshinAssets.soundAssetPath(location);
+        ResourceLocation assetPath = GenshinAssets.soundAssetPath(location);
         Resource resource = resources.getResource(assetPath).orElse(null);
         if (resource == null) {
             LOGGER.warn("[MineGenshin] 声音文件 {} 不存在，事件 {} 少了一条（把 ogg 放进角色目录的 sounds/ 里即可）",
@@ -414,9 +414,9 @@ public final class CharacterSounds {
      */
     public static final class CharacterSound extends Sound {
 
-        private final Identifier assetPath;
+        private final ResourceLocation assetPath;
 
-        CharacterSound(Identifier location, Identifier assetPath, float volume, float pitch,
+        CharacterSound(ResourceLocation location, ResourceLocation assetPath, float volume, float pitch,
                        int weight, boolean stream, boolean preload) {
             super(location, ConstantFloat.of(volume), ConstantFloat.of(pitch), weight,
                     Sound.Type.FILE, stream, preload, 16);
@@ -424,7 +424,7 @@ public final class CharacterSounds {
         }
 
         @Override
-        public Identifier getPath() {
+        public ResourceLocation getPath() {
             return assetPath;
         }
     }

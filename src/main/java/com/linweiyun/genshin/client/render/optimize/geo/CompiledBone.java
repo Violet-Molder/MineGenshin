@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.client.render.optimize.geo;
 
-import com.geckolib.cache.model.GeoBone;
-import com.geckolib.cache.model.cuboid.GeoCube;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.cache.object.GeoCube;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -32,13 +32,13 @@ import org.jspecify.annotations.Nullable;
  *       因为原版就是拿「已经变换到世界空间」的法线去判符号的，必须留到最后一步做。</li>
  * </ul>
  *
- * <p>不做顶点去重 / 面索引：26.2 的这条路径是「顺序写进顶点缓冲」，不是索引绘制，
+ * <p>不做顶点去重 / 面索引：这条路径是「顺序写进顶点缓冲」，不是索引绘制，
  * 去重只能省内存、省不了写入次数，反而会让编译期多一张索引表。索引化的收益要等
  * GPU 蒙皮那一阶段（把几何常驻显存）才成立。</p>
  */
 public final class CompiledBone {
 
-    /** 原始骨骼对象。轴心、基础旋转、{@code frameSnapshot}、以及骨骼位置监听都还从这里读。 */
+    /** 原始骨骼对象。轴心、旋转、位移、缩放与显隐都还从这里读。 */
     public final GeoBone source;
 
     /** 预编译顶点：每顶点 5 个 float（x, y, z, u, v）。没有几何时是空数组。 */
@@ -60,7 +60,7 @@ public final class CompiledBone {
      */
     public final GeoCube @Nullable [] cubes;
 
-    /** 子骨骼，顺序与 {@code GeoBone#children()} 一致。 */
+    /** 子骨骼，顺序与 {@code GeoBone#getChildBones()} 一致。 */
     public CompiledBone[] children = new CompiledBone[0];
 
     /** 从顶层骨骼到自己的路径（含自己）。骨骼树不可变，所以这是编译期常量。 */
@@ -69,22 +69,16 @@ public final class CompiledBone {
     /**
      * 本骨骼在 {@link CompiledGeoModel#bonesByIndex} 里的下标。
      *
-     * <h2>为什么需要它</h2>
-     * GPU 蒙皮要把「每根骨骼的矩阵」按固定顺序写进一块常量缓冲，顶点里只带一个骨骼下标
-     * （见 {@code gpu.SkinnedMesh}）。所以编译期就得给每根骨骼定一个稳定编号。
-     *
-     * <p>编号就是「先自己、再子树」的深度优先前序 —— 和
-     * {@link #children} 的编译顺序、顶点表的展平顺序三者完全一致，
-     * 于是「顶点缓冲区里的一段连续顶点」正好对应「一根骨骼」，
-     * 隐藏骨骼时只要跳过一个连续区间，不需要索引表。</p>
+     * <p>编号是「先自己、再子树」的深度优先前序 —— 与 {@link #children} 的编译顺序、
+     * 顶点表的展平顺序三者完全一致，于是顶点缓冲里的一段连续顶点正好对应一根骨骼，
+     * 跳过被隐藏的骨骼只需要跳过一个连续区间。</p>
      */
     public int index;
 
     /**
      * 本骨骼<b>连同整棵子树</b>一共占多少顶点（= 它们在顶点缓冲里那段连续区间的长度）。
      *
-     * <p>GPU 蒙皮里「藏掉一棵子树」= 那段顶点不画，但游标仍要跨过去（见
-     * {@code BoneMatrixPalette#collect}）。有了这个编译期常量，跳过时不必递归子树，
+     * <p>有了这个编译期常量，跳过一棵子树时不必递归它，
      * 一次加法就到下一个兄弟骨骼的区间。</p>
      */
     public int subtreeVertexCount;

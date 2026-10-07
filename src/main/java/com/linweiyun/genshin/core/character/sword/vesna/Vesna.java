@@ -14,7 +14,7 @@ import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import lombok.Getter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
 
@@ -128,7 +128,7 @@ public class Vesna extends SwordCharacter implements IStellarHousehold, IStellar
     }
 
     @Override
-    public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+    public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
         return Map.of(
                 ModAttributes.MAX_HP.getId(), Vesna::getAllHp,
                 ModAttributes.ATK.getId(), Vesna::getAllAtk,

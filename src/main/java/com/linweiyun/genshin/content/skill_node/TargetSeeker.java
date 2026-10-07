@@ -10,6 +10,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.AABB;
 import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
@@ -110,7 +111,7 @@ public class TargetSeeker {
     private LivingEntity executeCharacter(Level level, long tick) {
         LockedTargetData lockData = source.getData(AttachmentRegistration.LOCKED_TARGET);
         if (lockData.isValid(tick)) {
-            Entity locked = level.getEntity(lockData.targetId());
+            Entity locked = level instanceof ServerLevel serverLevel ? serverLevel.getEntity(lockData.targetId()) : null;
             if (locked instanceof LivingEntity livingLocked
                     && locked.isAlive()
                     && source.distanceTo(livingLocked) <= range
@@ -150,7 +151,7 @@ public class TargetSeeker {
     private LivingEntity executeAllySummonFree(Level level, long tick) {
         LockedTargetData lockData = source.getData(AttachmentRegistration.LOCKED_TARGET);
         if (lockData.isValid(tick)) {
-            Entity locked = level.getEntity(lockData.targetId());
+            Entity locked = level instanceof ServerLevel serverLevel ? serverLevel.getEntity(lockData.targetId()) : null;
             if (locked instanceof LivingEntity livingLocked
                     && locked.isAlive()
                     && source.distanceTo(livingLocked) <= range) {
@@ -206,7 +207,7 @@ public class TargetSeeker {
         LockedTargetData lockData = ownerPlayer.getData(AttachmentRegistration.LOCKED_TARGET);
         if (!lockData.isValid(tick)) return null;
 
-        Entity locked = level.getEntity(lockData.targetId());
+        Entity locked = level instanceof ServerLevel serverLevel ? serverLevel.getEntity(lockData.targetId()) : null;
         if (locked instanceof LivingEntity livingLocked && livingLocked.isAlive()) {
             return livingLocked;
         }

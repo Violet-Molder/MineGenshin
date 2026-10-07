@@ -89,7 +89,7 @@ public final class ShenheElementalSkill {
                         .build();
                 ModDamageSource source = ModDamageSource.from(spec, player);
                 if (hitEntity.level() instanceof ServerLevel serverLevel) {
-                    hitEntity.hurtServer(serverLevel, source, 0f);
+                    hitEntity.hurt(source, 0f);
                 }
             });
         }
@@ -126,7 +126,7 @@ public final class ShenheElementalSkill {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
 

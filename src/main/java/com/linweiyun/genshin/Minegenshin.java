@@ -19,7 +19,7 @@ import com.linweiyun.genshin.core.system.reaction.ReactionPriorityCalculator;
 import com.linweiyun.genshin.event.listener.server.GenshinEvents;
 import com.linweiyun.genshin.core.system.registry.register.*;
 import com.lowdragmc.lowdraglib2.gui.factory.PlayerUIMenuType;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
@@ -86,7 +86,7 @@ public class Minegenshin {
         ModMenus.register(modEventBus);
 
         PlayerUIMenuType.register(
-                Identifier.fromNamespaceAndPath("minegenshin", "backpack"),
+                ResourceLocation.fromNamespaceAndPath("minegenshin", "backpack"),
                 player -> {
                     Backpack backpack = player.getData(AttachmentRegistration.BACKPACK_ATTACHMENT.get());
                     return backpack::createUI;
@@ -102,8 +102,8 @@ public class Minegenshin {
         event.enqueueWork(AttributeCapHandler::applyCapRelief);
     }
 
-    public static Identifier id(String path) {
-        return Identifier.fromNamespaceAndPath(MOD_ID, path);
+    public static ResourceLocation id(String path) {
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
     }
 
     @SubscribeEvent

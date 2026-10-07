@@ -1,22 +1,21 @@
 package com.linweiyun.genshin.core.world;
 
 import com.linweiyun.genshin.Minegenshin;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.Identifier;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraft.world.level.saveddata.SavedDataType;
 
 public class TeyvatWorldInvasion extends SavedData {
 
-    public static final SavedDataType<TeyvatWorldInvasion> TYPE = new SavedDataType<>(
-            Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "teyvat_invasion"),
-            TeyvatWorldInvasion::new,
-            RecordCodecBuilder.create(instance -> instance.group(
-                    Codec.BOOL.fieldOf("invaded").forGetter(d -> d.invaded)
-            ).apply(instance, TeyvatWorldInvasion::new))
-    );
+    /** 存档文件名，落在 {@code <世界>/data/<id>.dat}。 */
+    public static final String FILE_ID = Minegenshin.MOD_ID + "_teyvat_invasion";
+
+    /** 是否处于「提瓦特入侵」状态的存档键。 */
+    private static final String KEY_INVADED = "invaded";
+
+    public static final SavedData.Factory<TeyvatWorldInvasion> FACTORY =
+            new SavedData.Factory<>(TeyvatWorldInvasion::new, TeyvatWorldInvasion::load);
 
     private boolean invaded;
 
@@ -38,7 +37,17 @@ public class TeyvatWorldInvasion extends SavedData {
     }
 
     public static TeyvatWorldInvasion get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(TYPE);
+        return level.getDataStorage().computeIfAbsent(FACTORY, FILE_ID);
+    }
+
+    @Override
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putBoolean(KEY_INVADED, invaded);
+        return tag;
+    }
+
+    private static TeyvatWorldInvasion load(CompoundTag tag, HolderLookup.Provider registries) {
+        return new TeyvatWorldInvasion(tag.getBoolean(KEY_INVADED));
     }
 
     private static boolean clientInvaded = false;

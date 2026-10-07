@@ -182,7 +182,7 @@ public class TalismanSpiritArea extends AreaEntity {
 
         ModDamageSource damageSource = ModDamageSource.from(spec, owner);
         if (target.level() instanceof ServerLevel serverLevel) {
-            target.hurtServer(serverLevel, damageSource, 0f);
+            target.hurt(damageSource, 0f);
         }
     }
 

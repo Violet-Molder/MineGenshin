@@ -16,10 +16,8 @@ import java.util.BitSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.TagValueInput;
 
 public class ClientHandler {
    public static void primogemClientHandler(int amount) {
@@ -40,7 +38,7 @@ public class ClientHandler {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && !mc.player.isRemoved()) {
          AdventurerInfoAttachment attachment = (AdventurerInfoAttachment)mc.player.getData(AttachmentRegistration.ADVENTURER_INFO_ATTACHMENT);
-         attachment.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, mc.player.registryAccess(), data));
+         attachment.deserializeNBT(mc.player.registryAccess(), data);
       }
    }
 
@@ -48,7 +46,7 @@ public class ClientHandler {
       Minecraft mc = Minecraft.getInstance();
       if (mc.player != null && !mc.player.isRemoved()) {
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)mc.player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
-         attachment.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, mc.player.registryAccess(), data));
+         attachment.deserializeNBT(mc.player.registryAccess(), data);
          attachment.fixCharacterTypes();
       }
    }
@@ -59,7 +57,7 @@ public class ClientHandler {
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)mc.player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
          PGCharacter character = attachment.getCharacterByUUID(uuid);
          if (character != null) {
-            character.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, mc.player.registryAccess(), data));
+            character.deserializeNBT(mc.player.registryAccess(), data);
          }
       }
    }
@@ -93,7 +91,7 @@ public class ClientHandler {
       if (mc.player != null && !mc.player.isRemoved()) {
          PlayerCharactersAttachment attachment = (PlayerCharactersAttachment)mc.player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
          PGCharacter character = new PGCharacter();
-         character.deserialize(TagValueInput.create(ProblemReporter.DISCARDING, mc.player.registryAccess(), characterData));
+         character.deserializeNBT(mc.player.registryAccess(), characterData);
          attachment.addCharacter(character, mc.player);
       }
    }
@@ -156,9 +154,9 @@ public class ClientHandler {
       Minecraft mc = Minecraft.getInstance();
       if (mc.level != null) {
          if (mc.level.getEntity(entityId) instanceof ISyncManagedEntity syncEntity) {
-            BitSet changed = BitSet.valueOf(payload.getLongArray("changed").orElse(new long[0]));
-            byte[] data = payload.getByteArray("data").orElse(new byte[0]);
-            CompoundTag extra = payload.getCompoundOrEmpty("extra");
+            BitSet changed = BitSet.valueOf(payload.getLongArray("changed"));
+            byte[] data = payload.getByteArray("data");
+            CompoundTag extra = payload.getCompound("extra");
             syncEntity.handleSyncPacket(mc.level.registryAccess(), changed, data, extra);
          }
       }

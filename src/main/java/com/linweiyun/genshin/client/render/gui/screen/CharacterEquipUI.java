@@ -1,9 +1,7 @@
-// restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
-// the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.gui.screen;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.combat.state.AnimationAvailability;
 import com.linweiyun.genshin.client.keybindings.KeyMappingRegistry;
 import com.linweiyun.genshin.client.render.character.CharacterRenderDispatcher;
@@ -40,7 +38,6 @@ import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepos
 import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
-import com.lowdragmc.lowdraglib2.client.scene.SceneRenderContext;
 import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.gui.texture.IGuiTexture;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
@@ -70,11 +67,11 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.server.permissions.Permissions;
-import net.minecraft.util.Util;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.Util;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -82,7 +79,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public final class CharacterEquipUI {
-   private static final Identifier STYLESHEET = Identifier.parse("minegenshin:lss/character_equip.lss");
+   private static final ResourceLocation STYLESHEET = ResourceLocation.parse("minegenshin:lss/character_equip.lss");
    private static final int TARGET_CHARACTER = -1;
    private static final int TARGET_WEAPON = -2;
    private static final int FULL_BRIGHT = 15728880;
@@ -393,7 +390,7 @@ public final class CharacterEquipUI {
          return stage;
       }
 
-      renderer.setAfterBuiltinSubmit(ctx -> renderPreview(st, ctx));
+      renderer.setBeforeBatchEnd((bufferSource, partialTick) -> renderPreview(st, bufferSource, partialTick));
       return stage;
    }
 
@@ -434,12 +431,12 @@ public final class CharacterEquipUI {
       };
    }
 
-   private static void renderPreview(CharacterEquipUI.State st, SceneRenderContext ctx) {
+    private static void renderPreview(CharacterEquipUI.State st, MultiBufferSource bufferSource, float partialTicks) {
       PGCharacter viewed = st.character;
       if (viewed != null && st.previewAnimatable != null) {
          String charId = viewed.getTextureId();
          CharacterRenderData data = CharacterRenderRepository.get(charId);
-         PoseStack poseStack = ctx.poseStack();
+         PoseStack poseStack = new PoseStack();
          poseStack.pushPose();
 
          try {
@@ -451,7 +448,7 @@ public final class CharacterEquipUI {
             CharacterRenderDispatcher.RenderTarget target = CharacterRenderDispatcher.targetFor(st.player, charId, data);
             if (target != null) {
                st.previewAnimatable.setPlayerEntity(st.player);
-               BoneUpdater<GeoRenderState> bones = CharacterRenderDispatcher.combine(
+               BoneUpdater<BoneRenderState> bones = CharacterRenderDispatcher.combine(
                   CharacterAppearanceBones.forMask(viewed.getAppearance()), CharacterPropBones.hideAllUpdater()
                );
                bones = CharacterRenderDispatcher.combine(bones, CharacterAppearanceOptionBones.updaterForPreview(viewed.getAppearance(), viewed));
@@ -460,7 +457,7 @@ public final class CharacterEquipUI {
                   CharacterRenderDispatcher.combine(CharacterFaceBones.updaterForState(st.previewAnimationName), CharacterPuppetBones.updaterFor(st.player))
                );
                target.renderer()
-                  .performRenderPass(st.previewAnimatable, st.player, poseStack, ctx.submitStorage(), ctx.cameraState(), 15728880, ctx.partialTicks(), bones);
+                  .performRenderPass(st.previewAnimatable, st.player, poseStack, bufferSource, 15728880, partialTicks, bones);
                return;
             }
          } finally {
@@ -2370,7 +2367,7 @@ public final class CharacterEquipUI {
    }
 
    private static boolean hasCheatPermission(Player player) {
-      return player != null && player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+      return player != null && player.hasPermissions(2);
    }
 
    private static String dataStamp(CharacterEquipUI.State st) {

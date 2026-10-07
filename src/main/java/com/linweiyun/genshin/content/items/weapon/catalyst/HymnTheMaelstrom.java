@@ -14,9 +14,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 
-import java.util.function.Consumer;
+import java.util.List;
 
 /**
  * 漩流颂歌（五星法器）。
@@ -140,12 +139,11 @@ public class HymnTheMaelstrom extends Catalyst {
     // ==================== 物品信息 ====================
 
     @Override
-    public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
-                                Consumer<Component> builder, TooltipFlag flag) {
-        super.appendHoverText(stack, context, display, builder, flag);
-        builder.accept(Component.empty());
-        builder.accept(Component.translatable("item.minegenshin.hymn_of_the_maelstrom.passive").withStyle(ChatFormatting.YELLOW));
-        builder.accept(Component.empty());
-        builder.accept(Component.literal("蓝玉髓所铸的精致灯盏，仿若自童话中诞\n生的宝物，据闻尘封着一曲为所有人忘却\n的颂歌。"));
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> builder, TooltipFlag flag) {
+        super.appendHoverText(stack, context, builder, flag);
+        builder.add(Component.empty());
+        builder.add(Component.translatable("item.minegenshin.hymn_of_the_maelstrom.passive").withStyle(ChatFormatting.YELLOW));
+        builder.add(Component.empty());
+        builder.add(Component.literal("蓝玉髓所铸的精致灯盏，仿若自童话中诞\n生的宝物，据闻尘封着一曲为所有人忘却\n的颂歌。"));
     }
 }

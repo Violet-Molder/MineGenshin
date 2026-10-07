@@ -1,70 +1,70 @@
 package com.linweiyun.genshin.client.render.character;
 
-import com.geckolib.model.GeoModel;
-import com.geckolib.renderer.GeoObjectRenderer;
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo;
-import com.linweiyun.genshin.client.render.optimize.GeoRenderIntercept;
-import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneSnapshots;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.RenderPassView;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.player.Player;
-import org.jspecify.annotations.Nullable;
+import org.jetbrains.annotations.Nullable;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.model.GeoModel;
+import software.bernie.geckolib.renderer.GeoObjectRenderer;
 
 /**
- * 角色模型渲染器。
+ * 角色模型渲染器：一次调用渲染一个角色的整套模型（含挂点层、半透明层）。
  *
- * <h2>为什么要把父类的原点平移「改成 0」</h2>
- * 基类 {@link GeoObjectRenderer}（给「摆件」用的渲染器）在 {@code adjustRenderPose} 里
- * 有一句 {@code translate(0.5, 0.51, 0.5)} —— 那是给<b>以方块角为原点</b>导出的
- * 摆件模型准备的补偿。
+ * <h2>原点</h2>
+ * 覆盖 {@link #preRender} 抵消父类 {@code GeoObjectRenderer} 的 +0.5/+0.51/+0.5 平移：
+ * 那句平移是给<b>以方块角为原点</b>导出的摆件模型用的，而本模组的角色模型以原点为中心、
+ * 人也站在方块中心，带上它会让模型整体偏到斜后方半格，与判定箱和影子对不上。
  *
- * <p>而我们这套角色模型是<b>以原点为中心</b>导出的：所有 cube 的 origin 都对称于 x=0
- * （头 −3.5~3.5、躯干 −3~3、腿 ±1.9 单位），模型自带
- * {@code visible_bounds_offset = [0, 1.75, 0]}。人也确实站在方块中心 ——
- * 原版实体渲染交给我们的 pose 就只有「实体相对相机的位置」（见
- * {@code EntityRenderDispatcher.submit}），没有任何半格偏移。
- *
- * <p>所以那句 +0.5 会把模型整体推到斜后方半格（约 0.71 格），和判定箱、影子对不上。
- * GeckoLib 自己的实体渲染器（{@code GeoEntityRenderer} / {@code GeoReplacedEntityRenderer}）
- * 就<b>没有</b>这句平移，只有摆件渲染器有 —— 这也说明它是「摆件约定」，不是实体的。
- *
- * <p>覆盖成空实现后：模型正好落在实体位置上，第一人称那边也不需要再做
- * 「反向补偿半格」的换算。
+ * <h2>骨骼规则</h2>
+ * {@link #performRenderPass} 收到本帧要用的 {@link BoneUpdater}，在 {@link #preRender}
+ * 里应用到烘焙模型上（改好的骨骼状态在本次渲染中一直有效）。
  */
-public class CharacterRenderer extends GeoObjectRenderer<GenshinReplacedPlayer, Player, GeoRenderState> {
+public class CharacterRenderer extends GeoObjectRenderer<GenshinReplacedPlayer> {
+
+    /** 本次渲染要应用的骨骼规则；由 {@link #performRenderPass} 设置。 */
+    @Nullable
+    private BoneUpdater<BoneRenderState> pendingUpdater;
 
     public CharacterRenderer(GeoModel<GenshinReplacedPlayer> model) {
         super(model);
     }
 
-    @Override
-    public void adjustRenderPose(RenderPassInfo<GeoRenderState> renderPassInfo) {
-        // 故意什么都不做：模型以原点为中心，不需要摆件渲染器那半格补偿。
-        // （要调模型相对实体的位置就改这里，别去动 adjustRenderPose 的父类默认值）
+    /**
+     * 渲染一趟角色模型。
+     *
+     * @param boneUpdater 本次要应用的骨骼规则；为空表示不改骨骼
+     */
+    public void performRenderPass(GenshinReplacedPlayer animatable, @Nullable Player related, PoseStack poseStack,
+                                  MultiBufferSource bufferSource, int packedLight, float partialTick,
+                                  @Nullable BoneUpdater<BoneRenderState> boneUpdater) {
+        this.animatable = animatable;
+        this.pendingUpdater = boneUpdater;
+        try {
+            render(poseStack, animatable, bufferSource, null, null, packedLight, partialTick);
+        } finally {
+            this.pendingUpdater = null;
+        }
     }
 
-    /**
-     * 几何提交 —— 本模组几何优化系统在角色侧的入口。
-     *
-     * <h2>为什么这里只剩两行</h2>
-     * 真正的接管逻辑（GPU 蒙皮 / CPU 优化 / 回退判定）统一放在
-     * {@link GeoRenderIntercept#trySubmit}：同一个入口也被 mixin 挂在
-     * {@code GeoRenderer#submitRenderTasks} 这条接口 default 方法上，于是角色、本模组实体、
-     * 以及其它模组的 GeckoLib 实体走的是<b>同一份代码</b>。这里保留覆写只是为了让角色
-     * 不依赖「mixin 注入是否成功」——两者不会重复接管，因为角色覆写了这个方法，
-     * 接口的 default 实现根本不会被调用。
-     *
-     * <p>{@code false} 只表示「这次什么都没提交」（目前只有 missing model 一种情况），
-     * 此时按 GeckoLib 默认实现的逐句复刻走一遍。不能写 {@code super.submitRenderTasks(...)}：
-     * {@code GeoRenderer} 的默认实现属于接口，而本类的直接父类是 {@code GeoObjectRenderer}
-     * 这个类，Java 不允许它写 {@code GeoRenderer.super.submitRenderTasks(...)}。</p>
-     */
     @Override
-    public void submitRenderTasks(RenderPassInfo<GeoRenderState> renderPassInfo,
-                                  OrderedSubmitNodeCollector renderTasks,
-                                  @Nullable RenderType renderType) {
-        if (!GeoRenderIntercept.trySubmit(renderPassInfo, renderTasks, renderType)) {
-            GeoRenderIntercept.submitDefault(renderPassInfo, renderTasks, renderType);
+    public void preRender(PoseStack poseStack, GenshinReplacedPlayer animatable, BakedGeoModel model,
+                          MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
+                          float partialTick, int packedLight, int packedOverlay, int colour) {
+        BoneUpdater<BoneRenderState> updater = this.pendingUpdater;
+        if (updater != null) {
+            BoneSnapshots snapshots = new BoneSnapshots(model);
+            updater.run(new RenderPassView<>(new BoneRenderState(partialTick), snapshots), snapshots);
         }
+
+        super.preRender(poseStack, animatable, model, bufferSource, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, colour);
+        // 抵消父类的摆件补偿（详见类注释）。要调模型相对实体的位置就改这一句。
+        poseStack.translate(-0.5F, -0.51F, -0.5F);
     }
 }

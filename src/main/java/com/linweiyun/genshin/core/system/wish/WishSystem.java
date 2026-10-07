@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.system.wish;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.google.gson.JsonParser;
 import com.linweiyun.genshin.content.items.artifact.ArtifactItem;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
@@ -15,16 +17,14 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.storage.TagValueOutput;
 import org.slf4j.Logger;
 
 import java.util.List;
@@ -78,10 +78,8 @@ public class WishSystem {
                     Component.translatable("message.minegenshin.wish.no_reward"));
         }
 
-        TagValueOutput output = TagValueOutput.createWithContext(
-                ProblemReporter.DISCARDING, serverPlayer.registryAccess());
-        charactersAttachment.serialize(output);
-        NetworkManager.setPlayerCharactersToPlayer(serverPlayer, output.buildResult());
+        NetworkManager.setPlayerCharactersToPlayer(serverPlayer,
+                charactersAttachment.serializeNBT(serverPlayer.registryAccess()));
     }
 
     /**
@@ -97,7 +95,7 @@ public class WishSystem {
     private static boolean handleCharacterDrop(ServerPlayer serverPlayer,
                                                PlayerCharactersAttachment charactersAttachment,
                                                WishEntry entry) {
-        Identifier charId = Identifier.parse(entry.id());
+        ResourceLocation charId = ResourceLocation.parse(entry.id());
         PGCharacter template = ModCharacters.getById(charId);
         if (template == null) {
             LOGGER.warn("Unknown character in wish: {}", entry.id());
@@ -167,8 +165,8 @@ public class WishSystem {
     }
 
     private static boolean handleItemDrop(ServerPlayer serverPlayer, WishEntry entry) {
-        Identifier itemId = Identifier.parse(entry.id());
-        Item item = BuiltInRegistries.ITEM.getValue(
+        ResourceLocation itemId = ResourceLocation.parse(entry.id());
+        Item item = BuiltInRegistries.ITEM.get(
                 ResourceKey.create(Registries.ITEM, itemId));
         if (item == null) {
             LOGGER.warn("Unknown item in wish: {}", entry.id());
@@ -209,7 +207,7 @@ public class WishSystem {
         if (server == null) return null;
 
         ResourceManager rm = server.getResourceManager();
-        Identifier resourceId = Identifier.fromNamespaceAndPath("minegenshin", "wish/standard.json");
+        ResourceLocation resourceId = ResourceLocation.fromNamespaceAndPath("minegenshin", "wish/standard.json");
 
         try {
             var resource = rm.getResourceOrThrow(resourceId);

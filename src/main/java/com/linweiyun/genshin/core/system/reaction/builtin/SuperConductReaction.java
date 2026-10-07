@@ -112,9 +112,8 @@ public class SuperConductReaction extends ElementalReaction {
         ModDamageSpec spec = ModDamageSpec.transformative(
                 ModReactionTypes.SUPERCONDUCT.get(), ModElements.CYRO.get(), AttackType.SPECIAL);
         ModDamageSource source = ModDamageSource.from(spec, context.attackerEntity());
-        // 伤害入口统一走 hurtServer（原版那条 @Deprecated 的 hurt(DamageSource,float) 已经被替换掉）
         if (target.level() instanceof ServerLevel serverLevel) {
-            target.hurtServer(serverLevel, source, 0f);
+            target.hurt(source, 0f);
         }
     }
 }

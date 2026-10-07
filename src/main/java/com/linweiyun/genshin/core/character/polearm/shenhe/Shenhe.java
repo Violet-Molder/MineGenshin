@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
 public class Shenhe extends ClaymoreCharacter implements IStellarStateHolder {
@@ -64,7 +64,7 @@ public class Shenhe extends ClaymoreCharacter implements IStellarStateHolder {
    }
 
    @Override
-   public Map<Identifier, Supplier<List<? extends Integer>>> getStatGrowthMap() {
+   public Map<ResourceLocation, Supplier<List<? extends Integer>>> getStatGrowthMap() {
       return Map.of(
          ModAttributes.MAX_HP.getId(),
          ShenheAttributeConfig::getAllHp,

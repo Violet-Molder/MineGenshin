@@ -11,7 +11,7 @@ import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -50,7 +50,7 @@ public final class LinweiyunElementalBurst {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
 
@@ -60,7 +60,7 @@ public final class LinweiyunElementalBurst {
         PGCharacter currentChar = attachment.getCurrentCharacter();
 
         TalismanSpiritArea field = ModEntities.FIELD_TALISMAN_SPIRIT.get()
-                .create(player.level(), EntitySpawnReason.EVENT);
+                .create(player.level());
         if (field != null) {
             field.setPos(player.position());
             if (currentChar != null) {

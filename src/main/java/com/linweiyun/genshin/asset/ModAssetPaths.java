@@ -3,7 +3,7 @@
 package com.linweiyun.genshin.asset;
 
 import com.linweiyun.genshin.Minegenshin;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 public final class ModAssetPaths {
@@ -23,35 +23,35 @@ public final class ModAssetPaths {
    private ModAssetPaths() {
    }
 
-   public static Identifier itemDefinition(String itemId) {
+   public static ResourceLocation itemDefinition(String itemId) {
       return inDir(dir(AssetCategory.ITEM, itemId), "definition.json", "");
    }
 
-   public static Identifier itemModel(String itemId) {
+   public static ResourceLocation itemModel(String itemId) {
       return inDir(dir(AssetCategory.ITEM, itemId), "model.json", "");
    }
 
-   public static Identifier itemTexture(String itemId) {
+   public static ResourceLocation itemTexture(String itemId) {
       return textureIn(dir(AssetCategory.ITEM, itemId), "texture.png");
    }
 
-   public static Identifier blockModel(String blockId) {
+   public static ResourceLocation blockModel(String blockId) {
       return inDir(dir(AssetCategory.BLOCK, blockId), "model.json", "");
    }
 
-   public static Identifier blockTexture(String blockId) {
+   public static ResourceLocation blockTexture(String blockId) {
       return textureIn(dir(AssetCategory.BLOCK, blockId), "texture.png");
    }
 
-   public static Identifier blockItemDefinition(String blockId) {
+   public static ResourceLocation blockItemDefinition(String blockId) {
       return inDir(blockItemDir(blockId), "definition.json", "");
    }
 
-   public static Identifier blockItemModel(String blockId) {
+   public static ResourceLocation blockItemModel(String blockId) {
       return inDir(blockItemDir(blockId), "model.json", "");
    }
 
-   public static Identifier blockItemTexture(String blockId) {
+   public static ResourceLocation blockItemTexture(String blockId) {
       return textureIn(blockItemDir(blockId), "texture.png");
    }
 
@@ -59,7 +59,7 @@ public final class ModAssetPaths {
       return objectDir + "/textures";
    }
 
-   public static Identifier textureIn(String objectDir, String fileName) {
+   public static ResourceLocation textureIn(String objectDir, String fileName) {
       return Minegenshin.id(textureDir(objectDir) + "/" + fileName);
    }
 
@@ -91,11 +91,11 @@ public final class ModAssetPaths {
       return dir != null && dir.endsWith("/local");
    }
 
-   public static boolean isLocalFile(@Nullable Identifier raw) {
+   public static boolean isLocalFile(@Nullable ResourceLocation raw) {
       return raw != null && raw.getPath().contains("/local/");
    }
 
-   public static Identifier withoutLocalDir(@Nullable Identifier raw) {
+   public static ResourceLocation withoutLocalDir(@Nullable ResourceLocation raw) {
       if (raw == null) {
          return null;
       }
@@ -103,7 +103,7 @@ public final class ModAssetPaths {
       String marker = "/local/";
       String path = raw.getPath();
       int at = path.indexOf(marker);
-      return at < 0 ? raw : Identifier.fromNamespaceAndPath(raw.getNamespace(), path.substring(0, at + 1) + path.substring(at + marker.length()));
+      return at < 0 ? raw : ResourceLocation.fromNamespaceAndPath(raw.getNamespace(), path.substring(0, at + 1) + path.substring(at + marker.length()));
    }
 
    public static String dir(AssetCategory category, String id) {
@@ -114,59 +114,59 @@ public final class ModAssetPaths {
       return dir(AssetCategory.BLOCK, blockId) + "/blockitem";
    }
 
-   public static Identifier file(AssetCategory category, String id, String relative) {
+   public static ResourceLocation file(AssetCategory category, String id, String relative) {
       return Minegenshin.id(dir(category, id) + "/" + relative);
    }
 
-   public static Identifier inDir(String directory, String baseName, String suffix) {
+   public static ResourceLocation inDir(String directory, String baseName, String suffix) {
       return Minegenshin.id(directory + "/" + baseName + suffix);
    }
 
-   public static Identifier geoModel(AssetCategory category, String id) {
+   public static ResourceLocation geoModel(AssetCategory category, String id) {
       return file(category, id, id + ".json");
    }
 
-   public static Identifier geoModelWithSuffix(AssetCategory category, String id) {
+   public static ResourceLocation geoModelWithSuffix(AssetCategory category, String id) {
       return file(category, id, id + ".geo.json");
    }
 
-   public static Identifier animation(AssetCategory category, String id) {
+   public static ResourceLocation animation(AssetCategory category, String id) {
       return file(category, id, id + ".animation.json");
    }
 
-   public static Identifier texture(AssetCategory category, String id) {
+   public static ResourceLocation texture(AssetCategory category, String id) {
       return file(category, id, id + ".png");
    }
 
-   public static Identifier blockState(String blockId) {
+   public static ResourceLocation blockState(String blockId) {
       return file(AssetCategory.BLOCK, blockId, "blockstate.json");
    }
 
-   public static Identifier blockItemGeoModel(String blockId, String itemName) {
+   public static ResourceLocation blockItemGeoModel(String blockId, String itemName) {
       return inDir(blockItemDir(blockId), itemName, ".json");
    }
 
-   public static Identifier blockItemGeoModelWithSuffix(String blockId, String itemName) {
+   public static ResourceLocation blockItemGeoModelWithSuffix(String blockId, String itemName) {
       return inDir(blockItemDir(blockId), itemName, ".geo.json");
    }
 
-   public static Identifier blockItemAnimation(String blockId, String itemName) {
+   public static ResourceLocation blockItemAnimation(String blockId, String itemName) {
       return inDir(blockItemDir(blockId), itemName, ".animation.json");
    }
 
-   public static Identifier blockItemTexture(String blockId, String itemName) {
+   public static ResourceLocation blockItemTexture(String blockId, String itemName) {
       return inDir(blockItemDir(blockId), itemName, ".png");
    }
 
-   public static Identifier assetKey(AssetCategory category, String id) {
+   public static ResourceLocation assetKey(AssetCategory category, String id) {
       return Minegenshin.id(dir(category, id) + "/" + id);
    }
 
-   public static Identifier blockItemKey(String blockId, String itemName) {
+   public static ResourceLocation blockItemKey(String blockId, String itemName) {
       return Minegenshin.id(blockItemDir(blockId) + "/" + itemName);
    }
 
-   public static boolean isGeoModelFile(Identifier raw) {
+   public static boolean isGeoModelFile(ResourceLocation raw) {
       if (raw == null) {
          return false;
       }
@@ -175,7 +175,7 @@ public final class ModAssetPaths {
       return path.endsWith(".json") && !path.endsWith(".animation.json") && !path.endsWith(".animations.json") ? !path.endsWith("/blockstate.json") : false;
    }
 
-   public static boolean isAnimationFile(Identifier raw) {
+   public static boolean isAnimationFile(ResourceLocation raw) {
       if (raw == null) {
          return false;
       }
@@ -184,15 +184,15 @@ public final class ModAssetPaths {
       return path.endsWith(".animation.json") || path.endsWith(".animations.json");
    }
 
-   public static Identifier modelKeyOf(Identifier raw) {
+   public static ResourceLocation modelKeyOf(ResourceLocation raw) {
       return strip(raw, ".geo.json", ".json");
    }
 
-   public static Identifier animationKeyOf(Identifier raw) {
+   public static ResourceLocation animationKeyOf(ResourceLocation raw) {
       return strip(raw, ".animation.json", ".animations.json", ".json");
    }
 
-   private static Identifier strip(@Nullable Identifier raw, String... suffixes) {
+   private static ResourceLocation strip(@Nullable ResourceLocation raw, String... suffixes) {
       if (raw == null) {
          return null;
       }
@@ -206,11 +206,11 @@ public final class ModAssetPaths {
          }
       }
 
-      return Identifier.fromNamespaceAndPath(raw.getNamespace(), path);
+      return ResourceLocation.fromNamespaceAndPath(raw.getNamespace(), path);
    }
 
    @Nullable
-   public static AssetCategory categoryOf(@Nullable Identifier raw) {
+   public static AssetCategory categoryOf(@Nullable ResourceLocation raw) {
       if (raw != null && "minegenshin".equals(raw.getNamespace())) {
          String path = raw.getPath();
 
@@ -227,7 +227,7 @@ public final class ModAssetPaths {
    }
 
    @Nullable
-   public static String idOf(@Nullable Identifier raw) {
+   public static String idOf(@Nullable ResourceLocation raw) {
       AssetCategory category = categoryOf(raw);
       if (category == null) {
          return null;
@@ -240,7 +240,7 @@ public final class ModAssetPaths {
    }
 
    @Nullable
-   public static String roleOf(@Nullable Identifier raw) {
+   public static String roleOf(@Nullable ResourceLocation raw) {
       AssetCategory category = categoryOf(raw);
       if (category == null) {
          return null;
@@ -256,16 +256,16 @@ public final class ModAssetPaths {
       return role.isEmpty() ? null : role;
    }
 
-   public static boolean isBlockState(@Nullable Identifier raw) {
+   public static boolean isBlockState(@Nullable ResourceLocation raw) {
       return raw != null && AssetCategory.BLOCK.matchesPath(raw.getPath()) && raw.getPath().endsWith("/blockstate.json");
    }
 
-   public static boolean isBlockItem(@Nullable Identifier raw) {
+   public static boolean isBlockItem(@Nullable ResourceLocation raw) {
       return raw != null && AssetCategory.BLOCK.matchesPath(raw.getPath()) && raw.getPath().contains("/blockitem/");
    }
 
    @Nullable
-   public static String dirOf(@Nullable Identifier raw) {
+   public static String dirOf(@Nullable ResourceLocation raw) {
       if (raw == null) {
          return null;
       }
@@ -276,7 +276,7 @@ public final class ModAssetPaths {
    }
 
    @Nullable
-   public static String baseNameOf(@Nullable Identifier raw) {
+   public static String baseNameOf(@Nullable ResourceLocation raw) {
       if (raw == null) {
          return null;
       }

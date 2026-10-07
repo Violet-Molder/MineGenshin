@@ -1,10 +1,9 @@
 package com.linweiyun.genshin.client.render.geo;
 
-import com.geckolib.animatable.GeoAnimatable;
-import com.geckolib.cache.animation.Animation;
-import com.geckolib.cache.model.BakedGeoModel;
-import com.geckolib.model.GeoModel;
-import com.geckolib.renderer.base.GeoRenderState;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animation.Animation;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
+import software.bernie.geckolib.model.GeoModel;
 import com.linweiyun.genshin.client.render.geo.AssetGeoCache.DirFiles;
 import com.linweiyun.genshin.asset.AssetCategory;
 import com.linweiyun.genshin.asset.AssetSet;
@@ -16,7 +15,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -99,8 +98,8 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
         );
     }
 
-    public Identifier getModelResource(GeoRenderState renderState) {
-        Identifier found = this.files().model();
+    public ResourceLocation getModelResource(T animatable) {
+        ResourceLocation found = this.files().model();
         if (found != null) {
             return ModAssetPaths.modelKeyOf(found);
         }
@@ -109,8 +108,8 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
         return this.assets.modelKey();
     }
 
-    public Identifier getTextureResource(GeoRenderState renderState) {
-        Identifier found = this.files().texture();
+    public ResourceLocation getTextureResource(T animatable) {
+        ResourceLocation found = this.files().texture();
         if (found != null) {
             return found;
         }
@@ -119,8 +118,8 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
         return this.assets.textureFile();
     }
 
-    public Identifier getAnimationResource(T animatable) {
-        Identifier found = this.files().animation();
+    public ResourceLocation getAnimationResource(T animatable) {
+        ResourceLocation found = this.files().animation();
         if (found != null) {
             return ModAssetPaths.animationKeyOf(found);
         }
@@ -129,7 +128,7 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
         return this.assets.animationKey();
     }
 
-    public BakedGeoModel getBakedModel(Identifier location) {
+    public BakedGeoModel getBakedModel(ResourceLocation location) {
         BakedGeoModel own = AssetGeoCache.model(location);
         if (own != null) {
             return own;
@@ -141,7 +140,7 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
 
     @Nullable
     public Animation getBakedAnimation(T animatable, String name) throws RuntimeException {
-        Identifier file = this.getAnimationResource(animatable);
+        ResourceLocation file = this.getAnimationResource(animatable);
         Animation own = AssetGeoCache.animation(file, name);
         if (own != null) {
             return own;
@@ -153,12 +152,12 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
         }
 
         this.warnAnimationNameOnce(file, name);
-        return super.getBakedAnimation(animatable, name);
+        return super.getAnimation(animatable, name);
     }
 
-    private void warnAnimationNameOnce(Identifier file, String name) {
+    private void warnAnimationNameOnce(ResourceLocation file, String name) {
         if (WARNED.add("anim:" + this.assets.dir() + "/" + name)) {
-            Identifier indexed = this.files().animation();
+            ResourceLocation indexed = this.files().animation();
             Set<String> available = AssetGeoCache.animationNames(file);
             LOGGER.error(
                 "[CategoryGeoModel] 动画 '{}' 解析失败。目录 {}：索引到的动画文件={}，请求的键={}，该键下可用的动画名={}  ‖ 动画文件 MISSING → 文件没被扫到（看 [AssetGeoCache] 目录清单与烘培失败日志）；可用动画名为空 → 文件在但 GeckoLib 没烘出来；列表里没有 '{}' → 改 json 里的动画名，或改 TestAction 的映射",
@@ -167,7 +166,7 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
         }
     }
 
-    private void warnMissingOnce(String what, Identifier[] expected) {
+    private void warnMissingOnce(String what, ResourceLocation[] expected) {
         if (WARNED.add(this.assets.dir() + "/" + what)) {
             Set<String> present = AssetGeoCache.knownDirs().contains(this.assets.dir()) ? this.presentFiles() : Set.of();
             LOGGER.warn(
@@ -176,7 +175,7 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
                     this.category.folder(),
                     this.id,
                     what,
-                    Arrays.stream(expected).map(Identifier::toString).toList(),
+                    Arrays.stream(expected).map(ResourceLocation::toString).toList(),
                     present.isEmpty() ? "（整个目录没被索引到，检查文件是否在 assets/minegenshin/" + this.assets.dir() + "/ 下）" : present
                 }
             );

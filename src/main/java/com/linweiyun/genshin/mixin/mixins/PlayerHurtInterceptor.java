@@ -27,10 +27,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerHurtInterceptor {
 
     @Inject(method = "actuallyHurt", at = @At("HEAD"), cancellable = true)
-    private void onPlayerActuallyHurt(ServerLevel level, DamageSource source, float damage,
+    private void onPlayerActuallyHurt(DamageSource source, float damage,
                                       CallbackInfo ci) {
         Player player = (Player) (Object) this;
         if (!player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT)) return;
+        if (!(player.level() instanceof ServerLevel level)) return;
         if (!TeyvatWorldInvasion.get(level).isInvaded()) return;
         if (source instanceof ModDamageSource) return;
 
@@ -78,8 +79,7 @@ public class PlayerHurtInterceptor {
         if (source.is(DamageTypes.IN_FIRE) || source.is(DamageTypes.CAMPFIRE)
                 || source.is(DamageTypes.ON_FIRE) || source.is(DamageTypes.LAVA)
                 || source.is(DamageTypes.HOT_FLOOR) || source.is(DamageTypes.FIREBALL)
-                || source.is(DamageTypes.UNATTRIBUTED_FIREBALL)
-                || source.is(DamageTypes.SULFUR_CUBE_HOT)) {
+                || source.is(DamageTypes.UNATTRIBUTED_FIREBALL)) {
             return ModElements.PYRO.get();
         }
         if (source.is(DamageTypes.LIGHTNING_BOLT)) {

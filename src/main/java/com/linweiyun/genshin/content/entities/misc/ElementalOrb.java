@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.content.entities.misc;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.PGCharacterData;
@@ -10,7 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
@@ -19,8 +21,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 public class ElementalOrb extends Entity {
@@ -151,10 +151,11 @@ public class ElementalOrb extends Entity {
     public GenshinElement getElement() {
         String elementId = this.getEntityData().get(DATA_ELEMENT);
         if (elementId != null && !elementId.isEmpty()) {
-            return com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
-                    .get(Identifier.fromNamespaceAndPath("minegenshin", elementId))
-                    .map(r -> r.value())
-                    .orElse(ModElements.FYSIKOS.get());
+            GenshinElement element = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
+                    .get(ResourceLocation.fromNamespaceAndPath("minegenshin", elementId));
+            if (element != null) {
+                return element;
+            }
         }
         return ModElements.FYSIKOS.get();
     }
@@ -176,16 +177,16 @@ public class ElementalOrb extends Entity {
     }
 
     @Override
-    public final boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+    public final boolean hurt(DamageSource source, float damage) {
         return false;
     }
 
     @Override
-    public void readAdditionalSaveData(ValueInput input) {
+    public void readAdditionalSaveData(CompoundTag input) {
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput output) {
+    protected void addAdditionalSaveData(CompoundTag output) {
     }
 
     private void addElementalEnergy(Player player) {

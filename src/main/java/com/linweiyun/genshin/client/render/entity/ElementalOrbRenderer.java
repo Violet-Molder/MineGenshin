@@ -5,33 +5,27 @@ import com.linweiyun.genshin.content.entities.misc.ElementalOrb;
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.state.ExperienceOrbRenderState;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-public class ElementalOrbRenderer extends EntityRenderer<ElementalOrb, ExperienceOrbRenderState> {
+public class ElementalOrbRenderer extends EntityRenderer<ElementalOrb> {
 
-    private static final Identifier ORB_TEXTURE =
-            Identifier.withDefaultNamespace("textures/entity/experience/experience_orb.png");
-    private static final RenderType RENDER_TYPE =
-            RenderTypes.entityTranslucentCullItemTarget(ORB_TEXTURE);
+    private static final ResourceLocation ORB_TEXTURE =
+            ResourceLocation.withDefaultNamespace("textures/entity/experience/experience_orb.png");
+    private static final RenderType RENDER_TYPE = RenderType.itemEntityTranslucentCull(ORB_TEXTURE);
+
+    private static final float BASE_SCALE = 0.3F;
 
     public ElementalOrbRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.shadowRadius = 0.15F;
         this.shadowStrength = 0.75F;
-    }
-
-    private static class OrbRenderState extends ExperienceOrbRenderState {
-        int elementColor = 0xFFFFFF;
     }
 
     @Override
@@ -40,32 +34,34 @@ public class ElementalOrbRenderer extends EntityRenderer<ElementalOrb, Experienc
     }
 
     @Override
-    public void submit(ExperienceOrbRenderState state, PoseStack poseStack,
-                       SubmitNodeCollector collector, CameraRenderState camera) {
+    public void render(ElementalOrb entity, float entityYaw, float partialTicks, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
         poseStack.pushPose();
-        int icon = state.icon;
+        // 经验球图标表 4×4，这里固定取左上角那一格
+        int icon = 0;
         float u0 = (icon % 4 * 16) / 64.0F;
         float u1 = u0 + 16.0F / 64.0F;
         float v0 = (icon / 4 * 16) / 64.0F;
         float v1 = v0 + 16.0F / 64.0F;
 
-        int color = ((OrbRenderState) state).elementColor;
+        int color = getColorForElement(entity.getElement());
         int r = (color >> 16) & 0xFF;
         int g = (color >> 8) & 0xFF;
         int b = color & 0xFF;
 
         poseStack.translate(0.0F, 0.1F, 0.0F);
-        poseStack.mulPose(camera.orientation);
-        poseStack.scale(0.3F, 0.3F, 0.3F);
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        poseStack.scale(BASE_SCALE, BASE_SCALE, BASE_SCALE);
 
-        collector.submitCustomGeometry(poseStack, RENDER_TYPE, (pose, buffer) -> {
-            vertex(buffer, pose, -0.5F, -0.25F, r, g, b, u0, v1, state.lightCoords);
-            vertex(buffer, pose, 0.5F, -0.25F, r, g, b, u1, v1, state.lightCoords);
-            vertex(buffer, pose, 0.5F, 0.75F, r, g, b, u1, v0, state.lightCoords);
-            vertex(buffer, pose, -0.5F, 0.75F, r, g, b, u0, v0, state.lightCoords);
-        });
+        VertexConsumer buffer = bufferSource.getBuffer(RENDER_TYPE);
+        PoseStack.Pose pose = poseStack.last();
+        vertex(buffer, pose, -0.5F, -0.25F, r, g, b, u0, v1, packedLight);
+        vertex(buffer, pose, 0.5F, -0.25F, r, g, b, u1, v1, packedLight);
+        vertex(buffer, pose, 0.5F, 0.75F, r, g, b, u1, v0, packedLight);
+        vertex(buffer, pose, -0.5F, 0.75F, r, g, b, u0, v0, packedLight);
+
         poseStack.popPose();
-        super.submit(state, poseStack, collector, camera);
+        super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
     }
 
     private static void vertex(VertexConsumer buffer, PoseStack.Pose pose,
@@ -80,16 +76,8 @@ public class ElementalOrbRenderer extends EntityRenderer<ElementalOrb, Experienc
     }
 
     @Override
-    public ExperienceOrbRenderState createRenderState() {
-        return new OrbRenderState();
-    }
-
-    @Override
-    public void extractRenderState(ElementalOrb entity, ExperienceOrbRenderState state,
-                                    float partialTicks) {
-        super.extractRenderState(entity, state, partialTicks);
-        GenshinElement element = entity.getElement();
-        ((OrbRenderState) state).elementColor = getColorForElement(element);
+    public ResourceLocation getTextureLocation(ElementalOrb entity) {
+        return ORB_TEXTURE;
     }
 
     private static int getColorForElement(GenshinElement element) {

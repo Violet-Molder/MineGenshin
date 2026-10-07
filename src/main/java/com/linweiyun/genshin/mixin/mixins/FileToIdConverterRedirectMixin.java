@@ -2,10 +2,12 @@ package com.linweiyun.genshin.mixin.mixins;
 
 import com.linweiyun.genshin.asset.AssetRedirects;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -27,18 +29,23 @@ import java.util.Map;
 @Mixin(FileToIdConverter.class)
 public class FileToIdConverterRedirectMixin {
 
+    /** 这个转换器管的目录（目标类的 {@code prefix} 字段）。 */
+    @Shadow
+    @Final
+    private String prefix;
+
     /** 单个文件的通道：{@code items} / {@code models} / {@code textures/<子目录>}。 */
     @Inject(method = "listMatchingResources", at = @At("RETURN"), cancellable = true)
     private void minegenshin$injectRedirectedResources(ResourceManager manager,
-                                                       CallbackInfoReturnable<Map<Identifier, Resource>> cir) {
-        Map<Identifier, Resource> extra = AssetRedirects.resolve(this.minegenshin$directory(), manager);
+                                                       CallbackInfoReturnable<Map<ResourceLocation, Resource>> cir) {
+        Map<ResourceLocation, Resource> extra = AssetRedirects.resolve(this.minegenshin$directory(), manager);
         if (extra.isEmpty()) {
             return;
         }
 
-        Map<Identifier, Resource> merged = new HashMap<>(cir.getReturnValue());
+        Map<ResourceLocation, Resource> merged = new HashMap<>(cir.getReturnValue());
         boolean added = false;
-        for (Map.Entry<Identifier, Resource> entry : extra.entrySet()) {
+        for (Map.Entry<ResourceLocation, Resource> entry : extra.entrySet()) {
             if (merged.putIfAbsent(entry.getKey(), entry.getValue()) == null) {
                 added = true;
             }
@@ -51,15 +58,15 @@ public class FileToIdConverterRedirectMixin {
     /** 资源栈的通道：{@code blockstates}（原版按「多包叠加」读，返回的是 List）。 */
     @Inject(method = "listMatchingResourceStacks", at = @At("RETURN"), cancellable = true)
     private void minegenshin$injectRedirectedStacks(ResourceManager manager,
-                                                    CallbackInfoReturnable<Map<Identifier, List<Resource>>> cir) {
-        Map<Identifier, Resource> extra = AssetRedirects.resolve(this.minegenshin$directory(), manager);
+                                                    CallbackInfoReturnable<Map<ResourceLocation, List<Resource>>> cir) {
+        Map<ResourceLocation, Resource> extra = AssetRedirects.resolve(this.minegenshin$directory(), manager);
         if (extra.isEmpty()) {
             return;
         }
 
-        Map<Identifier, List<Resource>> merged = new HashMap<>(cir.getReturnValue());
+        Map<ResourceLocation, List<Resource>> merged = new HashMap<>(cir.getReturnValue());
         boolean added = false;
-        for (Map.Entry<Identifier, Resource> entry : extra.entrySet()) {
+        for (Map.Entry<ResourceLocation, Resource> entry : extra.entrySet()) {
             if (merged.putIfAbsent(entry.getKey(), List.of(entry.getValue())) == null) {
                 added = true;
             }
@@ -69,8 +76,8 @@ public class FileToIdConverterRedirectMixin {
         }
     }
 
-    /** 这个转换器管的是哪个目录（record 访问器；mixin 里必须走一次 Object 转换）。 */
+    /** 这个转换器管的目录。 */
     private String minegenshin$directory() {
-        return ((FileToIdConverter) (Object) this).prefix();
+        return this.prefix;
     }
 }

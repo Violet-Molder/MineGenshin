@@ -1,10 +1,10 @@
 package com.linweiyun.genshin.asset.pack;
 
-import com.geckolib.GeckoLibConstants;
+import software.bernie.geckolib.GeckoLibConstants;
 import com.google.gson.JsonObject;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.GsonHelper;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public final class GeoJsonReader {
      * @param resource 资源本体
      * @param id       资源路径，仅用于报错定位，可为 null
      */
-    public static JsonObject read(@Nullable Resource resource, @Nullable Identifier id) throws RuntimeException {
+    public static JsonObject read(@Nullable Resource resource, @Nullable ResourceLocation id) throws RuntimeException {
         return read(resource, null, id);
     }
 
@@ -81,7 +81,7 @@ public final class GeoJsonReader {
      * @param id       资源路径，仅用于报错定位，可为 null
      */
     public static JsonObject read(@Nullable Resource resource, @Nullable byte[] packed,
-                                  @Nullable Identifier id) throws RuntimeException {
+                                  @Nullable ResourceLocation id) throws RuntimeException {
         logModeOnce();
 
         byte[] json;
@@ -110,7 +110,7 @@ public final class GeoJsonReader {
     }
 
     /** 读原始字节（不过读取器）；给「判类型」这类只需要字节的场景用。 */
-    public static byte[] readBytes(Resource resource, @Nullable Identifier id) throws RuntimeException {
+    public static byte[] readBytes(Resource resource, @Nullable ResourceLocation id) throws RuntimeException {
         try (InputStream in = resource.open()) {
             return in.readAllBytes();
         } catch (IOException e) {

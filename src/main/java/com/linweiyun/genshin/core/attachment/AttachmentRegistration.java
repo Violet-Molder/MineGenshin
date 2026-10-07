@@ -21,7 +21,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<Integer>> PRIMOGEM_ATTACHMENT =
             ATTACHMENTS.register("player_primogem",
                     () -> AttachmentType.builder(() -> 0)
-                            .serialize(Codec.INT.fieldOf("primogem"))
+                            .serialize(Codec.INT)
                             .sync(StreamCodec.of(
                                     FriendlyByteBuf::writeInt,
                                     FriendlyByteBuf::readInt
@@ -32,7 +32,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<Boolean>> GENSHIN_MODE_ATTACHMENT =
             ATTACHMENTS.register("player_genshin_mode",
                     () -> AttachmentType.builder(() -> false)
-                            .serialize(Codec.BOOL.fieldOf("genshin_mode"))
+                            .serialize(Codec.BOOL)
                             .sync(StreamCodec.of(
                                     FriendlyByteBuf::writeBoolean,
                                     FriendlyByteBuf::readBoolean
@@ -53,7 +53,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<Boolean>> WALK_MODE_ATTACHMENT =
             ATTACHMENTS.register("player_walk_mode",
                     () -> AttachmentType.builder(() -> false)
-                            .serialize(Codec.BOOL.fieldOf("walk_mode"))
+                            .serialize(Codec.BOOL)
                             .sync(StreamCodec.of(
                                     FriendlyByteBuf::writeBoolean,
                                     FriendlyByteBuf::readBoolean
@@ -74,7 +74,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<Boolean>> COMPAT_LINK_ATTACHMENT =
             ATTACHMENTS.register("player_compat_link",
                     () -> AttachmentType.builder(() -> false)
-                            .serialize(Codec.BOOL.fieldOf("compat_link"))
+                            .serialize(Codec.BOOL)
                             .copyOnDeath()
                             .build()
             );
@@ -105,7 +105,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<TeyvatEntityStats>> ENTITY_STATS = ATTACHMENTS.register(
             "entity_stats",
             () -> AttachmentType.builder(() -> TeyvatEntityStats.DEFAULT)
-                    .serialize(TeyvatEntityStats.CODEC.fieldOf("entity_stats"))
+                    .serialize(TeyvatEntityStats.CODEC)
                     .sync(TeyvatEntityStats.STREAM_CODEC)
                     .copyOnDeath()
                     .build()
@@ -123,7 +123,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<ShieldState>> SHIELD = ATTACHMENTS.register(
             "shield",
             () -> AttachmentType.builder(ShieldState::new)
-                    .serialize(ShieldState.CODEC.fieldOf("shield"))
+                    .serialize(ShieldState.CODEC)
                     .sync(ShieldState.STREAM_CODEC)
                     .build()
     );
@@ -140,7 +140,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<PoiseState>> POISE = ATTACHMENTS.register(
             "poise",
             () -> AttachmentType.builder(PoiseState::new)
-                    .serialize(PoiseState.CODEC.fieldOf("poise"))
+                    .serialize(PoiseState.CODEC)
                     .sync(PoiseState.STREAM_CODEC)
                     .build()
     );
@@ -155,7 +155,7 @@ public class AttachmentRegistration {
             ATTACHMENTS.register(
                     "animation_state",
                     () -> AttachmentType.builder(AnimationState::new)
-                            .serialize(AnimationState.CODEC.fieldOf("animation_state"))
+                            .serialize(AnimationState.CODEC)
                             .sync(AnimationState.STREAM_CODEC)
                             .build()
             );
@@ -173,7 +173,7 @@ public class AttachmentRegistration {
             ATTACHMENTS.register(
                     "body_yaw",
                     () -> AttachmentType.builder(() -> Float.NaN)
-                            .serialize(Codec.FLOAT.fieldOf("body_yaw"))
+                            .serialize(Codec.FLOAT)
                             .sync(StreamCodec.of(
                                     FriendlyByteBuf::writeFloat,
                                     FriendlyByteBuf::readFloat
@@ -184,7 +184,7 @@ public class AttachmentRegistration {
     public static final Supplier<AttachmentType<LockedTargetData>> LOCKED_TARGET =
             ATTACHMENTS.register("locked_target",
                     () -> AttachmentType.builder(() -> LockedTargetData.EMPTY)
-                            .serialize(LockedTargetData.CODEC.fieldOf("locked_target"))
+                            .serialize(LockedTargetData.CODEC)
                             .build()
             );
 

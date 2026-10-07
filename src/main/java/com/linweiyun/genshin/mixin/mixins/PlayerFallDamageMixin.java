@@ -16,41 +16,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /**
  * <b>摔落伤害改成「最大生命值的百分比」</b>。
  *
- * <h2>为什么拦在 {@code Player#causeFallDamage}</h2>
- * 26.2 的落地链是
- * {@code Entity#checkFallDamage → Block#fallOn（或干草 / 粘液块那几种自己的 fallOn）
- * → entity#causeFallDamage → Player#causeFallDamage → super（LivingEntity）}，
- * 而真正扣血那次 {@code hurt} 在 {@code LivingEntity#causeFallDamage} 里
- * （它还管着「被爆炸 / 风弹顶起来那一摔」的折算）。在<b>玩家的入口 HEAD 取消</b>，
- * 后面整条链都不跑：既不会重复扣血，也不用去动怪物共用的那一层。
- * <p>⚠️ 26.2 的签名是 {@code causeFallDamage(double, float, DamageSource)}（第一个参数是
- * <b>double</b>）—— 写错类型不会编译报错（{@code @Inject} 是运行期才校验描述符），
- * 但游戏启动时会对不上、直接 FATAL，改这里务必按 {@code javap} 的真实描述符来。
+ * <h2>拦在哪一层</h2>
+ * 落地链是 {@code Entity#checkFallDamage → Block#fallOn（干草 / 粘液块那几种方块有自己的 fallOn）
+ * → entity#causeFallDamage → Player#causeFallDamage}，真正扣血发生在
+ * {@code LivingEntity#causeFallDamage} 里（那一层还负责「被爆炸 / 风弹顶起来那一摔」的折算）。
+ * 这里在玩家的入口 HEAD 取消，后面整条链都不跑：既不会重复扣血，也不用去动怪物共用的那一层。
  *
- * <h2>读的是「实际掉了几格」</h2>
- * {@code Block#fallOn} 传进来的就是这个累计值（真实高度）——原版的「安全高度 3 格」
- * 是在 {@code calculateFallDamage} 里才减掉的，那一层被我们整个跳过了。
- * 所以用户的表（「12 格以内不掉血」）直接对得上实际高度。保险起见仍取
- * {@code max(player.fallDistance, 参数)}：石笋那条会传 {@code 高度 + 2.5}，取大的那个更接近真实。
+ * <h2>参数含义</h2>
+ * 第一个参数是<b>本次落地的实际高度（格）</b>：原版「安全高度 3 格」是在
+ * {@code calculateFallDamage} 里才扣掉的，而那一层被这里整个跳过，所以表里的格数直接对得上实际高度。
+ * 实际用值时取 {@code max(player.fallDistance, 参数)}：石笋那条会传「高度 + 2.5」，取大的更接近真实。
+ * 第二个参数是方块自带的减免乘数（普通方块 1.0、粘液块 0.0、干草与蜂蜜 0.2、石笋 2.0）。
  *
- * <h2>两件事不受影响</h2>
+ * <h2>不受影响的两件事</h2>
  * <ul>
- *   <li>「能飞就不吃摔伤」（{@code mayFly}）与原版一致：不拦，交回原版处理；</li>
- *   <li>「被爆炸 / 风弹顶起来的那一摔不算」也照旧：{@code isIgnoringFallDamageFromCurrentImpulse}
- *       那一档直接放行给原版。</li>
- *   <li>方块自带的减免（粘液块 0.0、干草 / 蜂蜜 0.2、石笋 2.0）照<b>乘</b>在这个百分比上 ——
- *       不乘的话「落在粘液块上」这种原本完全免伤的落地会变成实打实扣一大截。</li>
+ *   <li>能飞就不吃摔伤（{@code mayFly}）：不拦，交回原版；</li>
+ *   <li>被爆炸 / 风弹顶起来的那一摔：{@code isIgnoringFallDamageFromCurrentImpulse} 那一档直接放行。</li>
  * </ul>
  *
- * <p>伤害直接扣在<b>当前出战角色</b>身上（{@link PGCharacter#hurt}），走的是角色血量池，
- * 和护盾无关 —— 原神里护盾能不能挡摔伤是另一件事，用户没提，先按「直接扣血」做。
- * （原版那条 {@code FALL_ONE_CM} 统计也随之跳过，不影响玩法。）
+ * <p>伤害扣在<b>当前出战角色</b>身上（{@link PGCharacter#hurt}），走角色血量池，与护盾无关。
+ * 原版那条 {@code FALL_ONE_CM} 统计也随之跳过。
  */
 @Mixin(Player.class)
 public class PlayerFallDamageMixin {
 
     @Inject(method = "causeFallDamage", at = @At("HEAD"), cancellable = true)
-    private void minegenshin$percentFallDamage(double fallDistance, float multiplier, DamageSource source,
+    private void minegenshin$percentFallDamage(float fallDistance, float multiplier, DamageSource source,
                                                CallbackInfoReturnable<Boolean> cir) {
         Player player = (Player) (Object) this;
 

@@ -173,7 +173,7 @@ public class DamageBonusEffect implements ICharacterEffect {
 
         if (applicableElement != null) {
             // 存<b>完整注册名</b>（元素 getId() 只给 path，反查注册表需要带命名空间的键）
-            net.minecraft.resources.Identifier key =
+            net.minecraft.resources.ResourceLocation key =
                     com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
                             .getKey(applicableElement);
             if (key != null) {
@@ -184,15 +184,15 @@ public class DamageBonusEffect implements ICharacterEffect {
 
     @Override
     public ICharacterEffect createFromInstanceData(net.minecraft.nbt.CompoundTag data) {
-        float savedBonus = data.getFloat("dmg_bonus").orElse(0f);
-        java.util.Optional<int[]> savedTypes = data.getIntArray("dmg_types");
-        if (savedTypes.isEmpty()) {
+        float savedBonus = data.getFloat("dmg_bonus");
+        int[] savedTypes = data.getIntArray("dmg_types");
+        if (savedTypes.length == 0) {
             return this;        // 老数据没有参数：保持原型（加成为 0，但至少类型正确）
         }
 
         AttackType[] allTypes = AttackType.values();
         Set<AttackType> types = EnumSet.noneOf(AttackType.class);
-        for (int ordinal : savedTypes.get()) {
+        for (int ordinal : savedTypes) {
             if (ordinal >= 0 && ordinal < allTypes.length) {
                 types.add(allTypes[ordinal]);
             }
@@ -202,13 +202,11 @@ public class DamageBonusEffect implements ICharacterEffect {
         }
 
         GenshinElement element = null;
-        java.util.Optional<String> elementKey = data.getString("dmg_element");
-        if (elementKey.isPresent()) {
+        String elementKey = data.getString("dmg_element");
+        if (!elementKey.isEmpty()) {
             try {
                 element = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY
-                        .get(net.minecraft.resources.Identifier.parse(elementKey.get()))
-                        .map(net.minecraft.core.Holder.Reference::value)
-                        .orElse(null);
+                        .get(net.minecraft.resources.ResourceLocation.parse(elementKey));
             } catch (Exception ignored) {
                 element = null;
             }

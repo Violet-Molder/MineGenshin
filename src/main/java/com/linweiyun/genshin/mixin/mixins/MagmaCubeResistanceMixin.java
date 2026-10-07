@@ -3,7 +3,7 @@ package com.linweiyun.genshin.mixin.mixins;
 import com.linweiyun.genshin.content.entities.teyvat.TeyvatLiving;
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
-import net.minecraft.world.entity.monster.cubemob.MagmaCube;
+import net.minecraft.world.entity.monster.MagmaCube;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(MagmaCube.class)

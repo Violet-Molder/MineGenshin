@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public abstract class FistCharacter extends PGCharacter {
    protected FistCharacter(
@@ -23,7 +23,7 @@ public abstract class FistCharacter extends PGCharacter {
       int staminaRecovery,
       float energyMax,
       String resourceId,
-      Map<Identifier, Supplier<List<? extends Integer>>> statGrowth
+      Map<ResourceLocation, Supplier<List<? extends Integer>>> statGrowth
    ) {
       super(uuid, rarity, name, elementId, ascendAttribute, maxStamina, staminaRecovery, energyMax, resourceId, statGrowth);
    }

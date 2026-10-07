@@ -19,15 +19,14 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 import dev.vfyjxf.taffy.style.FlexDirection;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.slf4j.Logger;
 
 public class CharacterInfoMenu extends AbstractContainerMenu {
@@ -70,13 +69,13 @@ public class CharacterInfoMenu extends AbstractContainerMenu {
 
    private ModularUI createModularUI(Player player) {
       UIElement root = new UIElement();
-      Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(Identifier.parse("minegenshin:lss/character_info.lss"));
+      Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(ResourceLocation.parse("minegenshin:lss/character_info.lss"));
       UIElement backGround = new UIElement();
       UIElement character_list_container = new UIElement()
          .setId("character_list_container")
          .layout(layoutStyle -> layoutStyle.flexDirection(FlexDirection.ROW));
       UIElement artifact_container = new UIElement().setId("artifact_container").layout(layoutStyle -> layoutStyle.flexDirection(FlexDirection.ROW));
-      ResourceHandler<ItemResource> artifactHandler = this.artifactInventory.asResourceHandler();
+      IItemHandlerModifiable artifactHandler = this.artifactInventory.asResourceHandler();
 
       for (int i = 0; i < 5; i++) {
          artifact_container.addChildren(new UIElement[]{boundSlot(artifactHandler, i)});
@@ -88,7 +87,7 @@ public class CharacterInfoMenu extends AbstractContainerMenu {
       return ModularUI.of(ui, player);
    }
 
-   private static ItemSlot boundSlot(ResourceHandler<ItemResource> handler, int index) {
+   private static ItemSlot boundSlot(IItemHandlerModifiable handler, int index) {
       ItemSlot slot = new ItemSlot();
       slot.bind(handler, index);
       return slot;
@@ -125,7 +124,7 @@ public class CharacterInfoMenu extends AbstractContainerMenu {
       return result;
    }
 
-   public void clicked(int slotIndex, int buttonNum, ContainerInput containerInput, Player player) {
+   public void clicked(int slotIndex, int buttonNum, ClickType containerInput, Player player) {
       if (slotIndex >= 0 && slotIndex < this.artifactInventory.slotCount()) {
          if (slotIndex < this.slots.size()) {
             this.getSlot(slotIndex);

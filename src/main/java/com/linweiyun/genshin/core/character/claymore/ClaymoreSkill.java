@@ -248,7 +248,7 @@ public class ClaymoreSkill extends SkillBase {
 
             ModDamageSource source = ModDamageSource.from(spec.build(), player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
             }
         }
     }

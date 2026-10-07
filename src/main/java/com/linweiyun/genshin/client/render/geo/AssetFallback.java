@@ -3,7 +3,7 @@
 package com.linweiyun.genshin.client.render.geo;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +11,7 @@ public final class AssetFallback {
    private AssetFallback() {
    }
 
-   public static Identifier model(@Nullable Identifier own, @Nullable Identifier... candidates) {
+   public static ResourceLocation model(@Nullable ResourceLocation own, @Nullable ResourceLocation... candidates) {
       if (own == null) {
          return firstNonNull(candidates);
       }
@@ -20,7 +20,7 @@ public final class AssetFallback {
          return own;
       }
 
-      for (Identifier candidate : candidates) {
+      for (ResourceLocation candidate : candidates) {
          if (candidate != null && !own.equals(candidate) && GenshinGeoCache.model(candidate) != null) {
             return candidate;
          }
@@ -29,7 +29,7 @@ public final class AssetFallback {
       return own;
    }
 
-   public static Identifier animation(@Nullable Identifier own, @Nullable Identifier... candidates) {
+   public static ResourceLocation animation(@Nullable ResourceLocation own, @Nullable ResourceLocation... candidates) {
       if (own == null) {
          return firstNonNull(candidates);
       }
@@ -38,7 +38,7 @@ public final class AssetFallback {
          return own;
       }
 
-      for (Identifier candidate : candidates) {
+      for (ResourceLocation candidate : candidates) {
          if (candidate != null && !own.equals(candidate) && GenshinGeoCache.animationFile(candidate) != null) {
             return candidate;
          }
@@ -47,7 +47,7 @@ public final class AssetFallback {
       return own;
    }
 
-   public static Identifier texture(@Nullable Identifier own, @Nullable Identifier... candidates) {
+   public static ResourceLocation texture(@Nullable ResourceLocation own, @Nullable ResourceLocation... candidates) {
       if (own == null) {
          return firstNonNull(candidates);
       }
@@ -56,7 +56,7 @@ public final class AssetFallback {
          return own;
       }
 
-      for (Identifier candidate : candidates) {
+      for (ResourceLocation candidate : candidates) {
          if (candidate != null && !own.equals(candidate) && exists(candidate)) {
             return candidate;
          }
@@ -66,8 +66,8 @@ public final class AssetFallback {
    }
 
    @Nullable
-   private static Identifier firstNonNull(@Nullable Identifier[] candidates) {
-      for (Identifier candidate : candidates) {
+   private static ResourceLocation firstNonNull(@Nullable ResourceLocation[] candidates) {
+      for (ResourceLocation candidate : candidates) {
          if (candidate != null) {
             return candidate;
          }
@@ -76,7 +76,7 @@ public final class AssetFallback {
       return null;
    }
 
-   private static boolean exists(Identifier location) {
+   private static boolean exists(ResourceLocation location) {
       Minecraft minecraft = Minecraft.getInstance();
       ResourceManager manager = minecraft == null ? null : minecraft.getResourceManager();
       return manager == null ? true : manager.getResource(location).isPresent();

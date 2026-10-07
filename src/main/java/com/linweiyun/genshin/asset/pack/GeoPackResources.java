@@ -11,12 +11,12 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PackResources.ResourceOutput;
-import net.minecraft.server.packs.metadata.MetadataSectionType;
+import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.server.packs.resources.Resource;
@@ -32,13 +32,13 @@ public final class GeoPackResources {
    }
 
    @Nullable
-   public static Resource resolve(@Nullable ResourceManager manager, @Nullable Identifier location) {
+   public static Resource resolve(@Nullable ResourceManager manager, @Nullable ResourceLocation location) {
       if (manager == null || location == null) {
          return null;
       }
 
       if ("minegenshin".equals(location.getNamespace()) && isTexture(location)) {
-         Map<Identifier, byte[]> entries = GeoPackSource.entriesQuiet(manager);
+         Map<ResourceLocation, byte[]> entries = GeoPackSource.entriesQuiet(manager);
          if (!GeoPackSource.usePacked(location, entries.containsKey(location))) {
             return null;
          }
@@ -50,13 +50,13 @@ public final class GeoPackResources {
       }
    }
 
-   public static Map<Identifier, Resource> under(@Nullable ResourceManager manager, @Nullable String directory, @Nullable Predicate<Identifier> filter) {
+   public static Map<ResourceLocation, Resource> under(@Nullable ResourceManager manager, @Nullable String directory, @Nullable Predicate<ResourceLocation> filter) {
       if (manager != null && directory != null) {
          String prefix = directory + "/";
-         Map<Identifier, Resource> found = new LinkedHashMap<>();
+         Map<ResourceLocation, Resource> found = new LinkedHashMap<>();
 
-         for (Entry<Identifier, byte[]> entry : GeoPackSource.entriesQuiet(manager).entrySet()) {
-            Identifier location = entry.getKey();
+         for (Entry<ResourceLocation, byte[]> entry : GeoPackSource.entriesQuiet(manager).entrySet()) {
+            ResourceLocation location = entry.getKey();
             if ("minegenshin".equals(location.getNamespace())
                && isTexture(location)
                && location.getPath().startsWith(prefix)
@@ -71,7 +71,7 @@ public final class GeoPackResources {
       }
    }
 
-   private static boolean isTexture(Identifier location) {
+   private static boolean isTexture(ResourceLocation location) {
       return location.getPath().endsWith(".png");
    }
 
@@ -90,7 +90,7 @@ public final class GeoPackResources {
       }
 
       @Nullable
-      public IoSupplier<InputStream> getResource(PackType type, Identifier location) {
+      public IoSupplier<InputStream> getResource(PackType type, ResourceLocation location) {
          return null;
       }
 
@@ -102,7 +102,7 @@ public final class GeoPackResources {
       }
 
       @Nullable
-      public <T> T getMetadataSection(MetadataSectionType<T> metadataSerializer) {
+      public <T> T getMetadataSection(MetadataSectionSerializer<T> metadataSerializer) {
          return null;
       }
 

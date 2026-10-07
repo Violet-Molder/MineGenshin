@@ -83,8 +83,8 @@ public final class GenshinFlight {
         if (player == null) {
             return List.of();
         }
-        return EquipmentSlot.VALUES.stream()
-                .filter(slot -> LivingEntity.canGlideUsing(player.getItemBySlot(slot), slot))
+        return java.util.Arrays.stream(EquipmentSlot.values())
+                .filter(slot -> player.getItemBySlot(slot).canElytraFly(player))
                 .toList();
     }
 

@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.attachment;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.network.NetworkManager;
 import com.linweiyun.genshin.core.character.ModCharacters;
@@ -12,9 +14,7 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.storage.TagValueOutput;
 import org.slf4j.Logger;
 
 import javax.annotation.Nullable;
@@ -124,26 +124,19 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
     }
 
     public void syncToPlayer(ServerPlayer player) {
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.registryAccess());
-        serialize(output);
-        NetworkManager.setPlayerCharactersToPlayer(player, output.buildResult());
+        NetworkManager.setPlayerCharactersToPlayer(player, serializeNBT(player.registryAccess()));
     }
 
     public void syncToServer() {
         Player clientPlayer = ClientAttachmentSync.getClientPlayer();
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING,
-                clientPlayer.registryAccess());
-        serialize(output);
-        NetworkManager.setPlayerCharactersToServer(output.buildResult());
+        NetworkManager.setPlayerCharactersToServer(serializeNBT(clientPlayer.registryAccess()));
     }
 
     // ========== 服务端触发 ==========
 
     public void addCharacterToPlayer(ServerPlayer player, PGCharacter character) {
         addCharacter(character, player); //AI 透传 Player 进行绑定
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.registryAccess());
-        character.serialize(output);
-        NetworkManager.addCharacterToPlayer(player, output.buildResult());
+        NetworkManager.addCharacterToPlayer(player, character.serializeNBT(player.registryAccess()));
     }
 
     public void removeCharacterToPlayer(ServerPlayer player, int uuid) {
@@ -158,11 +151,7 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
     public void addCharacterToServer(PGCharacter character) {
         Player clientPlayer = ClientAttachmentSync.getClientPlayer();
         addCharacter(character, clientPlayer);
-        TagValueOutput output = TagValueOutput.createWithContext(
-                ProblemReporter.DISCARDING,
-                clientPlayer.registryAccess());
-        character.serialize(output);
-        NetworkManager.addCharacterToServer(output.buildResult());
+        NetworkManager.addCharacterToServer(character.serializeNBT(clientPlayer.registryAccess()));
     }
 
     public void removeCharacterToServer(int uuid) {
@@ -178,19 +167,15 @@ public class PlayerCharactersAttachment implements IPersistedSerializable {
     public void syncSingleCharacterToServer(PGCharacter character) {
         if (character == null) return;
         Player clientPlayer = ClientAttachmentSync.getClientPlayer();
-        TagValueOutput output = TagValueOutput.createWithContext(
-                ProblemReporter.DISCARDING,
-                clientPlayer.registryAccess());
-        character.serialize(output);
-        NetworkManager.setCharacterDataToServer(character.getCharacterUUID(), output.buildResult());
+        NetworkManager.setCharacterDataToServer(character.getCharacterUUID(),
+                character.serializeNBT(clientPlayer.registryAccess()));
     }
 
     // 单个角色数据同步到客户端
     public void syncSingleCharacterToPlayer(ServerPlayer player, PGCharacter character) {
         if (character == null) return;
-        TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, player.registryAccess());
-        character.serialize(output);
-        NetworkManager.setCharacterDataToPlayer(player, character.getCharacterUUID(), output.buildResult());
+        NetworkManager.setCharacterDataToPlayer(player, character.getCharacterUUID(),
+                character.serializeNBT(player.registryAccess()));
     }
 
     public List<Integer> getSheetCharacterUUIDs() { return sheetCharacterUUIDs; }

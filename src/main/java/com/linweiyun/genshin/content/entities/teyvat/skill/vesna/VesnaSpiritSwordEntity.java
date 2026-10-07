@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.content.entities.teyvat.skill.vesna;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.content.skill_node.AreaEntityCollector;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -23,12 +25,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 
@@ -106,7 +106,7 @@ public class VesnaSpiritSwordEntity extends Entity implements ISyncManagedEntity
                                                 boolean stellarSwirl, float elementAmount,
                                                 float sovereigntyBonus) {
         VesnaSpiritSwordEntity e = ModEntities.VESNA_SPIRIT_SWORD.get()
-                .create(level, EntitySpawnReason.EVENT);
+                .create(level);
         if (e == null) return null;
 
         e.character = character;
@@ -234,24 +234,24 @@ public class VesnaSpiritSwordEntity extends Entity implements ISyncManagedEntity
                         .withSovereignty(sovereigntyBonus);
             }
             ModDamageSource source = ModDamageSource.from(spec, owner);
-            target.hurtServer(serverLevel, source, 0f);
+            target.hurt(source, 0f);
         }
     }
 
     // ==================== 杂项 ====================
 
     @Override
-    public boolean hurtServer(ServerLevel serverLevel, DamageSource damageSource, float v) {
+    public boolean hurt(DamageSource damageSource, float v) {
         return false;
     }
 
     @Override
-    protected void readAdditionalSaveData(ValueInput valueInput) {
-        loadManagedPersistentData(valueInput);
+    protected void readAdditionalSaveData(CompoundTag valueInput) {
+        loadManagedPersistentData(registryAccess(), valueInput);
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput valueOutput) {
-        saveManagedPersistentData(valueOutput, false);
+    protected void addAdditionalSaveData(CompoundTag valueOutput) {
+        saveManagedPersistentData(registryAccess(), valueOutput, false);
     }
 }

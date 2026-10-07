@@ -5,7 +5,7 @@ import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.damage.DamageOutcome;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DamageDealtEvent extends Event implements ElibIdentifiedEvent {
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "damage_dealt");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "damage_dealt");
 
     private final ServerLevel level;
     private final long gameTime;
@@ -43,7 +43,7 @@ public final class DamageDealtEvent extends Event implements ElibIdentifiedEvent
     }
 
     @Override
-    public Identifier eventId() {
+    public ResourceLocation eventId() {
         return ID;
     }
 

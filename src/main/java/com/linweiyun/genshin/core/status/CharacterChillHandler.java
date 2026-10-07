@@ -8,7 +8,7 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.elementlib.core.system.about.ElementalAttachmentInstance;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -39,8 +39,8 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 public final class CharacterChillHandler {
 
     /** 减速修饰符的 id。 */
-    private static final Identifier SLOW_MODIFIER_ID =
-            Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "character_cryo_slow");
+    private static final ResourceLocation SLOW_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "character_cryo_slow");
 
     /** 减速幅度（百分比，负数是减速）。 */
     private static final float SLOW_AMOUNT = -0.15f;

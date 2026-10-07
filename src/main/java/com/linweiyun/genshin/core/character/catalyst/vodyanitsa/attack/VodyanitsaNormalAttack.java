@@ -59,7 +59,7 @@ public final class VodyanitsaNormalAttack {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (hit.level() instanceof ServerLevel serverLevel) {
-                hit.hurtServer(serverLevel, source, 0f);
+                hit.hurt(source, 0f);
             }
         }
     }

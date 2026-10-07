@@ -5,7 +5,7 @@ import com.lowdragmc.photon.client.fx.FXHelper;
 import com.lowdragmc.photon.client.fx.FXRuntime;
 import com.lowdragmc.photon.client.fx.IEffectExecutor;
 import com.lowdragmc.photon.client.gameobject.IFXObject;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -54,7 +54,7 @@ public final class FxAnchor {
     private FXRuntime runtime;
     private boolean wanted;
 
-    public FxAnchor(Identifier fxId, Player player, PoseProvider poseProvider) {
+    public FxAnchor(ResourceLocation fxId, Player player, PoseProvider poseProvider) {
         this.player = player;
         this.level = player.level();
         this.fx = FXHelper.getFX(fxId);

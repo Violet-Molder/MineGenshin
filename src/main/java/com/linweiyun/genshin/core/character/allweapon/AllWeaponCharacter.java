@@ -16,7 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public abstract class AllWeaponCharacter extends PGCharacter {
       int staminaRecovery,
       float energyMax,
       String resourceId,
-      Map<Identifier, Supplier<List<? extends Integer>>> statGrowth
+      Map<ResourceLocation, Supplier<List<? extends Integer>>> statGrowth
    ) {
       super(uuid, rarity, name, elementId, ascendAttribute, maxStamina, staminaRecovery, energyMax, resourceId, statGrowth);
       this.appearanceData = AllWeaponAppearanceData.INSTANCE;

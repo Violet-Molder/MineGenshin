@@ -76,7 +76,7 @@ public abstract class FrostedIceMixin {
     @Inject(method = "neighborChanged", at = @At("HEAD"), cancellable = true)
     private void genshin$blockNeighborMelt(BlockState state, net.minecraft.world.level.Level level, BlockPos pos,
                                             net.minecraft.world.level.block.Block block,
-                                            net.minecraft.world.level.redstone.Orientation orientation,
+                                            BlockPos fromPos,
                                             boolean movedByPiston, CallbackInfo ci) {
         ci.cancel();
     }

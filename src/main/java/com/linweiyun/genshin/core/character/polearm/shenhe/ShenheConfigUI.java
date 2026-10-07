@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.core.character.polearm.shenhe;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.config.character.TalentConfigSource;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -29,7 +29,7 @@ public class ShenheConfigUI extends CharacterConfigScreen {
    private static final float GEAR_SCALE_COMP_X = 2.8999999F;
    private static final float GEAR_SCALE_COMP_Y = -0.19999999F;
    private static final float GEAR_SCALE_COMP_Z = 0.009999847F;
-   private static final BoneUpdater<GeoRenderState> PREVIEW_SCREEN_PARK = (renderPassInfo, snapshots) -> {
+   private static final BoneUpdater<BoneRenderState> PREVIEW_SCREEN_PARK = (renderPassInfo, snapshots) -> {
       snapshots.ifPresent("ysmGlow_texiao", snapshot -> {
          snapshot.setTranslateZ(snapshot.getTranslateZ() + -8.0F);
          snapshot.setScale(snapshot.getScaleX() * 0.6F, snapshot.getScaleY() * 0.6F, snapshot.getScaleZ() * 0.6F);
@@ -43,7 +43,7 @@ public class ShenheConfigUI extends CharacterConfigScreen {
    };
 
    @Override
-   protected BoneUpdater<GeoRenderState> previewBones() {
+   protected BoneUpdater<BoneRenderState> previewBones() {
       return PREVIEW_SCREEN_PARK;
    }
 

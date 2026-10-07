@@ -13,7 +13,7 @@ import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.linweiyun.genshin.core.system.registry.register.ModDataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -39,27 +39,28 @@ public class AdviceBookItem extends CharacterDevelopmentItem {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player,
-                                           @NotNull InteractionHand usedHand) {
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player,
+                                                           @NotNull InteractionHand usedHand) {
+        ItemStack heldStack = player.getItemInHand(usedHand);
         if (level.isClientSide()) {
-            return InteractionResult.SUCCESS;
+            return InteractionResultHolder.success(heldStack);
         }
 
         boolean isGenshinMode = player.getData(AttachmentRegistration.GENSHIN_MODE_ATTACHMENT);
         if (!isGenshinMode) {
-            return InteractionResult.PASS;
+            return InteractionResultHolder.pass(heldStack);
         }
 
         PlayerCharactersAttachment attachment =
                 player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
         PGCharacter character = attachment.getCurrentCharacter();
         if (character == null) {
-            return InteractionResult.PASS;
+            return InteractionResultHolder.pass(heldStack);
         }
 
         PGCharacterData data = character.getData();
         if (data == null) {
-            return InteractionResult.PASS;
+            return InteractionResultHolder.pass(heldStack);
         }
 
         character.addExp(expValue);
@@ -72,13 +73,12 @@ public class AdviceBookItem extends CharacterDevelopmentItem {
         addArtifactExpIfPresent(data.getCirclet(), ArtifactType.CIRCLET, inv);
         addWeaponExpIfPresent(data.getWeapon(), inv);
 
-        ItemStack stack = player.getItemInHand(usedHand);
-        stack.shrink(1);
+        heldStack.shrink(1);
 
         player.sendSystemMessage(
                 Component.literal("使用了经验书，当前角色获得 " + expValue + " 经验"));
 
-        return InteractionResult.CONSUME;
+        return InteractionResultHolder.consume(heldStack);
     }
 
     private void addArtifactExpIfPresent(ItemStack stack, ArtifactType type,

@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.content.entities.area;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.elementlib.core.attachment.StatusContainer;
@@ -267,7 +269,7 @@ public class ThunderCloudEntity extends AreaEntity {
         // 贡献者列表要在 withAttackerCharacter 之后再填（它返回的是新 spec）
         spec.setLunarContributors(contributors);
         ModDamageSource source = ModDamageSource.from(spec, attacker);
-        target.hurtServer(level, source, 0f);
+        target.hurt(source, 0f);
 
         LOGGER.info("[雷暴云攻击] target={} | contributors={} | damageSource={} | lunarTrigger={}",
                 target.getName().getString(), contributors.size(),
@@ -367,15 +369,15 @@ public class ThunderCloudEntity extends AreaEntity {
     // ==================== 落盘（@Persisted 对实体无效，必须真写 NBT） ====================
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+    public void readAdditionalSaveData(CompoundTag input) {
         super.readAdditionalSaveData(input);
-        this.lastLunarTriggerCharacterUUID = input.getIntOr("mg_lunar_trigger", 0);
+        this.lastLunarTriggerCharacterUUID = input.getInt("mg_lunar_trigger");
         // 引用在这里丢，后面按 id 找回来
         this.lastLunarTriggerCharacter = null;
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+    protected void addAdditionalSaveData(CompoundTag output) {
         super.addAdditionalSaveData(output);
         output.putInt("mg_lunar_trigger", this.lastLunarTriggerCharacterUUID);
     }

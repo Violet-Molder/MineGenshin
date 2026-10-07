@@ -18,13 +18,12 @@ import com.linweiyun.genshin.core.system.combat.animation.action.CharacterAction
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.ClientInput;
+import net.minecraft.client.player.Input;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -160,10 +159,10 @@ public final class ActionStateMachine {
       }
 
       if (!movementFrozen() && !actionLocked() && animationTick > 0 && !"default".equals(currentState)) {
-         ClientInput input = player.input;
+         Input input = player.input;
          boolean isMoving = input.getMoveVector().lengthSquared() > 1.0E-5F;
-         boolean isJumping = input.keyPresses.jump();
-         boolean isCrouching = input.keyPresses.shift();
+         boolean isJumping = input.jumping;
+         boolean isCrouching = input.shiftKeyDown;
          if (isMoving || isJumping || isCrouching) {
             resetToDefault();
             ActionServer.interruptActionToServer(InterruptReason.JUMP.ordinal());
@@ -212,7 +211,7 @@ public final class ActionStateMachine {
    public static void onMovementInputUpdate(MovementInputUpdateEvent event) {
       if (movementFrozen()) {
          if (event.getEntity() instanceof LocalPlayer player) {
-            event.getInput().keyPresses = Input.EMPTY;
+            ActionInputFreeze.clear(event.getInput());
             ActionInputFreeze.install(player);
          }
       }
@@ -461,9 +460,9 @@ public final class ActionStateMachine {
 
    public static void playLocalSound(@Nullable Player player, @Nullable String soundId, float volume, float pitch) {
       if (player != null && soundId != null && !soundId.isEmpty()) {
-         Identifier id = Identifier.tryParse(soundId);
+         ResourceLocation id = ResourceLocation.tryParse(soundId);
          if (id != null) {
-            SoundEvent soundEvent = (SoundEvent)BuiltInRegistries.SOUND_EVENT.getValue(id);
+            SoundEvent soundEvent = (SoundEvent)BuiltInRegistries.SOUND_EVENT.get(id);
             if (soundEvent == null) {
                soundEvent = SoundEvent.createVariableRangeEvent(id);
             }

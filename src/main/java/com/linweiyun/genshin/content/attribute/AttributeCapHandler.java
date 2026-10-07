@@ -4,7 +4,7 @@ import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.config.entity.EntityAttributeCapConfig;
 import com.linweiyun.genshin.mixin.mixins.AccessorRangedAttribute;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
 
@@ -24,7 +24,7 @@ public class AttributeCapHandler {
                 continue;
             }
 
-            Identifier id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
+            ResourceLocation id = BuiltInRegistries.ATTRIBUTE.getKey(attribute);
             if (id == null || !id.getNamespace().equals("minecraft")) {
                 continue;
             }

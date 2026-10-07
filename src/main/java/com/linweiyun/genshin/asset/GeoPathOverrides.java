@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.asset;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -75,12 +75,12 @@ public final class GeoPathOverrides {
      * @param original 不加规则时会用的路径
      * @return 最终路径；没有任何规则接管时原样返回 {@code original}
      */
-    public static Identifier resolve(GeoAssetKind kind, @Nullable Object owner, Identifier original) {
+    public static ResourceLocation resolve(GeoAssetKind kind, @Nullable Object owner, ResourceLocation original) {
         if (original == null) {
             return null;
         }
         for (int i = RULES.size() - 1; i >= 0; i--) {
-            Identifier rewritten = RULES.get(i).resolve(kind, owner, original);
+            ResourceLocation rewritten = RULES.get(i).resolve(kind, owner, original);
             if (rewritten != null) {
                 return rewritten;
             }

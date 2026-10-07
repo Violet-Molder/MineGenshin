@@ -1,9 +1,10 @@
 package com.linweiyun.genshin.content.entities.area;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.lowdragmc.lowdraglib2.syncdata.IPersistedSerializable;
 import com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -34,10 +35,10 @@ import java.util.UUID;
  * - 移除了增加持续时间（durationOnUse）和扩大范围（radiusOnUse）的代码
  * - 移除了等待时间（waitTime）
  *
- * 数据持久化：使用 LDLib2 的 @Persisted 注解 + IPersistedSerializable
+ * 数据持久化：寿命与拥有者写在实体自己的存档 NBT 里（见 readAdditionalSaveData / addAdditionalSaveData）
  * 数据同步：半径（radius）通过 SynchedEntityData 实时同步给客户端
  */
-public abstract class AreaEntity extends Entity implements IPersistedSerializable {
+public abstract class AreaEntity extends Entity {
 
     private static final Logger LOGGER = ModLog.getLogger(LogGroup.CONTENT);
 
@@ -326,7 +327,7 @@ public abstract class AreaEntity extends Entity implements IPersistedSerializabl
     }
 
     @Override
-    public final boolean hurtServer(ServerLevel level, net.minecraft.world.damagesource.DamageSource source, float damage) {
+    public final boolean hurt(net.minecraft.world.damagesource.DamageSource source, float damage) {
         return false;  // 领域实体不可被伤害
     }
 
@@ -343,19 +344,19 @@ public abstract class AreaEntity extends Entity implements IPersistedSerializabl
     // ========== 序列化 ==========
     //
     // ⚠️ 这里的 @Persisted 只是标注，对**实体**不生效（LDLib2 只 mixin 了 BlockEntity），
-    //    寿命与拥有者必须自己用 ValueOutput/ValueInput 真正落盘 ——
+    //    寿命与拥有者必须自己写进存档 NBT ——
     //    否则区块一重载，领域就被构造器「满血复活」，看起来永远不会消亡。
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
-        this.duration = input.getIntOr("mg_duration", this.duration);
-        this.expireGameTime = input.getLongOr("mg_expire", -1L);
+    public void readAdditionalSaveData(CompoundTag input) {
+        this.duration = input.contains("mg_duration") ? input.getInt("mg_duration") : this.duration;
+        this.expireGameTime = input.contains("mg_expire") ? input.getLong("mg_expire") : -1L;
 
-        this.characterUUID = input.getIntOr("mg_character", 0);
+        this.characterUUID = input.getInt("mg_character");
         this.owner = null;
         this.character = null;      // 让 getOwner()/getOwnerCharacter() 按 UUID 重新解析
 
-        String ownerId = input.getStringOr("mg_owner", "");
+        String ownerId = input.getString("mg_owner");
         if (!ownerId.isEmpty()) {
             try {
                 this.ownerUUID = UUID.fromString(ownerId);
@@ -368,7 +369,7 @@ public abstract class AreaEntity extends Entity implements IPersistedSerializabl
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+    protected void addAdditionalSaveData(CompoundTag output) {
         output.putInt("mg_duration", this.duration);
         output.putLong("mg_expire", this.expireGameTime);
         output.putInt("mg_character", this.characterUUID);

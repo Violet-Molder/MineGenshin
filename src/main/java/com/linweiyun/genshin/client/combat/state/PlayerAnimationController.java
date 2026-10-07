@@ -2,13 +2,13 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.combat.state;
 
-import com.geckolib.animatable.GeoAnimatable;
-import com.geckolib.animation.AnimationController;
-import com.geckolib.animation.RawAnimation;
-import com.geckolib.animation.RawAnimation.Stage;
-import com.geckolib.animation.object.PlayState;
-import com.geckolib.animation.state.AnimationPoint;
-import com.geckolib.animation.state.AnimationTest;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.RawAnimation.Stage;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.animation.AnimationProcessor;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -47,7 +47,7 @@ public final class PlayerAnimationController {
    }
 
    public static <T extends GeoAnimatable & IPlayerAnimatableProxy> AnimationController<T> create(T animatable) {
-      return new AnimationController("movement_controller", 5, state -> {
+      return new AnimationController<>(animatable, "movement_controller", 5, state -> {
          Player player = animatable.getPlayerEntity();
          return handle(state, player);
       });
@@ -58,7 +58,7 @@ public final class PlayerAnimationController {
    }
 
    public static <T extends GeoAnimatable & IPlayerAnimatableProxy> AnimationController<T> createPreview(T animatable, @Nullable String animationName) {
-      return new AnimationController("preview_idle", 5, state -> {
+      return new AnimationController<>(animatable, "preview_idle", 5, state -> {
          Player player = animatable.getPlayerEntity();
          if (player == null) {
             return PlayState.STOP;
@@ -66,10 +66,10 @@ public final class PlayerAnimationController {
 
          RawAnimation target = resolvePreviewAnimation(player, animationName);
          if (target == null) {
-            return state.controller().getCurrentAnimationPoint() == null ? PlayState.STOP : PlayState.CONTINUE;
+            return state.getController().getCurrentAnimation() == null ? PlayState.STOP : PlayState.CONTINUE;
          }
 
-         state.controller().setTransitionTicks(0);
+         state.getController().transitionLength(0);
          return state.setAndContinue(target);
       });
    }
@@ -85,12 +85,12 @@ public final class PlayerAnimationController {
       return idleName != null && AnimationAvailability.existsFor(player, idleName) ? idle : null;
    }
 
-   private static <T extends GeoAnimatable> PlayState handle(AnimationTest<T> state, @Nullable Player player) {
+   private static <T extends GeoAnimatable> PlayState handle(AnimationState<T> state, @Nullable Player player) {
       if (player == null) {
          return PlayState.STOP;
       }
 
-      AnimationController<T> controller = state.controller();
+      AnimationController<T> controller = state.getController();
       CharacterAnimations animations = CharacterActions.animationsFor(player);
 
       resetOnCharacterChange(player, controller);
@@ -116,25 +116,26 @@ public final class PlayerAnimationController {
       }
 
       if (target == null) {
-         return controller.getCurrentAnimationPoint() == null ? PlayState.STOP : PlayState.CONTINUE;
+         return controller.getCurrentAnimation() == null ? PlayState.STOP : PlayState.CONTINUE;
       }
 
       if (isLocalPlayer && ActionStateMachine.isApproachFrozen() && targetName(target).equals(currentAnimationName(controller))) {
-         return PlayState.PAUSE;
+         return PlayState.CONTINUE;
       }
 
       boolean isTargetSpecial = animations.specialAnims().contains(targetName(target));
       String currentPlayingAnim = currentAnimationName(controller);
       boolean isCurrentlySpecial = animations.specialAnims().contains(currentPlayingAnim);
       if (previousWasOneShot(animations, player, currentPlayingAnim)) {
-         controller.reset();
+         controller.forceAnimationReset();
       }
 
-      boolean nothingPlaying = controller.getCurrentAnimationPoint() == null || controller.getCurrentTimelineTime() < 0.0;
+      boolean nothingPlaying = controller.getCurrentAnimation() == null
+            || controller.getAnimationState() == AnimationController.State.STOPPED;
       if (!isTargetSpecial && !nothingPlaying && !previousWasOneShot(animations, player, currentPlayingAnim) && (!isCurrentlySpecial || hasActionState)) {
-         controller.setTransitionTicks(animations.exitTransitionTicks());
+         controller.transitionLength(animations.exitTransitionTicks());
       } else {
-         controller.setTransitionTicks(0);
+         controller.transitionLength(0);
       }
 
       return state.setAndContinue(target);
@@ -188,7 +189,7 @@ public final class PlayerAnimationController {
          return false;
       }
 
-      controller.reset();
+      controller.forceAnimationReset();
       LOCO_TRANSIENT.remove(player);
       return true;
    }
@@ -278,8 +279,8 @@ public final class PlayerAnimationController {
             boolean ascending;
             boolean descending;
             if (player instanceof LocalPlayer localPlayer) {
-               ascending = localPlayer.input.keyPresses.jump();
-               descending = localPlayer.input.keyPresses.shift();
+               ascending = localPlayer.input.jumping;
+               descending = localPlayer.input.shiftKeyDown;
             } else {
                ascending = movedY > 0.008;
                descending = movedY < -0.008;
@@ -469,8 +470,8 @@ public final class PlayerAnimationController {
    }
 
    private static String currentAnimationName(AnimationController<?> controller) {
-      AnimationPoint point = controller.getCurrentAnimationPoint();
-      return point != null && point.animation() != null ? point.animation().name() : "";
+      AnimationProcessor.QueuedAnimation current = controller.getCurrentAnimation();
+      return current != null && current.animation() != null ? current.animation().name() : "";
    }
 
    private static final class LocoTransient {

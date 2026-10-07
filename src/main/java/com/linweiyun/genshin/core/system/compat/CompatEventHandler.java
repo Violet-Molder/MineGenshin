@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * 与其他 MOD 的战斗兼容入口。
  *
  * <h2>为什么落在 {@link LivingIncomingDamageEvent}</h2>
- * 这个事件在 {@code LivingEntity#hurtServer} 的最前面触发，而且改的是
+ * 这个事件在 {@code LivingEntity#hurt} 的最前面触发，而且改的是
  * {@code DamageContainer} 里的伤害值本身 —— 也就是说：
  * <ul>
  *   <li>拿到的是其他 MOD 传进来的<b>原始伤害</b>（还没过护甲 / 附魔 / 吸收）；</li>
@@ -132,7 +132,7 @@ public class CompatEventHandler {
             CompatConvertedDamageSource convertedSource =
                     new CompatConvertedDamageSource(source, current.getElemental());
             event.setCanceled(true);
-            target.hurtServer(level, convertedSource, converted);
+            target.hurt(convertedSource, converted);
         } else {
             // 非原神模式：伤害源原封不动，只把数值换掉
             event.setAmount(converted);
@@ -145,8 +145,7 @@ public class CompatEventHandler {
      * <p>判据是原版里那几个直接用 {@code getAttributeValue(ATTACK_DAMAGE)} 算伤害的类型：
      * <ul>
      *   <li>{@link DamageTypes#PLAYER_ATTACK} —— {@code Player#attack} 打出来的一切近战，
-     *       横扫、自动旋转攻击都在这里面；</li>
-     *   <li>{@link DamageTypes#MACE_SMASH} —— 重锤猛击。</li>
+     *       横扫、自动旋转攻击都在这里面。</li>
      * </ul>
      * 非原神模式下这些伤害已经通过属性加成吃到了角色的那份攻击力，所以不能再乘一次倍率。
      *
@@ -155,7 +154,7 @@ public class CompatEventHandler {
      * 那种「近身放法术」用的也是自己的伤害类型，不在这里面，同样照常换算。
      */
     private static boolean usesPlayerAttackPower(DamageSource source) {
-        return source.is(DamageTypes.PLAYER_ATTACK) || source.is(DamageTypes.MACE_SMASH);
+        return source.is(DamageTypes.PLAYER_ATTACK);
     }
 
     /**

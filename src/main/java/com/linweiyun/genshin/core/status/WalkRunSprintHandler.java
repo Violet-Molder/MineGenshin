@@ -2,7 +2,7 @@ package com.linweiyun.genshin.core.status;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -33,8 +33,8 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 public final class WalkRunSprintHandler {
 
     /** 「走」状态减速修饰符的 id。 */
-    private static final Identifier WALK_MODIFIER_ID =
-            Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "walk_mode_slow");
+    private static final ResourceLocation WALK_MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "walk_mode_slow");
 
     /** 「走」相对「跑」的速度系数（0.65 = 走只有跑的 65%）。 */
     private static final double WALK_SPEED_FACTOR = 0.65;

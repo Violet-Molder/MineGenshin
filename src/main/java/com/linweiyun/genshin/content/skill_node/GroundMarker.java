@@ -3,6 +3,7 @@ package com.linweiyun.genshin.content.skill_node;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -32,10 +33,12 @@ import java.util.function.Consumer;
 public final class GroundMarker {
 
     /** 外圈颜色（正红）。 */
-    private static final DustParticleOptions OUTER = new DustParticleOptions(0xFF2020, 1.3f);
+    private static final DustParticleOptions OUTER =
+            new DustParticleOptions(new Vector3f(0xFF / 255f, 0x20 / 255f, 0x20 / 255f), 1.3f);
 
     /** 内圈颜色（亮一点，好和固定外圈区分开）。 */
-    private static final DustParticleOptions INNER = new DustParticleOptions(0xFFB0B0, 0.9f);
+    private static final DustParticleOptions INNER =
+            new DustParticleOptions(new Vector3f(0xFF / 255f, 0xB0 / 255f, 0xB0 / 255f), 0.9f);
 
     /** 圆环采样点数：越大越圆，也越费包。 */
     private static final int RING_POINTS = 24;

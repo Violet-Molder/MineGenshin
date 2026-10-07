@@ -1,5 +1,3 @@
-// restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
-// the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.gui.menu;
 
 import com.linweiyun.genshin.client.render.gui.component.CustomToggle;
@@ -49,15 +47,13 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.Item.TooltipContext;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.slf4j.Logger;
 
 public class BackpackUI {
@@ -66,7 +62,7 @@ public class BackpackUI {
 
    public static ModularUI createUI(Player player, Backpack backpack) {
       UIElement root = new UIElement().setId("root");
-      Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(Identifier.parse("minegenshin:lss/backpack.lss"));
+      Stylesheet stylesheet = StylesheetManager.INSTANCE.getStylesheetSafe(ResourceLocation.parse("minegenshin:lss/backpack.lss"));
       UIElement window = new UIElement().setId("window");
       UIElement sidebarPanel = new UIElement().setId("sidebar-panel");
       UIElement contentPanel = new UIElement().setId("content-panel");
@@ -107,7 +103,7 @@ public class BackpackUI {
       slotModeSection.setDisplay(false);
       AtomicBoolean isSlotMode = new AtomicBoolean(false);
       UIElement playerInventoryWindow = new UIElement().setId("player_inventory_window");
-      ResourceHandler<ItemResource> handler = backpack.asResourceHandler();
+      IItemHandlerModifiable handler = backpack.asResourceHandler();
       ScrollerView genshinBackpackWindow = new ScrollerView();
       genshinBackpackWindow.setId("genshin_backpack_window");
       Runnable rebuildSlotGrids = () -> {
@@ -280,7 +276,7 @@ public class BackpackUI {
       ItemStack stack,
       int globalSlot,
       boolean equipped,
-      ResourceHandler<ItemResource> handler,
+      IItemHandlerModifiable handler,
       int containerSlot,
       String key,
       String equippedByCharacterName,
@@ -339,7 +335,7 @@ public class BackpackUI {
    }
 
    private static ArtifactSortMethod.Entry toEntry(
-      ItemStack stack, int globalSlot, boolean equipped, ResourceHandler<ItemResource> handler, int containerSlot, String key
+      ItemStack stack, int globalSlot, boolean equipped, IItemHandlerModifiable handler, int containerSlot, String key
    ) {
       return toEntry(stack, globalSlot, equipped, handler, containerSlot, key, null, null);
    }
@@ -348,7 +344,7 @@ public class BackpackUI {
       List<ArtifactSortMethod.Entry> list = new ArrayList<>();
       int offset = getCategoryOffset(category);
       int totalSlots = category.maxCapacity;
-      ResourceHandler<ItemResource> backpackHandler = backpack.asResourceHandler();
+      IItemHandlerModifiable backpackHandler = backpack.asResourceHandler();
 
       for (int i = 0; i < totalSlots; i++) {
          ItemStack stack = backpack.getItem(offset + i);
@@ -367,7 +363,7 @@ public class BackpackUI {
                   if (character != null && character.getData() != null) {
                      ArtifactInventory inv = character.getData().getArtifactInventory();
                      if (inv != null) {
-                        ResourceHandler<ItemResource> lockedHandler = new LockedResourceHandler(inv.asResourceHandler());
+                        IItemHandlerModifiable lockedHandler = new LockedResourceHandler(inv.asResourceHandler());
                         int charUUID = character.getCharacterUUID();
                         String charName = character.getName().getString();
                         String charTextureId = character.getTextureId();
@@ -423,7 +419,7 @@ public class BackpackUI {
       }
 
       if (category == Backpack.Category.ARTIFACTS) {
-         ResourceHandler<ItemResource> h = backpack.asResourceHandler();
+         IItemHandlerModifiable h = backpack.asResourceHandler();
          stacks.sort((a, b) -> {
             ArtifactSortMethod.Entry ea = toEntry(a, 0, false, h, 0, "");
             ArtifactSortMethod.Entry eb = toEntry(b, 0, false, h, 0, "");
@@ -432,7 +428,7 @@ public class BackpackUI {
             return ga != gb ? Integer.compare(ga, gb) : method.comparator().compare(ea, eb);
          });
       } else if (category == Backpack.Category.WEAPONS) {
-         ResourceHandler<ItemResource> h = backpack.asResourceHandler();
+         IItemHandlerModifiable h = backpack.asResourceHandler();
          stacks.sort((a, b) -> {
             ArtifactSortMethod.Entry ea = toEntry(a, 0, false, h, 0, "");
             ArtifactSortMethod.Entry eb = toEntry(b, 0, false, h, 0, "");
@@ -591,7 +587,7 @@ public class BackpackUI {
          }
 
          List<Component> tooltipLines = new ArrayList<>();
-         stack.getItem().appendHoverText(stack, TooltipContext.EMPTY, TooltipDisplay.DEFAULT, tooltipLines::add, TooltipFlag.NORMAL);
+         stack.getItem().appendHoverText(stack, TooltipContext.EMPTY, tooltipLines, TooltipFlag.NORMAL);
 
          for (Component line : tooltipLines) {
             String text = line.getString();
@@ -649,7 +645,7 @@ public class BackpackUI {
    }
 
    private static UIElement buildGridForCategory(
-      Backpack.Category category, ResourceHandler<ItemResource> handler, Backpack backpack, Player player, ArtifactSortMethod sortMethod
+      Backpack.Category category, IItemHandlerModifiable handler, Backpack backpack, Player player, ArtifactSortMethod sortMethod
    ) {
       UIElement gridContainer = new UIElement().setId("grid_container");
       List<ArtifactSortMethod.Entry> sorted = collectSorted(backpack, category, player, sortMethod);

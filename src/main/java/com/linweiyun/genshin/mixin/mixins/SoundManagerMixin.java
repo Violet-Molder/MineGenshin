@@ -3,7 +3,7 @@ package com.linweiyun.genshin.mixin.mixins;
 import com.linweiyun.genshin.client.sound.CharacterSoundSink;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,19 +32,19 @@ public abstract class SoundManagerMixin implements CharacterSoundSink {
 
     @Shadow
     @Final
-    private Map<Identifier, WeighedSoundEvents> registry;
+    private Map<ResourceLocation, WeighedSoundEvents> registry;
 
     @Shadow
     @Final
-    private Map<Identifier, Resource> soundCache;
+    private Map<ResourceLocation, Resource> soundCache;
 
     @Override
-    public Map<Identifier, WeighedSoundEvents> genshin$soundEvents() {
+    public Map<ResourceLocation, WeighedSoundEvents> genshin$soundEvents() {
         return this.registry;
     }
 
     @Override
-    public Map<Identifier, Resource> genshin$soundFiles() {
+    public Map<ResourceLocation, Resource> genshin$soundFiles() {
         return this.soundCache;
     }
 }

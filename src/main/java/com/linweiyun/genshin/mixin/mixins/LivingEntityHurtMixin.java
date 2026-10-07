@@ -29,7 +29,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityReference;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -55,26 +54,26 @@ public class LivingEntityHurtMixin {
     }
 
     @Shadow
-    private void playSecondaryHurtSound(DamageSource source) {
-
-    }
-
-    @Shadow
     protected void playHurtSound(DamageSource source) {
 
     }
 
     @Shadow
-    protected int lastHurtByPlayerMemoryTime;
+    protected int lastHurtByPlayerTime;
 
     @Shadow
-    protected EntityReference<Player> lastHurtByPlayer;
+    protected Player lastHurtByPlayer;
 
-    @Inject(method = "hurtServer", at = @At("HEAD"), cancellable = true)
-    private void onLivingEntityHurtServer(ServerLevel level, DamageSource source, float damage,
+    @Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
+    private void onLivingEntityHurt(DamageSource source, float damage,
                                           CallbackInfoReturnable<Boolean> cir) {
 
         LivingEntity self = (LivingEntity) (Object) this;
+
+        // 原神侧的状态（世界入侵、方块附着、飘字广播）挂在服务端世界上，客户端路径直接放行
+        if (!(self.level() instanceof ServerLevel level)) {
+            return;
+        }
 
         // 护盾：伤害还没落地之前先问盾。
         //
@@ -113,7 +112,7 @@ public class LivingEntityHurtMixin {
                         float convertedDamage = damage / vanillaAttack * teyvatAttack;
                         cir.cancel();
                         TeyvatConvertedDamageSource newSource = new TeyvatConvertedDamageSource(source);
-                        boolean result = self.hurtServer(level, newSource, convertedDamage);
+                        boolean result = self.hurt(newSource, convertedDamage);
                         cir.setReturnValue(result);
                         return;
                     }
@@ -269,11 +268,10 @@ public class LivingEntityHurtMixin {
 
         if (target.isDeadOrDying()) {
             target.makeSound(getDeathSound());
-            playSecondaryHurtSound(source);
 
             if (modSource.getEntity() instanceof Player player) {
-                lastHurtByPlayerMemoryTime = 100;
-                lastHurtByPlayer = EntityReference.of(player);
+                lastHurtByPlayerTime = 100;
+                lastHurtByPlayer = player;
             }
 
             target.die(source);

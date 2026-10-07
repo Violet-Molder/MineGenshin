@@ -1,7 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.action.data;
 
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * </pre>
  * 同一个物品源，拆成两根骨骼分别挂到角色模型的两根骨骼上。
  *
- * <h2>3. 直接指定 geo 模型 —— {@link #model(Identifier, Identifier, String)}</h2>
+ * <h2>3. 直接指定 geo 模型 —— {@link #model(ResourceLocation, ResourceLocation, String)}</h2>
  * 内容不来自物品，而是来自任意一个 geo 模型文件。适合「拿 C 模型的一根骨骼去替换 B 的某根骨骼」，
  * 或者做固定外观。
  *
@@ -35,8 +35,8 @@ import org.jetbrains.annotations.Nullable;
 public record BoneMountContent(
         ItemStack stack,
         @Nullable String sourceBone,
-        @Nullable Identifier modelId,
-        @Nullable Identifier textureId) {
+        @Nullable ResourceLocation modelId,
+        @Nullable ResourceLocation textureId) {
 
     /** 整个物品模型。 */
     public static BoneMountContent whole(ItemStack stack) {
@@ -49,7 +49,7 @@ public record BoneMountContent(
     }
 
     /** 直接指定 geo 模型与贴图里的一根骨骼。 */
-    public static BoneMountContent model(Identifier modelId, Identifier textureId, String sourceBone) {
+    public static BoneMountContent model(ResourceLocation modelId, ResourceLocation textureId, String sourceBone) {
         return new BoneMountContent(ItemStack.EMPTY, sourceBone, modelId, textureId);
     }
 

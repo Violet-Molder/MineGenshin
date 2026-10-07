@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public final class CharacterRenderData {
    private final String id;
@@ -221,15 +221,15 @@ public final class CharacterRenderData {
       return this.modelAuthorUrl;
    }
 
-   public Identifier modelIdentifier() {
+   public ResourceLocation modelIdentifier() {
       return GenshinAssets.fromModelPath(this.modelPath);
    }
 
-   public Identifier textureIdentifier() {
+   public ResourceLocation textureIdentifier() {
       return GenshinAssets.fromTexturePath(this.texturePath);
    }
 
-   public Identifier animationIdentifier() {
+   public ResourceLocation animationIdentifier() {
       return GenshinAssets.fromAnimationPath(this.animationPath);
    }
 

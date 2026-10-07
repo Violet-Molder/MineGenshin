@@ -4,20 +4,21 @@ import com.linweiyun.genshin.client.performance.IndicatorFramePlanner;
 import com.linweiyun.genshin.client.performance.IndicatorGlyphCache;
 import com.linweiyun.genshin.client.performance.IndicatorPerfStats;
 import com.linweiyun.genshin.client.performance.HudRenderCaches;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Quaternionf;
 import org.joml.Vector3fc;
 import org.slf4j.Logger;
@@ -27,14 +28,14 @@ import java.util.List;
 /**
  * 伤害飘字渲染器 —— 与血条 / 等级文字同为「世界空间提交」模式。
  *
- * <p>每帧在 {@link SubmitCustomGeometryEvent} 里把每个活跃飘字摆到它的世界坐标：
+ * <p>每帧在 {@link RenderLevelStageEvent} 里把每个活跃飘字摆到它的世界坐标：
  * 平移到「相机相对位置」→ 乘相机朝向（命名牌口径的 billboard）→ 按世界尺度缩放，
  * 然后交给 {@link GradientTextRenderer} 提交带渐变的文字几何。</p>
  *
  * <p>因为几何本身就活在世界投影里，透视自带的近大远小就是飘字的距离表现，
  * 不需要手动投影与距离缩放。</p>
  *
- * <h2>这一层的性能职责（渲染优化模块的入口）</h2>
+ * <h2>这一层的性能职责</h2>
  * <ol>
  *   <li><b>先规划再提交</b>：可见性剔除、条数上限、锚点位姿烘焙全部交给
  *       {@link IndicatorFramePlanner}，本类只负责取相机参数并调用一次
@@ -52,9 +53,12 @@ import java.util.List;
 public final class DamageIndicatorRenderer {
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
 
+    /** 飘字几何用的顶点缓冲块大小（字节），一次整帧的飘字远小于它 */
+    private static final int BUFFER_SIZE = 1536;
+
     /**
-     * 旧 HUD 的 scale 以 GUI 像素为单位（scale=2.2 时字高 9×2.2≈20 GUI 像素）。
-     * 换算到世界空间时按 1080p / 自动 GUI 尺度校准，保持旧观感：
+     * 飘字的 scale 以 GUI 像素为单位（scale=2.2 时字高 9×2.2≈20 GUI 像素）。
+     * 换算到世界空间时按 1080p / 自动 GUI 尺度校准：
      * 2.2 × 0.0155 ≈ 0.034 方块/字体像素 ≈ 1.36 倍命名牌。
      *
      * @deprecated 真正的换算量在 {@link IndicatorFramePlanner#GUI_PIXEL_TO_BLOCK}，
@@ -62,6 +66,10 @@ public final class DamageIndicatorRenderer {
      */
     @Deprecated
     public static final float GUI_PIXEL_TO_BLOCK = IndicatorFramePlanner.GUI_PIXEL_TO_BLOCK;
+
+    /** 本模组自己的顶点缓冲，只有渲染主线程会碰 */
+    private static ByteBufferBuilder buffer;
+    private static MultiBufferSource.BufferSource bufferSource;
 
     private DamageIndicatorRenderer() {}
 
@@ -74,7 +82,11 @@ public final class DamageIndicatorRenderer {
     }
 
     @SubscribeEvent
-    public static void onSubmitCustomGeometry(SubmitCustomGeometryEvent event) {
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+            return;
+        }
+
         List<DamageIndicator> active = DamageIndicatorManager.getActive();
         if (active.isEmpty()) {
             // 没有飘字也照常记一次「本帧 0 条」：否则 F3 上的读数会停在最后一批飘字的数字上，
@@ -86,20 +98,32 @@ public final class DamageIndicatorRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
 
-        SubmitNodeCollector collector = event.getSubmitNodeCollector();
         PoseStack poseStack = event.getPoseStack();
         Font font = mc.font;
-        if (collector == null || poseStack == null || font == null) return;
+        if (poseStack == null || font == null) return;
 
-        Camera camera = mc.gameRenderer.mainCamera();
-        Vec3 camPos = camera.position();
+        Camera camera = event.getCamera();
+        Vec3 camPos = camera.getPosition();
         Quaternionf camRot = camera.rotation();
         // 直接把手里的向量接口传下去；这里再包一次 new Vec3(...) 就是每帧一次白分配
-        Vector3fc forward = camera.forwardVector();
+        Vector3fc forward = camera.getLookVector();
 
         List<IndicatorFramePlanner.Entry> entries = IndicatorFramePlanner.plan(
                 active, poseStack.last().pose(), camPos, camRot, forward, font);
-        GradientTextRenderer.submitBatch(collector, poseStack, entries);
+        if (entries.isEmpty()) {
+            return;
+        }
+
+        GradientTextRenderer.submitBatch(bufferSource(), entries);
+        bufferSource.endBatch();
+    }
+
+    private static MultiBufferSource.BufferSource bufferSource() {
+        if (bufferSource == null) {
+            buffer = new ByteBufferBuilder(BUFFER_SIZE);
+            bufferSource = MultiBufferSource.immediate(buffer);
+        }
+        return bufferSource;
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.asset;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,7 +32,7 @@ public interface GeoPathRule {
      * @return 改写后的路径；{@code null} 表示不处理
      */
     @Nullable
-    Identifier resolve(GeoAssetKind kind, @Nullable Object owner, Identifier original);
+    ResourceLocation resolve(GeoAssetKind kind, @Nullable Object owner, ResourceLocation original);
 
     /** 命名空间过滤的便捷包装。 */
     default GeoPathRule forNamespace(String namespace) {

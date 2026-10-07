@@ -1,6 +1,6 @@
 package com.linweiyun.genshin.asset;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * 「一个 id 的一整套资源」—— 类别 + id → 模型 / 动画 / 贴图 三个位置。
@@ -49,70 +49,70 @@ public record AssetSet(String dir, String baseName) {
     // ==================== 文件位置 ====================
 
     /** 模型文件：{@code <dir>/<baseName>.json}。 */
-    public Identifier modelFile() {
+    public ResourceLocation modelFile() {
         return ModAssetPaths.inDir(this.dir, this.baseName, ModAssetPaths.JSON_SUFFIX);
     }
 
     /** 模型文件的另一种写法：{@code <dir>/<baseName>.geo.json}。 */
-    public Identifier modelFileWithSuffix() {
+    public ResourceLocation modelFileWithSuffix() {
         return ModAssetPaths.inDir(this.dir, this.baseName, ModAssetPaths.GEO_SUFFIX);
     }
 
     /** 动画文件：{@code <dir>/<baseName>.animation.json}。 */
-    public Identifier animationFile() {
+    public ResourceLocation animationFile() {
         return ModAssetPaths.inDir(this.dir, this.baseName, ModAssetPaths.ANIMATION_SUFFIX);
     }
 
     /** 贴图文件：{@code <dir>/textures/<baseName>.png}。 */
-    public Identifier textureFile() {
+    public ResourceLocation textureFile() {
         return ModAssetPaths.textureIn(this.dir, this.baseName + ModAssetPaths.PNG_SUFFIX);
     }
 
     // ==================== 原版入口文件（由 AssetRedirects 供料） ====================
 
     /** 物品定义：{@code <dir>/definition.json}（原版入口 {@code items/<id>.json}）。 */
-    public Identifier definitionFile() {
+    public ResourceLocation definitionFile() {
         return ModAssetPaths.inDir(this.dir, ModAssetPaths.DEFINITION_FILE, "");
     }
 
     /** 原版模型：{@code <dir>/model.json}（原版入口 {@code models/<路径>.json}）。 */
-    public Identifier vanillaModelFile() {
+    public ResourceLocation vanillaModelFile() {
         return ModAssetPaths.inDir(this.dir, ModAssetPaths.MODEL_FILE, "");
     }
 
     /** 图集贴图：{@code <dir>/textures/texture.png}（原版入口 {@code textures/<路径>.png}）。 */
-    public Identifier vanillaTextureFile() {
+    public ResourceLocation vanillaTextureFile() {
         return ModAssetPaths.textureIn(this.dir, ModAssetPaths.TEXTURE_FILE);
     }
 
     // ==================== 资源键 ====================
 
     /** 模型缓存键：{@code <dir>/<baseName>}。 */
-    public Identifier modelKey() {
-        return net.minecraft.resources.Identifier.fromNamespaceAndPath(
+    public ResourceLocation modelKey() {
+        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
                 com.linweiyun.genshin.Minegenshin.MOD_ID, this.dir + "/" + this.baseName);
     }
 
     /** 动画缓存键（与模型同键，见 {@link ModAssetPaths#assetKey}）。 */
-    public Identifier animationKey() {
+    public ResourceLocation animationKey() {
         return modelKey();
     }
 
     // ==================== 候选序列（给解析用） ====================
 
     /** 模型的候选文件，按优先级排列：{@code .json} 优先，其次 {@code .geo.json}。 */
-    public Identifier[] modelCandidates() {
-        return new Identifier[]{modelFile(), modelFileWithSuffix()};
+    public ResourceLocation[] modelCandidates() {
+        return new ResourceLocation[]{modelFile(), modelFileWithSuffix()};
     }
 
     /** 动画的候选文件。 */
-    public Identifier[] animationCandidates() {
-        return new Identifier[]{animationFile()};
+    public ResourceLocation[] animationCandidates() {
+        return new ResourceLocation[]{animationFile()};
     }
 
     /** 贴图的候选文件。 */
-    public Identifier[] textureCandidates() {
-        return new Identifier[]{textureFile()};
+    public ResourceLocation[] textureCandidates() {
+        return new ResourceLocation[]{textureFile()};
     }
 
     /** 调试用：{@code entity/test1/test1}。 */

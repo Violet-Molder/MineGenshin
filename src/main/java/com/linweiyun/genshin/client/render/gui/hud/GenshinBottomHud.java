@@ -5,10 +5,9 @@ import com.linweiyun.genshin.core.character.PGCharacterData;
 import com.linweiyun.genshin.core.system.compat.PlayerStatBridge;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodData;
@@ -26,7 +25,7 @@ import net.minecraft.world.food.FoodData;
  *
  * <p>用原版贴图直接 blit 的写法（不吃 ldlib）：{@code minecraft:hud/experience_bar_background}、
  * {@code minecraft:hud/food_full} 这些是 GUI 图集里的精灵，ldlib2 的 {@code SpriteTexture} 只按
- * 贴图文件路径取图，取不到图集精灵。所以这几样单独走一个原生 {@link net.minecraft.client.gui.GuiLayer}。
+ * 贴图文件路径取图，取不到图集精灵。所以这几样单独走一个原生 GUI 层。
  *
  * <p>经验条的比例来自当前出战角色：{@code 当前经验 / 本次升级所需经验}，超过就按满条画
  * （升到突破上限后经验会溢出，这时候让条停在满格而不是超出去）。
@@ -49,19 +48,19 @@ public final class GenshinBottomHud {
     /** 饱食度图标个数 */
     private static final int FOOD_ICON_COUNT = 10;
 
-    private static final Identifier EXPERIENCE_BAR_BACKGROUND =
-            Identifier.withDefaultNamespace("hud/experience_bar_background");
-    private static final Identifier EXPERIENCE_BAR_PROGRESS =
-            Identifier.withDefaultNamespace("hud/experience_bar_progress");
-    private static final Identifier FOOD_EMPTY = Identifier.withDefaultNamespace("hud/food_empty");
-    private static final Identifier FOOD_HALF = Identifier.withDefaultNamespace("hud/food_half");
-    private static final Identifier FOOD_FULL = Identifier.withDefaultNamespace("hud/food_full");
-    private static final Identifier FOOD_EMPTY_HUNGER =
-            Identifier.withDefaultNamespace("hud/food_empty_hunger");
-    private static final Identifier FOOD_HALF_HUNGER =
-            Identifier.withDefaultNamespace("hud/food_half_hunger");
-    private static final Identifier FOOD_FULL_HUNGER =
-            Identifier.withDefaultNamespace("hud/food_full_hunger");
+    private static final ResourceLocation EXPERIENCE_BAR_BACKGROUND =
+            ResourceLocation.withDefaultNamespace("hud/experience_bar_background");
+    private static final ResourceLocation EXPERIENCE_BAR_PROGRESS =
+            ResourceLocation.withDefaultNamespace("hud/experience_bar_progress");
+    private static final ResourceLocation FOOD_EMPTY = ResourceLocation.withDefaultNamespace("hud/food_empty");
+    private static final ResourceLocation FOOD_HALF = ResourceLocation.withDefaultNamespace("hud/food_half");
+    private static final ResourceLocation FOOD_FULL = ResourceLocation.withDefaultNamespace("hud/food_full");
+    private static final ResourceLocation FOOD_EMPTY_HUNGER =
+            ResourceLocation.withDefaultNamespace("hud/food_empty_hunger");
+    private static final ResourceLocation FOOD_HALF_HUNGER =
+            ResourceLocation.withDefaultNamespace("hud/food_half_hunger");
+    private static final ResourceLocation FOOD_FULL_HUNGER =
+            ResourceLocation.withDefaultNamespace("hud/food_full_hunger");
 
     private GenshinBottomHud() {
     }
@@ -74,7 +73,7 @@ public final class GenshinBottomHud {
                 && PlayerStatBridge.isGenshinMode(player);
     }
 
-    public static void render(GuiGraphicsExtractor graphics) {
+    public static void render(GuiGraphics graphics) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || !shouldRender()) {
             return;
@@ -97,39 +96,39 @@ public final class GenshinBottomHud {
         return gameMode != null && gameMode.canHurtPlayer();
     }
 
-    private static void renderExperienceBar(GuiGraphicsExtractor graphics, LocalPlayer player,
+    private static void renderExperienceBar(GuiGraphics graphics, LocalPlayer player,
                                             int left, int top) {
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, EXPERIENCE_BAR_BACKGROUND,
+        graphics.blitSprite(EXPERIENCE_BAR_BACKGROUND,
                 left, top, XP_BAR_WIDTH, XP_BAR_HEIGHT);
 
         // 原版这里是 progress = experienceProgress * 183，照抄；比例已经夹在 0~1，条不会画出去
         int progress = (int) (experienceRatio(player) * (XP_BAR_WIDTH + 1));
         if (progress > 0) {
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, EXPERIENCE_BAR_PROGRESS,
+            graphics.blitSprite(EXPERIENCE_BAR_PROGRESS,
                     XP_BAR_WIDTH, XP_BAR_HEIGHT, 0, 0, left, top, progress, XP_BAR_HEIGHT);
         }
     }
 
-    private static void renderFood(GuiGraphicsExtractor graphics, LocalPlayer player,
+    private static void renderFood(GuiGraphics graphics, LocalPlayer player,
                                    int screenWidth, int top) {
         FoodData foodData = player.getFoodData();
         int food = foodData.getFoodLevel();
         boolean hunger = player.hasEffect(MobEffects.HUNGER);
 
-        Identifier empty = hunger ? FOOD_EMPTY_HUNGER : FOOD_EMPTY;
-        Identifier half = hunger ? FOOD_HALF_HUNGER : FOOD_HALF;
-        Identifier full = hunger ? FOOD_FULL_HUNGER : FOOD_FULL;
+        ResourceLocation empty = hunger ? FOOD_EMPTY_HUNGER : FOOD_EMPTY;
+        ResourceLocation half = hunger ? FOOD_HALF_HUNGER : FOOD_HALF;
+        ResourceLocation full = hunger ? FOOD_FULL_HUNGER : FOOD_FULL;
 
         int rowWidth = FOOD_ICON_STEP * (FOOD_ICON_COUNT - 1) + FOOD_ICON_SIZE;
         int left = (screenWidth - rowWidth) / 2;
 
         for (int i = 0; i < FOOD_ICON_COUNT; i++) {
             int x = left + i * FOOD_ICON_STEP;
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, empty, x, top, FOOD_ICON_SIZE, FOOD_ICON_SIZE);
+            graphics.blitSprite(empty, x, top, FOOD_ICON_SIZE, FOOD_ICON_SIZE);
             if (i * 2 + 1 < food) {
-                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, full, x, top, FOOD_ICON_SIZE, FOOD_ICON_SIZE);
+                graphics.blitSprite(full, x, top, FOOD_ICON_SIZE, FOOD_ICON_SIZE);
             } else if (i * 2 + 1 == food) {
-                graphics.blitSprite(RenderPipelines.GUI_TEXTURED, half, x, top, FOOD_ICON_SIZE, FOOD_ICON_SIZE);
+                graphics.blitSprite(half, x, top, FOOD_ICON_SIZE, FOOD_ICON_SIZE);
             }
         }
     }

@@ -6,15 +6,15 @@ import com.linweiyun.genshin.core.system.poise.PoiseState;
 import com.lowdragmc.lowdraglib2.gui.sync.bindings.impl.SupplierDataSource;
 import com.lowdragmc.lowdraglib2.gui.texture.SpriteTexture;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
-import com.lowdragmc.lowdraglib2.gui.ui.data.Clip;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.ProgressBar;
 import com.lowdragmc.lowdraglib2.gui.ui.event.UIEvents;
 import com.lowdragmc.lowdraglib2.integration.kjs.KJSBindings;
 import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import dev.vfyjxf.taffy.style.TaffyPosition;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import org.appliedenergistics.yoga.YogaOverflow;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -37,7 +37,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class MobPoiseBar extends ProgressBar {
 
     /**
-     * 带 {@code Clip.SCISSOR} 的裁剪层至少要占这么多<b>物理像素</b>，不足就整层不画。
+     * 开了 {@code overflow: hidden} 的裁剪层至少要占这么多<b>物理像素</b>，不足就整层不画。
      *
      * <p>和 {@link HPProgressBar#MIN_CLIP_PIXELS} 同一件事、同一个理由：
      * LDLib2 把裁剪框四舍五入到物理像素，宽度不到半个像素就是 0 宽，
@@ -59,12 +59,12 @@ public class MobPoiseBar extends ProgressBar {
         });
         this.bar
                 .addChild(barIcon = new UIElement())
-                .layout(layout -> layout.positionType(TaffyPosition.ABSOLUTE))
-                .style(s -> {
-                    s.background(SpriteTexture.of(
-                            Identifier.fromNamespaceAndPath("minegenshin", "gui/empty.png")));
-                    s.clip(Clip.SCISSOR);
-                });
+                .layout(layout -> {
+                    layout.positionType(TaffyPosition.ABSOLUTE);
+                    layout.overflow(YogaOverflow.HIDDEN);
+                })
+                .style(s -> s.background(SpriteTexture.of(
+                        ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/empty.png"))));
 
         // 填充纹理（复用血条那张白条，颜色交给 LSS 的样式类）
         this.barIcon.style(s -> s.background(SpriteTexture.of(
@@ -128,7 +128,7 @@ public class MobPoiseBar extends ProgressBar {
             // 布局还没算出来，宽度无从判断，先不画
             return false;
         }
-        float scale = Minecraft.getInstance().getWindow().getGuiScale();
+        float scale = (float) Minecraft.getInstance().getWindow().getGuiScale();
         return widthRatio * referenceWidth * scale >= MIN_CLIP_PIXELS
                 && heightRatio * referenceHeight * scale >= MIN_CLIP_PIXELS;
     }

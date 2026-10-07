@@ -19,6 +19,7 @@ import com.linweiyun.genshin.core.system.shield.ShieldService;
 import com.linweiyun.genshin.core.system.poise.PoiseService;
 import com.linweiyun.genshin.core.system.poise.PoiseState;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.linweiyun.genshin.util.log.LogGroup;
@@ -27,12 +28,11 @@ import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Camera;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -42,7 +42,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.slf4j.Logger;
@@ -56,15 +56,15 @@ public class MobHealthBarHud {
 
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
 
-    private static final Identifier HP_BAR_BG_TEXTURE =
-            Identifier.fromNamespaceAndPath("minegenshin", "gui/short_character_hp_green.png");
-    private static final Identifier HP_BAR_FILL_TEXTURE =
-            Identifier.fromNamespaceAndPath("minegenshin", "gui/short_character_hp_bar_white.png");
+    private static final ResourceLocation HP_BAR_BG_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/short_character_hp_green.png");
+    private static final ResourceLocation HP_BAR_FILL_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath("minegenshin", "gui/short_character_hp_bar_white.png");
 
     /**
      * 血条用的 {@link RenderType}，一类贴图只取一次。
      *
-     * <p>{@code RenderTypes.entityTranslucent(texture)} 内部是
+     * <p>{@code RenderType.entityTranslucent(texture)} 内部是
      * {@code Util.memoize(BiFunction)}，<b>每次调用都要新建一个缓存键对象</b>；
      * 而一条血条要取 4~6 次 RenderType（背景 / 拖尾 / 填充 / 盾条背景 / 盾条填充），
      * 也就是每实体每帧白造同样数量的对象。这里提前取好，之后只是读一个静态字段。</p>
@@ -81,7 +81,7 @@ public class MobHealthBarHud {
     private static RenderType barBgType() {
         RenderType type = barBgType;
         if (type == null) {
-            type = RenderTypes.entityTranslucent(HP_BAR_BG_TEXTURE);
+            type = RenderType.entityTranslucent(HP_BAR_BG_TEXTURE);
             barBgType = type;
         }
         return type;
@@ -90,7 +90,7 @@ public class MobHealthBarHud {
     private static RenderType barFillType() {
         RenderType type = barFillType;
         if (type == null) {
-            type = RenderTypes.entityTranslucent(HP_BAR_FILL_TEXTURE);
+            type = RenderType.entityTranslucent(HP_BAR_FILL_TEXTURE);
             barFillType = type;
         }
         return type;
@@ -153,20 +153,38 @@ public class MobHealthBarHud {
     private static final float[] COLOR_TRAIL = { 0.70f, 0.50f, 0.10f };
 
 
+    /** 血条几何用的顶点缓冲块大小（字节） */
+    private static final int BUFFER_SIZE = 8192;
+
+    /** 本模组自己的顶点缓冲，只有渲染主线程会碰 */
+    private static ByteBufferBuilder buffer;
+    private static MultiBufferSource.BufferSource bufferSource;
+
+    private static MultiBufferSource.BufferSource bufferSource() {
+        if (bufferSource == null) {
+            buffer = new ByteBufferBuilder(BUFFER_SIZE);
+            bufferSource = MultiBufferSource.immediate(buffer);
+        }
+        return bufferSource;
+    }
+
     @SubscribeEvent
-    public static void onSubmitCustomGeometry(SubmitCustomGeometryEvent event) {
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
+            return;
+        }
+
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
         if (!TeyvatWorldInvasion.isClientInvaded()) return;
 
-        SubmitNodeCollector collector = event.getSubmitNodeCollector();
+        MultiBufferSource.BufferSource collector = bufferSource();
         PoseStack poseStack = event.getPoseStack();
 
-        float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         // 相机在本帧的实体循环里是常量：位置、朝向各取一次就够
-        // （朝向早先是写在 pushPose 里逐实体取的）
-        Camera camera = mc.gameRenderer.mainCamera();
-        Vec3 camPos = camera.position();
+        Camera camera = mc.gameRenderer.getMainCamera();
+        Vec3 camPos = camera.getPosition();
         Quaternionf camRot = camera.rotation();
         double camX = camPos.x;
         double camY = camPos.y;
@@ -248,39 +266,30 @@ public class MobHealthBarHud {
 
                 // ============ 空槽背景 ============
                 RenderType bgType = barBgType();
-                collector.submitCustomGeometry(poseStack, bgType, (pose, buffer) -> {
-                    Matrix4f matrix = pose.pose();
-                    drawTexturedQuad(buffer, matrix, 0.0f,
-                            -BAR_WIDTH / 2, -BAR_HEIGHT / 2, BAR_WIDTH / 2, BAR_HEIGHT / 2,
-                            0.0f, 0.0f, 1.0f, 1.0f,
-                            1.0f, 1.0f, 1.0f, 1.0f);
-                });
+                drawTexturedQuad(collector.getBuffer(bgType), poseStack.last().pose(), 0.0f,
+                        -BAR_WIDTH / 2, -BAR_HEIGHT / 2, BAR_WIDTH / 2, BAR_HEIGHT / 2,
+                        0.0f, 0.0f, 1.0f, 1.0f,
+                        1.0f, 1.0f, 1.0f, 1.0f);
 
                 // ============ 拖尾 ============
                 if (trailRatio > healthRatio) {
                     float trailWidth = BAR_WIDTH * trailRatio;
                     RenderType trailType = barFillType();
-                    collector.submitCustomGeometry(poseStack, trailType, (pose, buffer) -> {
-                        Matrix4f matrix = pose.pose();
-                        drawTexturedQuad(buffer, matrix, TRAIL_Z_OFFSET,
-                                BAR_WIDTH / 2 - trailWidth, -BAR_HEIGHT / 2,
-                                BAR_WIDTH / 2, BAR_HEIGHT / 2,
-                                trailRatio, 0.0f, 0.0f, 1.0f,
-                                COLOR_TRAIL[0], COLOR_TRAIL[1], COLOR_TRAIL[2], 1.0f);
-                    });
+                    drawTexturedQuad(collector.getBuffer(trailType), poseStack.last().pose(), TRAIL_Z_OFFSET,
+                            BAR_WIDTH / 2 - trailWidth, -BAR_HEIGHT / 2,
+                            BAR_WIDTH / 2, BAR_HEIGHT / 2,
+                            trailRatio, 0.0f, 0.0f, 1.0f,
+                            COLOR_TRAIL[0], COLOR_TRAIL[1], COLOR_TRAIL[2], 1.0f);
                 }
 
                 // ============ 血条填充 ============
                 float fillWidth = BAR_WIDTH * healthRatio;
                 RenderType barType = barFillType();
-                collector.submitCustomGeometry(poseStack, barType, (pose, buffer) -> {
-                    Matrix4f matrix = pose.pose();
-                    drawTexturedQuad(buffer, matrix, FILL_Z_OFFSET,
-                            BAR_WIDTH / 2 - fillWidth, -BAR_HEIGHT / 2,
-                            BAR_WIDTH / 2, BAR_HEIGHT / 2,
-                            healthRatio, 0.0f, 0.0f, 1.0f,
-                            r, g, b, 1.0f);
-                });
+                drawTexturedQuad(collector.getBuffer(barType), poseStack.last().pose(), FILL_Z_OFFSET,
+                        BAR_WIDTH / 2 - fillWidth, -BAR_HEIGHT / 2,
+                        BAR_WIDTH / 2, BAR_HEIGHT / 2,
+                        healthRatio, 0.0f, 0.0f, 1.0f,
+                        r, g, b, 1.0f);
 
                 // ============ 护盾条 ============
                 // 血条在画（showBar）且有罩型护盾时，在血条正上方叠一条更细的盾条；颜色取护盾元素
@@ -302,28 +311,19 @@ public class MobHealthBarHud {
                     RenderType shieldType = barFillType();
 
                     // 空槽
-                    collector.submitCustomGeometry(poseStack, shieldType, (pose, buffer) -> {
-                        Matrix4f matrix = pose.pose();
-                        drawTexturedQuad(buffer, matrix, 0.0f,
-                                -BAR_WIDTH / 2, -SHIELD_BAR_HEIGHT / 2, BAR_WIDTH / 2, SHIELD_BAR_HEIGHT / 2,
-                                0.0f, 0.0f, 1.0f, 1.0f,
-                                0.22f, 0.26f, 0.3f, 1.0f);
-                    });
+                    drawTexturedQuad(collector.getBuffer(shieldType), poseStack.last().pose(), 0.0f,
+                            -BAR_WIDTH / 2, -SHIELD_BAR_HEIGHT / 2, BAR_WIDTH / 2, SHIELD_BAR_HEIGHT / 2,
+                            0.0f, 0.0f, 1.0f, 1.0f,
+                            0.22f, 0.26f, 0.3f, 1.0f);
 
                     // 填充：按剩余护盾比例从右往左收
                     // sr/sg/sb 在 if 里赋值过，不是 effectively final，lambda 捕获不了，先拷一份
                     float shieldWidth = BAR_WIDTH * shieldRatio;
-                    float fillR = sr;
-                    float fillG = sg;
-                    float fillB = sb;
-                    collector.submitCustomGeometry(poseStack, shieldType, (pose, buffer) -> {
-                        Matrix4f matrix = pose.pose();
-                        drawTexturedQuad(buffer, matrix, SHIELD_FILL_Z_OFFSET,
-                                BAR_WIDTH / 2 - shieldWidth, -SHIELD_BAR_HEIGHT / 2,
-                                BAR_WIDTH / 2, SHIELD_BAR_HEIGHT / 2,
-                                shieldRatio, 0.0f, 0.0f, 1.0f,
-                                fillR, fillG, fillB, 1.0f);
-                    });
+                    drawTexturedQuad(collector.getBuffer(shieldType), poseStack.last().pose(), SHIELD_FILL_Z_OFFSET,
+                            BAR_WIDTH / 2 - shieldWidth, -SHIELD_BAR_HEIGHT / 2,
+                            BAR_WIDTH / 2, SHIELD_BAR_HEIGHT / 2,
+                            shieldRatio, 0.0f, 0.0f, 1.0f,
+                            sr, sg, sb, 1.0f);
                     poseStack.popPose();
                 }
 
@@ -340,29 +340,20 @@ public class MobHealthBarHud {
                     RenderType poiseType = barFillType();
 
                     // 空槽
-                    collector.submitCustomGeometry(poseStack, poiseType, (pose, buffer) -> {
-                        Matrix4f matrix = pose.pose();
-                        drawTexturedQuad(buffer, matrix, 0.0f,
-                                -BAR_WIDTH / 2, -POISE_BAR_HEIGHT / 2, BAR_WIDTH / 2, POISE_BAR_HEIGHT / 2,
-                                0.0f, 0.0f, 1.0f, 1.0f,
-                                COLOR_POISE_SLOT[0], COLOR_POISE_SLOT[1], COLOR_POISE_SLOT[2], 1.0f);
-                    });
+                    drawTexturedQuad(collector.getBuffer(poiseType), poseStack.last().pose(), 0.0f,
+                            -BAR_WIDTH / 2, -POISE_BAR_HEIGHT / 2, BAR_WIDTH / 2, POISE_BAR_HEIGHT / 2,
+                            0.0f, 0.0f, 1.0f, 1.0f,
+                            COLOR_POISE_SLOT[0], COLOR_POISE_SLOT[1], COLOR_POISE_SLOT[2], 1.0f);
 
                     // 填充：破韧时按闪烁相位整条亮/灭，普通时按比例
                     if (poiseRatio > 0.0001f && (!poiseBroken || blinkVisible)) {
                         float[] poiseColor = poiseBroken ? COLOR_POISE_BROKEN : COLOR_POISE;
                         float poiseWidth = BAR_WIDTH * poiseRatio;
-                        float fillR = poiseColor[0];
-                        float fillG = poiseColor[1];
-                        float fillB = poiseColor[2];
-                        collector.submitCustomGeometry(poseStack, poiseType, (pose, buffer) -> {
-                            Matrix4f matrix = pose.pose();
-                            drawTexturedQuad(buffer, matrix, POISE_FILL_Z_OFFSET,
-                                    BAR_WIDTH / 2 - poiseWidth, -POISE_BAR_HEIGHT / 2,
-                                    BAR_WIDTH / 2, POISE_BAR_HEIGHT / 2,
-                                    poiseRatio, 0.0f, 0.0f, 1.0f,
-                                    fillR, fillG, fillB, 1.0f);
-                        });
+                        drawTexturedQuad(collector.getBuffer(poiseType), poseStack.last().pose(), POISE_FILL_Z_OFFSET,
+                                BAR_WIDTH / 2 - poiseWidth, -POISE_BAR_HEIGHT / 2,
+                                BAR_WIDTH / 2, POISE_BAR_HEIGHT / 2,
+                                poiseRatio, 0.0f, 0.0f, 1.0f,
+                                poiseColor[0], poiseColor[1], poiseColor[2], 1.0f);
                     }
                     poseStack.popPose();
                 }
@@ -385,6 +376,8 @@ public class MobHealthBarHud {
 
             poseStack.popPose();
         }
+
+        collector.endBatch();
     }
 
     private static boolean hasActiveElements(StatusContainer container, LivingEntity living) {
@@ -430,7 +423,7 @@ public class MobHealthBarHud {
      * - 类元素映射到主元素（FROZEN → CYRO），按主元素去重
      * - 剩余衰减时间 ≤ 2s 的元素闪烁
      */
-    private static void renderElementalIcons(PoseStack poseStack, SubmitNodeCollector collector,
+    private static void renderElementalIcons(PoseStack poseStack, MultiBufferSource collector,
                                              StatusContainer container, float yOffset,
                                              boolean blinkVisible) {
         if (container == null) return;
@@ -487,20 +480,16 @@ public class MobHealthBarHud {
             float yTop = yOffset + ICON_SIZE / 2.0f;
             float yBottom = yOffset - ICON_SIZE / 2.0f;
 
-            // 图标 RenderType 按元素查表：早先这里是「拼字符串 → new Identifier → 查 RenderType」，
-            // 每个图标、每个实体、每一帧都来一遍
+            // 图标 RenderType 按元素查表，省掉每个图标、每个实体、每一帧重复拼路径并查缓存
             RenderType type = HudRenderCaches.elementIcon(element);
             if (type == null) {
                 i++;
                 continue;
             }
-            collector.submitCustomGeometry(poseStack, type, (pose, buffer) -> {
-                Matrix4f matrix = pose.pose();
-                drawTexturedQuad(buffer, matrix, 0.0f,
-                        x1, yBottom, x2, yTop,
-                        1.0f, 0.0f, 0.0f, 1.0f,
-                        1.0f, 1.0f, 1.0f, 1.0f);
-            });
+            drawTexturedQuad(collector.getBuffer(type), poseStack.last().pose(), 0.0f,
+                    x1, yBottom, x2, yTop,
+                    1.0f, 0.0f, 0.0f, 1.0f,
+                    1.0f, 1.0f, 1.0f, 1.0f);
             i++;
         }
     }
@@ -516,9 +505,9 @@ public class MobHealthBarHud {
         return null;
     }
 
-    private static void submitLevelText(PoseStack poseStack, SubmitNodeCollector collector,
+    private static void submitLevelText(PoseStack poseStack, MultiBufferSource collector,
                                         Minecraft mc, int level, float yOffset, float scale) {
-        // 文案与宽度都按等级缓存：「Lv.N」的拼接与 Font#width 的排版早先是每实体每帧重跑
+        // 文案与宽度都按等级缓存，省掉每实体每帧重跑「Lv.N」的拼接与 Font#width 的排版
         String text = HudRenderCaches.levelLabel(level);
         int width = HudRenderCaches.levelLabelWidth(mc.font, level);
 
@@ -527,17 +516,17 @@ public class MobHealthBarHud {
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
         poseStack.scale(scale, -scale, scale);
 
-        collector.submitText(
-                poseStack,
+        mc.font.drawInBatch(
+                Component.literal(text).getVisualOrderText(),
                 -width / 2.0f,
                 0.0f,
-                Component.literal(text).getVisualOrderText(),
-                true,
-                Font.DisplayMode.SEE_THROUGH,
-                0xF000F0,
                 0xFFFFFFFF,
+                true,
+                poseStack.last().pose(),
+                collector,
+                Font.DisplayMode.SEE_THROUGH,
                 0,
-                0
+                0xF000F0
         );
 
         poseStack.popPose();

@@ -2,9 +2,8 @@ package com.linweiyun.genshin.client.performance;
 
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -19,10 +18,10 @@ import java.util.Map;
  *
  * <ol>
  *   <li><b>元素图标贴图</b>：不缓存就要
- *       {@code Identifier.fromNamespaceAndPath("minegenshin", "icon/elemental/" + id + ".png")}
- *       —— 每个图标、每个实体、每一帧都要拼一次字符串再 new 一个 {@link Identifier}。
+ *       {@code ResourceLocation.fromNamespaceAndPath("minegenshin", "icon/elemental/" + id + ".png")}
+ *       —— 每个图标、每个实体、每一帧都要拼一次字符串再 new 一个 {@link ResourceLocation}。
  *       现在按元素实例查表，稳态下零分配；</li>
- *   <li><b>血条用的 {@link RenderType}</b>：{@code RenderTypes.entityTranslucent(texture)}
+ *   <li><b>血条用的 {@link RenderType}</b>：{@code RenderType.entityTranslucent(texture)}
  *       内部是 {@code Util.memoize(BiFunction)}，<b>每次调用都要新建一个 {@code Pair} 当缓存键</b>
  *       （见 {@code Util.memoize/2}）。一条血条要取 4~6 次，等于每实体每帧白造 4~6 个对象。
  *       这里把它提到「一类贴图只取一次」；</li>
@@ -50,7 +49,7 @@ public final class HudRenderCaches {
     /**
      * 取某个元素的图标 {@link RenderType}。
      *
-     * <p>第一次见到这个元素才拼字符串、建 Identifier 并查一次 RenderType 缓存；
+     * <p>第一次见到这个元素才拼字符串、建 ResourceLocation 并查一次 RenderType 缓存；
      * 之后每帧每实体都只是一次 IdentityHashMap 查询。</p>
      */
     public static RenderType elementIcon(GenshinElement element) {
@@ -61,7 +60,7 @@ public final class HudRenderCaches {
         if (cached != null) {
             return cached;
         }
-        RenderType built = RenderTypes.entityTranslucent(Identifier.fromNamespaceAndPath(
+        RenderType built = RenderType.entityTranslucent(ResourceLocation.fromNamespaceAndPath(
                 "minegenshin", "icon/elemental/" + element.getId() + ".png"));
         ELEMENT_ICON_TYPES.put(element, built);
         return built;

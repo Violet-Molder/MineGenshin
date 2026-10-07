@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.character.appearance;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.core.character.util.appearance.EarBoneRules;
 import com.linweiyun.genshin.core.character.util.appearance.LegBoneRules;
 import java.util.ArrayList;
@@ -15,20 +15,20 @@ import org.jetbrains.annotations.Nullable;
 public final class CharacterAppearanceBones {
    private static final int MASK_BITS = 20;
    private static final int MASK_MASK = 1048575;
-   private static final Map<Integer, BoneUpdater<GeoRenderState>> CACHE = new ConcurrentHashMap<>();
+   private static final Map<Integer, BoneUpdater<BoneRenderState>> CACHE = new ConcurrentHashMap<>();
 
    private CharacterAppearanceBones() {
    }
 
-   public static BoneUpdater<GeoRenderState> forMask(int mask) {
+   public static BoneUpdater<BoneRenderState> forMask(int mask) {
       int key = mask & 1048575;
-      BoneUpdater<GeoRenderState> cached = CACHE.get(key);
+      BoneUpdater<BoneRenderState> cached = CACHE.get(key);
       if (cached != null) {
          return cached;
       }
 
-      BoneUpdater<GeoRenderState> created = updaterOf(hiddenBones(key));
-      BoneUpdater<GeoRenderState> previous = CACHE.putIfAbsent(key, created);
+      BoneUpdater<BoneRenderState> created = updaterOf(hiddenBones(key));
+      BoneUpdater<BoneRenderState> previous = CACHE.putIfAbsent(key, created);
       return previous != null ? previous : created;
    }
 
@@ -38,7 +38,7 @@ public final class CharacterAppearanceBones {
       return hidden;
    }
 
-   private static BoneUpdater<GeoRenderState> updaterOf(List<String> hidden) {
+   private static BoneUpdater<BoneRenderState> updaterOf(List<String> hidden) {
       return (renderPassInfo, snapshots) -> {
          for (String bone : hidden) {
             snapshots.ifPresent(bone, snapshot -> {
@@ -50,7 +50,7 @@ public final class CharacterAppearanceBones {
    }
 
    @Nullable
-   public static BoneUpdater<GeoRenderState> forMaskOrNull(@Nullable Integer mask) {
+   public static BoneUpdater<BoneRenderState> forMaskOrNull(@Nullable Integer mask) {
       return mask == null ? null : forMask(mask);
    }
 }

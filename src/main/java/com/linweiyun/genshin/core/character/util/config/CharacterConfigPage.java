@@ -2,14 +2,10 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.core.character.util.config;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.keybindings.KeyMappingRegistry;
-import com.linweiyun.genshin.client.render.character.CharacterRenderDispatcher;
 import com.linweiyun.genshin.client.render.character.GenshinPreviewPlayer;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterAppearanceBones;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterAppearanceOptionBones;
-import com.linweiyun.genshin.client.render.character.appearance.CharacterFaceBones;
 import com.linweiyun.genshin.content.attribute.AttributeType;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
@@ -20,7 +16,6 @@ import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
-import com.lowdragmc.lowdraglib2.client.scene.WorldSceneRenderer;
 import com.lowdragmc.lowdraglib2.gui.ui.UIElement;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Label;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Scene;
@@ -29,8 +24,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.Selector;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.TextField;
 import com.lowdragmc.lowdraglib2.gui.ui.elements.Toggle;
 import com.lowdragmc.lowdraglib2.gui.ui.utils.UIElementProvider;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,14 +31,14 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.Util;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.Util;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public final class CharacterConfigPage {
-   public static final Identifier STYLESHEET = Identifier.parse("minegenshin:lss/character_config.lss");
+   public static final ResourceLocation STYLESHEET = ResourceLocation.parse("minegenshin:lss/character_config.lss");
    public static final float PREVIEW_CENTER_Y = 1.3F;
    public static final float PREVIEW_ZOOM = 2.8F;
    public static final float PREVIEW_YAW = 115.0F;
@@ -56,7 +49,7 @@ public final class CharacterConfigPage {
    }
 
    public static UIElement buildPreview(
-      Player player, PGCharacter character, int[] previewMask, GenshinPreviewPlayer previewAnimatable, @Nullable BoneUpdater<GeoRenderState> extraBones
+      Player player, PGCharacter character, int[] previewMask, GenshinPreviewPlayer previewAnimatable, @Nullable BoneUpdater<BoneRenderState> extraBones
    ) {
       String characterId = character.getTextureId();
       UIElement preview = new UIElement().setId("cc-preview");
@@ -75,41 +68,8 @@ public final class CharacterConfigPage {
          scene.setShowHoverBlockTips(false);
          scene.setRenderSelect(false);
          scene.setRenderFacing(false);
-         WorldSceneRenderer renderer = (WorldSceneRenderer)scene.getRenderer();
-         if (renderer == null) {
-            return preview;
-         }
-
-         renderer.setAfterBuiltinSubmit(
-            ctx -> {
-               CharacterRenderDispatcher.RenderTarget target = CharacterRenderDispatcher.targetFor(player, characterId, data);
-               if (target != null) {
-                  previewAnimatable.setPlayerEntity(player);
-                  PoseStack poseStack = ctx.poseStack();
-                  poseStack.pushPose();
-
-                  try {
-                     poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-                     BoneUpdater<GeoRenderState> bones = CharacterRenderDispatcher.combine(
-                        CharacterAppearanceBones.forMask(previewMask[0]), CharacterAppearanceOptionBones.updaterForPreview(previewMask[0], character)
-                     );
-                     bones = CharacterRenderDispatcher.combine(bones, CharacterFaceBones.updaterForState(previewAnimatable.previewAnimationName()));
-                     if (extraBones != null) {
-                        bones = CharacterRenderDispatcher.combine(bones, extraBones);
-                     }
-
-                     target.renderer()
-                        .performRenderPass(previewAnimatable, player, poseStack, ctx.submitStorage(), ctx.cameraState(), 15728880, ctx.partialTicks(), bones);
-                  } finally {
-                     poseStack.popPose();
-                  }
-               }
-            }
-         );
-         return preview;
-      } else {
-         return preview;
       }
+      return preview;
    }
 
    private static void finishPreview(UIElement preview, @Nullable CharacterRenderData data) {

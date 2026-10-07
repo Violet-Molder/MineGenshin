@@ -3,7 +3,7 @@ package com.linweiyun.genshin.event.game;
 import com.linweiyun.elementlib.api.event.ElibIdentifiedEvent;
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.Event;
@@ -11,7 +11,7 @@ import net.neoforged.bus.api.Event;
 /** 释放元素爆发事件 —— 口径同 {@link ElementalSkillCastEvent}。 */
 public final class ElementalBurstCastEvent extends Event implements ElibIdentifiedEvent {
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "elemental_burst_cast");
+    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Minegenshin.MOD_ID, "elemental_burst_cast");
 
     private final ServerLevel level;
     private final long gameTime;
@@ -27,7 +27,7 @@ public final class ElementalBurstCastEvent extends Event implements ElibIdentifi
     }
 
     @Override
-    public Identifier eventId() {
+    public ResourceLocation eventId() {
         return ID;
     }
 

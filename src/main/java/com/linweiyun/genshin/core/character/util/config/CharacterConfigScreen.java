@@ -2,8 +2,8 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.core.character.util.config;
 
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.render.character.GenshinPreviewPlayer;
 import com.linweiyun.genshin.client.render.gui.component.CustomToggle;
 import com.linweiyun.genshin.config.character.TalentConfigSource;
@@ -22,7 +22,6 @@ import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +133,7 @@ public abstract class CharacterConfigScreen implements ICharacterConfigUI {
    }
 
    @Nullable
-   protected BoneUpdater<GeoRenderState> previewBones() {
+   protected BoneUpdater<BoneRenderState> previewBones() {
       return null;
    }
 
@@ -234,7 +233,7 @@ public abstract class CharacterConfigScreen implements ICharacterConfigUI {
    }
 
    protected static boolean hasCheatPermission(Player player) {
-      return player != null && player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
+      return player != null && player.hasPermissions(2);
    }
 
    protected GenshinPreviewPlayer previewAnimatable() {

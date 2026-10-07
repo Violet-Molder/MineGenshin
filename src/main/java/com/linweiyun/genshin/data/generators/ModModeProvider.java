@@ -7,7 +7,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import org.jspecify.annotations.Nullable;
 
@@ -90,9 +90,9 @@ public class ModModeProvider implements DataProvider {
     public CompletableFuture<?> run(CachedOutput cache) {
         List<CompletableFuture<?>> writes = new ArrayList<>();
         Set<Item> handled = new HashSet<>();
-        List<Identifier> missing = new ArrayList<>();
+        List<ResourceLocation> missing = new ArrayList<>();
 
-        for (Identifier id : BuiltInRegistries.ITEM.keySet()) {
+        for (ResourceLocation id : BuiltInRegistries.ITEM.keySet()) {
             if (!modId.equals(id.getNamespace())) {
                 continue;
             }
@@ -114,7 +114,7 @@ public class ModModeProvider implements DataProvider {
         }
 
         // 等价于原版 ModelProvider 的 finalizeAndValidate：本命名空间的物品一个都不能漏
-        for (Identifier id : BuiltInRegistries.ITEM.keySet()) {
+        for (ResourceLocation id : BuiltInRegistries.ITEM.keySet()) {
             if (!modId.equals(id.getNamespace())) {
                 continue;
             }
@@ -138,8 +138,8 @@ public class ModModeProvider implements DataProvider {
     // ==================== 输出 ====================
 
     /** 按 id 取物品；取不到返回 null。 */
-    private static Item itemOf(Identifier id) {
-        return BuiltInRegistries.ITEM.get(id).map(reference -> reference.value()).orElse(null);
+    private static Item itemOf(ResourceLocation id) {
+        return BuiltInRegistries.ITEM.get(id);
     }
 
     private static CompletableFuture<?> write(CachedOutput cache, @Nullable Path path, String json) {
@@ -157,7 +157,7 @@ public class ModModeProvider implements DataProvider {
     }
 
     /** 平面物品的定义：指向同目录的 model.json（经 AssetRedirects 变成 models/item/&lt;id&gt;/model.json）。 */
-    private static String flatDefinition(Identifier id) {
+    private static String flatDefinition(ResourceLocation id) {
         return """
                 {
                   "model": {
@@ -169,7 +169,7 @@ public class ModModeProvider implements DataProvider {
     }
 
     /** 平面物品的模型：layer0 指向同目录的 texture.png。 */
-    private static String flatModel(Identifier id) {
+    private static String flatModel(ResourceLocation id) {
         return """
                 {
                   "parent": "minecraft:item/generated",

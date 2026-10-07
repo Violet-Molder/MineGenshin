@@ -1,14 +1,14 @@
 package com.linweiyun.genshin.content.entities.teyvat.monster.slime;
 
-import com.geckolib.animatable.GeoAnimatable;
-import com.geckolib.animatable.GeoEntity;
-import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animatable.manager.AnimatableManager;
-import com.geckolib.animation.AnimationController;
-import com.geckolib.animation.RawAnimation;
-import com.geckolib.animation.object.PlayState;
-import com.geckolib.animation.state.AnimationTest;
-import com.geckolib.util.GeckoLibUtil;
+import software.bernie.geckolib.animatable.GeoAnimatable;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.AnimationState;
+import software.bernie.geckolib.util.GeckoLibUtil;
 import com.linweiyun.genshin.content.entities.teyvat.monster.TeyvatMonster;
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.element.ModElements;
@@ -74,10 +74,10 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
     //注册Geckolib动画控制器
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>("jump", 0, this::jumpingState));
+        controllers.add(new AnimationController<>(this, "jump", 0, this::jumpingState));
     }
 
-    private PlayState jumpingState(AnimationTest<GeoAnimatable> geoAnimatableAnimationTest) {
+    private PlayState jumpingState(AnimationState<TeyvatSlime> geoAnimatableAnimationTest) {
         if (!this.onGround()) {       // 不在地面（跳跃/下落中）
             return geoAnimatableAnimationTest.setAndContinue(JUMPING_START);  // 播放跳跃动画
         }
@@ -88,8 +88,8 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
         if (id != null && !id.isEmpty()) {
             String[] parts = id.split(":", 2);
             if (parts.length == 2) {
-                net.minecraft.resources.Identifier identifier = net.minecraft.resources.Identifier.fromNamespaceAndPath(parts[0], parts[1]);
-                GenshinElement resolved = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.get(identifier).map(r -> r.value()).orElse(null);
+                net.minecraft.resources.ResourceLocation identifier = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(parts[0], parts[1]);
+                GenshinElement resolved = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.get(identifier);
                 if (resolved != null) return resolved;
             }
         }
@@ -97,7 +97,7 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
     }
     // 设置元素类型
     public void setElement(GenshinElement element) {
-        net.minecraft.resources.Identifier key = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.getKey(element);
+        net.minecraft.resources.ResourceLocation key = com.linweiyun.elementlib.core.system.registry.ModRegistries.ELEMENT_REGISTRY.getKey(element);
         this.entityData.set(DATA_ELEMENT, key != null ? key.toString() : "minegenshin:fysikos");
     }
 
@@ -106,7 +106,7 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
      *
      * <p><b>只免疫伤害，不拒收附着</b>：打上去照样挂元素、照样能反应，只是这一下不掉血。
      *
-     * <p>附着走默认实现（全收）：{@code onAttachElement} 与 {@code hurtServer} 都不拦附着。
+     * <p>附着走默认实现（全收）：{@code onAttachElement} 与 {@code hurt} 都不拦附着。
      */
     @Override
     public boolean isImmuneToElementDamage(GenshinElement element) {
@@ -181,7 +181,7 @@ public class TeyvatSlime extends TeyvatMonster implements GeoEntity {
                     .build();
             ModDamageSource damageSource = ModDamageSource.from(spec, this);
             if (this.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, damageSource, damage);
+                target.hurt(damageSource, damage);
             }
         }
     }

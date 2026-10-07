@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.content.entities.teyvat.skill.vesna;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.content.entities.ModEntities;
 import com.linweiyun.genshin.content.skill_node.TargetSeeker;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
@@ -24,8 +26,6 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.HitResult;
 import com.linweiyun.genshin.core.system.combat.CombatAim;
 import net.minecraft.world.phys.Vec3;
@@ -118,7 +118,7 @@ public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity 
 
     public static VesnaAttackProjectile create(Level level, Vesna ownerCharacter, Vec3 pos, int skillLevel) {
         VesnaAttackProjectile p = ModEntities.VESNA_ATTACK_PROJECTILE.get()
-                .create(level, EntitySpawnReason.EVENT);
+                .create(level);
         if (p == null) return null;
 
         Player ownerPlayer = ownerCharacter.getData().getOwnerPlayer();
@@ -335,7 +335,7 @@ public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity 
     // ==================== 命中 ====================
 
     @Override
-    public boolean hurtServer(ServerLevel serverLevel, DamageSource damageSource, float v) {
+    public boolean hurt(DamageSource damageSource, float v) {
         return false;
     }
 
@@ -357,7 +357,7 @@ public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity 
                 .attackerCharacter(character)
                 .build();
         ModDamageSource source = ModDamageSource.from(spec, ownerPlayer);
-        target.hurtServer(serverLevel, source, 0f);
+        target.hurt(source, 0f);
 
         discard();
     }
@@ -365,13 +365,13 @@ public class VesnaAttackProjectile extends Entity implements ISyncManagedEntity 
     // ==================== 持久化 ====================
 
     @Override
-    protected void readAdditionalSaveData(ValueInput valueInput) {
-        loadManagedPersistentData(valueInput);
+    protected void readAdditionalSaveData(CompoundTag valueInput) {
+        loadManagedPersistentData(registryAccess(), valueInput);
     }
 
     @Override
-    protected void addAdditionalSaveData(ValueOutput valueOutput) {
-        saveManagedPersistentData(valueOutput, false);
+    protected void addAdditionalSaveData(CompoundTag valueOutput) {
+        saveManagedPersistentData(registryAccess(), valueOutput, false);
     }
 
     private Player getOwnerPlayer() {

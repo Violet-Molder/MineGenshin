@@ -20,10 +20,11 @@
 // 服务器端不会走到 forCharacter()，也就不会加载任何子类，天然安全。
 package com.linweiyun.genshin.client.render.character.appearance;
 
-import com.geckolib.cache.model.GeoBone;
-import com.geckolib.renderer.base.GeoRenderState;
-import com.geckolib.renderer.base.RenderPassInfo.BoneUpdater;
+import software.bernie.geckolib.cache.object.GeoBone;
+import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
+import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.world.entity.player.Player;
@@ -132,15 +133,15 @@ public abstract class CharacterBoneVisibility {
     * @param player    玩家（用于读动画状态等）
     * @param character 当前出战角色，可能为 null
     */
-   public BoneUpdater<GeoRenderState> weaponUpdater(Player player, @Nullable PGCharacter character) {
+   public BoneUpdater<BoneRenderState> weaponUpdater(Player player, @Nullable PGCharacter character) {
       return (renderPassInfo, snapshots) -> {
-         Map<String, GeoBone> bones = renderPassInfo.model().boneLookup().get();
-         if (bones == null || bones.isEmpty()) {
+         List<GeoBone> bones = snapshots.bones();
+         if (bones.isEmpty()) {
             return;
          }
-         for (GeoBone bone : bones.values()) {
+         for (GeoBone bone : bones) {
             if (shouldHide(bone)) {
-               snapshots.ifPresent(bone.name(), snapshot -> {
+               snapshots.ifPresent(bone.getName(), snapshot -> {
                   snapshot.setScale(0.0F, 0.0F, 0.0F);
                   snapshot.skipRender(true);
                   snapshot.skipChildrenRender(true);
@@ -160,7 +161,7 @@ public abstract class CharacterBoneVisibility {
     * @param bone 待判断的骨骼
     */
    protected boolean shouldHide(GeoBone bone) {
-      if (WEAPON_BONE_NAME.equals(bone.name())) {
+      if (WEAPON_BONE_NAME.equals(bone.getName())) {
          return true;
       }
       // allbody 的祖先容器（如顶层 Root → allbody → …）必须保留：
@@ -186,10 +187,10 @@ public abstract class CharacterBoneVisibility {
    private static boolean isInsideAllbody(GeoBone bone) {
       GeoBone cursor = bone;
       while (cursor != null) {
-         if (ALLBODY_BONE_NAME.equals(cursor.name())) {
+         if (ALLBODY_BONE_NAME.equals(cursor.getName())) {
             return true;
          }
-         cursor = cursor.parent();
+         cursor = cursor.getParent();
       }
       return false;
    }
@@ -201,8 +202,8 @@ public abstract class CharacterBoneVisibility {
     * 之外，但携带本体子树，一旦被隐藏会连带整个模型消失，因此必须保留。
     */
    private static boolean containsAllbodyDescendant(GeoBone bone) {
-      for (GeoBone child : bone.children()) {
-         if (ALLBODY_BONE_NAME.equals(child.name()) || containsAllbodyDescendant(child)) {
+      for (GeoBone child : bone.getChildBones()) {
+         if (ALLBODY_BONE_NAME.equals(child.getName()) || containsAllbodyDescendant(child)) {
             return true;
          }
       }

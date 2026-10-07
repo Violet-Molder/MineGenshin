@@ -1,11 +1,8 @@
-// restored by decompilation (2026-09-27): this file had been rolled back to an older snapshot;
-// the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.geo;
 
-import com.geckolib.cache.animation.Animation;
-import com.geckolib.cache.animation.BakedAnimations;
-import com.geckolib.cache.model.BakedGeoModel;
-import com.geckolib.loading.math.MathParser;
+import software.bernie.geckolib.animation.Animation;
+import software.bernie.geckolib.loading.object.BakedAnimations;
+import software.bernie.geckolib.cache.object.BakedGeoModel;
 import com.google.gson.JsonObject;
 import com.linweiyun.genshin.asset.AssetCategory;
 import com.linweiyun.genshin.asset.ModAssetPaths;
@@ -23,10 +20,12 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.server.packs.resources.PreparableReloadListener.PreparationBarrier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
@@ -36,14 +35,14 @@ public final class AssetGeoCache implements PreparableReloadListener {
    private static final String[] ROOTS = new String[]{AssetCategory.ITEM.folder(), AssetCategory.BLOCK.folder(), AssetCategory.ENTITY.folder()};
    private static final int MAX_EMPTY_SCANS = 5;
    private static final String[] VANILLA_ENTRY_FILES = new String[]{"blockstate.json", "definition.json", "model.json"};
-   private static volatile Map<Identifier, BakedGeoModel> models = Map.of();
-   private static volatile Map<Identifier, BakedAnimations> animations = Map.of();
+   private static volatile Map<ResourceLocation, BakedGeoModel> models = Map.of();
+   private static volatile Map<ResourceLocation, BakedAnimations> animations = Map.of();
    private static volatile Map<String, AssetGeoCache.DirFiles> index = Map.of();
    private static volatile boolean reloaded = false;
    private static int emptyScans = 0;
 
    @Nullable
-   public static BakedGeoModel model(@Nullable Identifier location) {
+   public static BakedGeoModel model(@Nullable ResourceLocation location) {
       if (location == null) {
          return null;
       }
@@ -53,7 +52,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
    }
 
    @Nullable
-   public static Animation animation(@Nullable Identifier animationKey, @Nullable String name) {
+   public static Animation animation(@Nullable ResourceLocation animationKey, @Nullable String name) {
       if (animationKey != null && name != null) {
          ensureLoaded();
          BakedAnimations baked = animations.get(animationKey);
@@ -78,7 +77,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
       }
    }
 
-   public static Set<String> animationNames(@Nullable Identifier animationKey) {
+   public static Set<String> animationNames(@Nullable ResourceLocation animationKey) {
       if (animationKey == null) {
          return Set.of();
       }
@@ -150,8 +149,9 @@ public final class AssetGeoCache implements PreparableReloadListener {
       }
    }
 
-   public CompletableFuture<Void> reload(SharedState sharedState, Executor prepExecutor, PreparationBarrier barrier, Executor applyExecutor) {
-      ResourceManager resourceManager = sharedState.resourceManager();
+   public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager,
+                                         ProfilerFiller preparationsProfiler, ProfilerFiller reloadProfiler,
+                                         Executor prepExecutor, Executor applyExecutor) {
       return CompletableFuture.<AssetGeoCache.Scanned>supplyAsync(() -> this.scan(resourceManager), prepExecutor)
          .<AssetGeoCache.Scanned>thenCompose(barrier::wait)
          .thenAcceptAsync(this::apply, applyExecutor)
@@ -171,14 +171,13 @@ public final class AssetGeoCache implements PreparableReloadListener {
    }
 
    private AssetGeoCache.Scanned scanUnsafe(ResourceManager resourceManager) {
-      Map<Identifier, BakedGeoModel> foundModels = new HashMap<>(models);
-      Map<Identifier, BakedAnimations> foundAnimations = new HashMap<>(animations);
+      Map<ResourceLocation, BakedGeoModel> foundModels = new HashMap<>(models);
+      Map<ResourceLocation, BakedAnimations> foundAnimations = new HashMap<>(animations);
       Map<String, AssetGeoCache.DirFiles> foundIndex = new HashMap<>(index);
-      MathParser mathParser = MathParser.createWithDeduplication();
-      Map<Identifier, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
+      Map<ResourceLocation, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
 
       for (String root : ROOTS) {
-         Map<Identifier, Resource> resources;
+         Map<ResourceLocation, Resource> resources;
          try {
             resources = resourceManager.listResources(root, id -> id.getNamespace().equals("minegenshin"));
          } catch (Exception e) {
@@ -186,9 +185,9 @@ public final class AssetGeoCache implements PreparableReloadListener {
             continue;
          }
 
-         Set<Identifier> candidates = new LinkedHashSet<>(resources.keySet());
+         Set<ResourceLocation> candidates = new LinkedHashSet<>(resources.keySet());
 
-         for (Identifier packed : packedEntries.keySet()) {
+         for (ResourceLocation packed : packedEntries.keySet()) {
             if (packed.getPath().startsWith(root + "/") && !resources.containsKey(packed)) {
                candidates.add(packed);
             }
@@ -198,7 +197,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
          int fromDisk = 0;
          int fromPack = 0;
 
-         for (Identifier raw : candidates) {
+         for (ResourceLocation raw : candidates) {
             String path = raw.getPath();
             if (path.startsWith(root + "/") && !isVanillaEntryFile(raw)) {
                Resource onDisk = resources.get(raw);
@@ -226,7 +225,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
                         try {
                            if (kind == AssetGeoCache.ContentKind.ANIMATION) {
                               JsonObject json = packed == null ? LOADER.deserializeGeckoLibAnimationFile(raw, onDisk) : LOADER.readPacked(raw, packed);
-                              BakedAnimations baked = LOADER.bakeGeckoLibAnimationsFile(raw, json, mathParser);
+                              BakedAnimations baked = GeoAssetBakery.animations(json);
                               if (baked != null) {
                                  foundAnimations.put(ModAssetPaths.animationKeyOf(raw), baked);
                                  foundIndex.merge(dir, new AssetGeoCache.DirFiles(null, raw, null), AssetGeoCache::preferAnimation);
@@ -235,7 +234,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
                               }
                            } else {
                               JsonObject json = packed == null ? LOADER.deserializeGeckoLibModelFile(raw, onDisk) : LOADER.readPacked(raw, packed);
-                              BakedGeoModel baked = LOADER.bakeGeckoLibModelFile(raw, json);
+                              BakedGeoModel baked = GeoAssetBakery.model(raw, json);
                               if (baked != null) {
                                  foundModels.put(ModAssetPaths.modelKeyOf(raw), baked);
                                  foundIndex.merge(dir, new AssetGeoCache.DirFiles(raw, null, null), AssetGeoCache::preferModel);
@@ -271,7 +270,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
       return Map.copyOf(clean);
    }
 
-   private static boolean isVanillaEntryFile(Identifier raw) {
+   private static boolean isVanillaEntryFile(ResourceLocation raw) {
       String path = raw.getPath();
       int slash = path.lastIndexOf(47);
       String file = slash < 0 ? path : path.substring(slash + 1);
@@ -285,7 +284,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
       return false;
    }
 
-   private static AssetGeoCache.ContentKind classify(@Nullable Resource resource, @Nullable byte[] packed, Identifier id) {
+   private static AssetGeoCache.ContentKind classify(@Nullable Resource resource, @Nullable byte[] packed, ResourceLocation id) {
       try {
          JsonObject json = GeoJsonReader.read(resource, packed, id);
          if (json.has("animations")) {
@@ -345,13 +344,13 @@ public final class AssetGeoCache implements PreparableReloadListener {
          : existing;
    }
 
-   private static boolean matchesDirName(@Nullable Identifier file) {
+   private static boolean matchesDirName(@Nullable ResourceLocation file) {
       String dir = ModAssetPaths.dirOf(file);
       String base = ModAssetPaths.baseNameOf(file);
       return dir != null && base != null && base.equals(ModAssetPaths.dirNameOf(dir));
    }
 
-   private static boolean isPlain(@Nullable Identifier file) {
+   private static boolean isPlain(@Nullable ResourceLocation file) {
       return ModAssetPaths.isLocalFile(file);
    }
 
@@ -368,7 +367,7 @@ public final class AssetGeoCache implements PreparableReloadListener {
       }
    }
 
-   private static String describe(@Nullable Identifier location) {
+   private static String describe(@Nullable ResourceLocation location) {
       return location == null ? "MISSING" : location.toString();
    }
 
@@ -378,10 +377,10 @@ public final class AssetGeoCache implements PreparableReloadListener {
       UNKNOWN;
    }
 
-   public record DirFiles(@Nullable Identifier model, @Nullable Identifier animation, @Nullable Identifier texture) {
+   public record DirFiles(@Nullable ResourceLocation model, @Nullable ResourceLocation animation, @Nullable ResourceLocation texture) {
       public static final AssetGeoCache.DirFiles EMPTY = new AssetGeoCache.DirFiles(null, null, null);
    }
 
-   private record Scanned(Map<Identifier, BakedGeoModel> models, Map<Identifier, BakedAnimations> animations, Map<String, AssetGeoCache.DirFiles> index) {
+   private record Scanned(Map<ResourceLocation, BakedGeoModel> models, Map<ResourceLocation, BakedAnimations> animations, Map<String, AssetGeoCache.DirFiles> index) {
    }
 }

@@ -92,7 +92,7 @@ public final class PlungeAttack {
             GenshinFlight.stopFlying(player);
             // 客户端这边 core 那份 stopFlying 只改本地旗标，同步给服务端要自己来
             player.onUpdateAbilities();
-            player.fallDistance = 0.0;
+            player.fallDistance = 0.0f;
         }
         // 万一还挂着原版滑翔姿态（进原神模式之前就在滑），也一并停掉
         if (player.isFallFlying()) {

@@ -66,11 +66,11 @@ public final class RaidenShogunNormalAttack {
                     .build();
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {
-                target.hurtServer(serverLevel, source, 0f);
+                target.hurt(source, 0f);
 
                 // 第 4 段双倍结算
                 if (stage == 4) {
-                    target.hurtServer(serverLevel, source, 0f);
+                    target.hurt(source, 0f);
                 }
             }
         }

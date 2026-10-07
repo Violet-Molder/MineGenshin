@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.content.entities.area;
 
+import net.minecraft.nbt.CompoundTag;
+
 import com.linweiyun.genshin.config.reaction.ReactionConfig;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
@@ -296,7 +298,7 @@ public class StellarVortexEntity extends AreaEntity {
                     .withAttackerCharacter(iceSource);
             spec = spec.withStellarBaseBonusMult(com.linweiyun.genshin.core.system.reaction.StellarGlimmer.swirlBaseBonusMult(level));
             ModDamageSource source = ModDamageSource.from(spec, iceSourcePlayer);
-            target.hurtServer(level, source, 0f);
+            target.hurt(source, 0f);
 
             StatusContainer container = ElementalAttachments.container(target);
             ElementalAttachmentHelper.attach(
@@ -345,7 +347,7 @@ public class StellarVortexEntity extends AreaEntity {
                     .withAttackerCharacter(triggerCharacter);
             spec = spec.withStellarBaseBonusMult(com.linweiyun.genshin.core.system.reaction.StellarGlimmer.swirlBaseBonusMult(level));
             ModDamageSource source = ModDamageSource.from(spec, windSourcePlayer);
-            target.hurtServer(level, source, 0f);
+            target.hurt(source, 0f);
         }
 
         this.lastTopContributor = contributorList.isEmpty() ? null : contributorList.get(0);
@@ -457,15 +459,15 @@ public class StellarVortexEntity extends AreaEntity {
     // ==================== 落盘（@Persisted 对实体无效，必须真写 NBT） ====================
 
     @Override
-    public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+    public void readAdditionalSaveData(CompoundTag input) {
         super.readAdditionalSaveData(input);
-        this.lastStellarTriggerCharacterUUID = input.getIntOr("mg_stellar_trigger", 0);
+        this.lastStellarTriggerCharacterUUID = input.getInt("mg_stellar_trigger");
         // 引用在这里丢，后面按 id 找回来
         this.lastStellarTriggerCharacter = null;
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+    protected void addAdditionalSaveData(CompoundTag output) {
         super.addAdditionalSaveData(output);
         output.putInt("mg_stellar_trigger", this.lastStellarTriggerCharacterUUID);
     }

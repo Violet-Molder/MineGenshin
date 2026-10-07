@@ -2,12 +2,14 @@
 // the newest version only existed as a compiled class in the Gradle build cache (08:55 build).
 package com.linweiyun.genshin.client.render.character;
 
-import com.geckolib.animatable.GeoReplacedEntity;
-import com.geckolib.animatable.instance.AnimatableInstanceCache;
-import com.geckolib.animatable.manager.AnimatableManager.ControllerRegistrar;
-import com.geckolib.util.GeckoLibUtil;
+import software.bernie.geckolib.animatable.GeoReplacedEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar;
+import software.bernie.geckolib.util.GeckoLibUtil;
 import com.linweiyun.genshin.client.combat.state.PlayerAnimationController;
 import com.linweiyun.genshin.core.system.combat.animation.animatable.IPlayerAnimatableProxy;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +24,12 @@ public class GenshinReplacedPlayer implements GeoReplacedEntity, IPlayerAnimatab
 
    public AnimatableInstanceCache getAnimatableInstanceCache() {
       return this.cache;
+   }
+
+   /** GeckoLib 4 的 {@code GeoReplacedEntity} 要求报出「替换的是哪种实体」；本类只替换玩家。 */
+   @Override
+   public EntityType<? extends Entity> getReplacingEntityType() {
+      return EntityType.PLAYER;
    }
 
    @Nullable

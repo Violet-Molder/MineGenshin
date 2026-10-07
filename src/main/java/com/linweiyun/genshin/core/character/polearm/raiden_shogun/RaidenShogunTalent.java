@@ -10,7 +10,7 @@ import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.talent.TalentBase;
 import com.linweiyun.genshin.core.system.registry.register.ModCharacterEffects;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -33,8 +33,8 @@ public class RaidenShogunTalent extends TalentBase {
     private static final int ASCEND2_TAP_TICKS = 200;
     private static final int ASCEND2_HOLD_TICKS = 300;
     /** 增伤效果的实例 id（参与查重与同步，不要改名；两个方向各一份）。 */
-    private static final Identifier ASCEND2_TAP_ID = Identifier.parse("minegenshin:shenhe_ascend2_tap");
-    private static final Identifier ASCEND2_HOLD_ID = Identifier.parse("minegenshin:shenhe_ascend2_hold");
+    private static final ResourceLocation ASCEND2_TAP_ID = ResourceLocation.parse("minegenshin:shenhe_ascend2_tap");
+    private static final ResourceLocation ASCEND2_HOLD_ID = ResourceLocation.parse("minegenshin:shenhe_ascend2_hold");
 
     /**
      * 突破天赋 1：给队伍 4 人各挂一份「冰凌」（点按 5 根 / 200 刻、长按 7 根 / 300 刻）。
