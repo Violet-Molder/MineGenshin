@@ -98,7 +98,7 @@ public class StellarVortexEntity extends AreaEntity {
     // 星璇存活期间所有触发过星扩散的角色（只增不减，用于冰伤统计）
     private final List<PGCharacter> accumulatedContributors = new ArrayList<>();
 
-    // 最后一次星扩散的触发者（作为星扩散-冰的伤害源）
+    // 最后一次星扩散的触发者（作为星扩散的冰段的伤害源）
     private transient PGCharacter lastStellarTriggerCharacter;
 
     /**
@@ -158,7 +158,7 @@ public class StellarVortexEntity extends AreaEntity {
     }
 
     /**
-     * 记下「最后一次让这枚星璇生成 / 升级」的星扩散触发者 —— 它就是星扩散-冰段的伤害源。
+     * 记下「最后一次让这枚星璇生成 / 升级」的星扩散触发者 —— 它就是星扩散的冰段段的伤害源。
      *
      * <p>生成（新建星璇）和升级（合并进已有星璇）两条路都要调；影响范围之外触发的星扩散
      * 走的是「新建星璇」，不会落到这一枚头上，所以天然不计入。
@@ -196,7 +196,7 @@ public class StellarVortexEntity extends AreaEntity {
     }
 
     /**
-     * 向累积贡献者列表添加角色（用于星扩散-冰爆炸时统计）
+     * 向累积贡献者列表添加角色（用于星扩散的冰段爆炸时统计）
      */
     public void addContributor(PGCharacter character) {
         if (character != null && !accumulatedContributors.contains(character)) {
@@ -274,7 +274,7 @@ public class StellarVortexEntity extends AreaEntity {
         }
         this.lastTopContributor = contributorList.get(0);
 
-        // 星扩散-冰的伤害源 = 最后一次让这枚星璇生成 / 升级的星扩散触发者；
+        // 星扩散的冰段的伤害源 = 最后一次让这枚星璇生成 / 升级的星扩散触发者；
         // 找不到（离线 / 存档里没有）就退化到「第一个贡献者」。
         PGCharacter iceSource = resolveStellarTriggerCharacter();
         if (iceSource == null) {
@@ -311,7 +311,7 @@ public class StellarVortexEntity extends AreaEntity {
     }
 
     /**
-     * 触发星扩散-风的区域伤害
+     * 触发星扩散的风段的区域伤害
      * @param triggerCharacter 本次触发星扩散的角色（作为伤害源）
      * @param windContributors  本次触发时目标身上的冰+风附着角色（作为贡献者）
      */
@@ -330,7 +330,7 @@ public class StellarVortexEntity extends AreaEntity {
             return;
         }
 
-        // 星扩散-风的伤害源 = 触发者本人
+        // 星扩散的风段的伤害源 = 触发者本人
         Player windSourcePlayer = resolveOwnerPlayer(level, triggerCharacter);
         if (windSourcePlayer == null) {
             windSourcePlayer = resolveOwnerPlayer(level, contributorList.get(0));
@@ -350,7 +350,7 @@ public class StellarVortexEntity extends AreaEntity {
 
         this.lastTopContributor = contributorList.isEmpty() ? null : contributorList.get(0);
 
-        LOGGER.info("[星辉风旋] 星扩散-风伤害 level={} targets={} trigger={} windContributors={}",
+        LOGGER.info("[星辉风旋] 星扩散的风段伤害 level={} targets={} trigger={} windContributors={}",
                 vortexLevel, targets.size(),
                 triggerCharacter != null ? triggerCharacter.getName() : "none",
                 contributorList.size());

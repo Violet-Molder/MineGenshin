@@ -7,14 +7,22 @@ import com.linweiyun.elementlib.api.ElementalReactionType;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 辉映·星烁（Radiance: Stellar Glimmer）的两个分支。
+ * 星烁体系（辉映·星烁，Radiance: Stellar Glimmer）的两个分支。
  *
  * <h2>命名关系</h2>
  * <pre>
- * 辉映·星烁（Radiance: Stellar Glimmer）  ← 统称，不是一条独立反应
- *   ├─ 辉映·星超导（Radiance: Stellar Conduce）
- *   └─ 辉映·星扩散（Radiance: Stellar Glimmer-Swirl，即星扩散）
+ * 辉映·星烁   统称 —— 是<b>体系</b>，不是一条反应
+ *   ├─ 星扩散   反应名；对应的<b>状态</b>叫「辉映·星扩散」
+ *   └─ 星超导   反应名；对应的<b>状态</b>叫「辉映·星超导」
  * </pre>
+ *
+ * <p>要点有两条：
+ * <ul>
+ *   <li><b>反应名不带元素后缀</b>：星扩散就是星扩散，风段 / 冰段靠飘字底部颜色区分
+ *       （见 {@code DamageIndicatorFactory} 的星烁配色），不写成「星扩散（风）」这种名字；</li>
+ *   <li><b>辉映是状态（体系），不是反应</b>：「辉映·星扩散」只用来叫那个 buff，
+ *       被触发出来的那条反应叫星扩散。</li>
+ * </ul>
  *
  * <h2>为什么要分「分支」而不是直接判断反应类型</h2>
  * 加成来源经常写得很粗：有的 buff/天赋写的是「<b>星烁反应加成</b>」——
@@ -33,20 +41,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public enum StellarGlimmerBranch {
 
-    /** 辉映·星扩散 —— 风/冰星辉扩散。 */
-    SWIRL("辉映·星扩散"),
+    /** 星扩散 —— 风段 / 冰段两段，对应状态「辉映·星扩散」。 */
+    SWIRL("星扩散", "辉映·星扩散"),
 
-    /** 辉映·星超导 —— 雷/冰星辉超导。 */
-    CONDUCE("辉映·星超导");
+    /** 星超导 —— 雷段 / 冰段两段，对应状态「辉映·星超导」。 */
+    CONDUCE("星超导", "辉映·星超导");
 
-    private final String displayName;
+    private final String reactionName;
+    private final String stateName;
 
-    StellarGlimmerBranch(String displayName) {
-        this.displayName = displayName;
+    StellarGlimmerBranch(String reactionName, String stateName) {
+        this.reactionName = reactionName;
+        this.stateName = stateName;
     }
 
-    public String displayName() {
-        return displayName;
+    /** 反应名（星扩散 / 星超导）—— 飘字、日志里说「这条反应」时用它。 */
+    public String reactionName() {
+        return reactionName;
+    }
+
+    /** 状态名（辉映·星扩散 / 辉映·星超导）—— 说那个 buff 时用它。 */
+    public String stateName() {
+        return stateName;
     }
 
     /** 这条反应属于哪个分支；不是星烁反应就返回 null。 */
@@ -74,7 +90,7 @@ public enum StellarGlimmerBranch {
     /**
      * 这条反应结算时用哪个元素吃抗性区。
      *
-     * <p>和「哪个元素触发」无关 —— 星扩散-风按风抗算、星扩散-冰按冰抗算，
+     * <p>和「哪个元素触发」无关 —— 星扩散的风段按风抗算、星扩散的冰段按冰抗算，
      * 超导同理（雷 / 冰）。
      */
     public static GenshinElement damageElementOf(@Nullable ElementalReactionType reactionType) {

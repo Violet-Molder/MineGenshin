@@ -588,8 +588,8 @@ public final class DamageIndicatorFactory {
     /**
      * 星烁（星扩散 / 星超导）伤害数字 —— 按伤害元素选底部色，与反应文字同一套配色 + 斜体。
      *
-     * <p>星扩散-风走风色、星扩散-冰走冰色，和 {@code stellarWindReactionGradient} /
-     * {@code stellarIceReactionGradient} 对得上；没专用星辉底色的元素（例如星超导-雷）
+     * <p>星扩散的风段走风色、星扩散的冰段走冰色，和 {@code stellarWindReactionGradient} /
+     * {@code stellarIceReactionGradient} 对得上；没专用星辉底色的元素（例如星超导的雷段）
      * 退回元素自身颜色，斜体保持不变。</p>
      */
     public static void stellarDamageGradient(LivingEntity target, DamageSource source, float finalDamage,
