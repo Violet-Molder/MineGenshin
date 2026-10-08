@@ -16,11 +16,19 @@
 // （无论 weapon 是在 allbody 内挂在手上、还是像法器一样独立在外 —— 全部隐藏，
 // 防止挂在 allbody 内时被整棵 allbody 一起带出来）。需要亮的骨骼由子类覆写决定。
 //
+// 联动角色（IBCharacter）的模型是对方的，不按本 MOD 的命名约定，所以约定改成「按角色声明」：
+// 该角色的 assets/minegenshin/character/<id>/resources.json 里写
+//   "bones": { "body_root": "bone2", "weapon": ["blade_right"], "hide": [...] }
+// 声明了就按声明走（body_root 写 "*" 表示不裁剪），没声明就还是上面的 allbody / weapon 约定。
+// 见 CharacterBoneSpec 的注释。
+//
 // 注意：基类引用 client 渲染类型（BoneUpdater/Player…），只在客户端渲染路径触达它；
 // 服务器端不会走到 forCharacter()，也就不会加载任何子类，天然安全。
 package com.linweiyun.genshin.client.render.character.appearance;
 
 import software.bernie.geckolib.cache.object.GeoBone;
+import com.linweiyun.genshin.asset.source.CharacterBoneSpec;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
 import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -134,13 +142,14 @@ public abstract class CharacterBoneVisibility {
     * @param character 当前出战角色，可能为 null
     */
    public BoneUpdater<BoneRenderState> weaponUpdater(Player player, @Nullable PGCharacter character) {
+      CharacterBoneSpec spec = boneSpecOf(character);
       return (renderPassInfo, snapshots) -> {
          List<GeoBone> bones = snapshots.bones();
          if (bones.isEmpty()) {
             return;
          }
          for (GeoBone bone : bones) {
-            if (shouldHide(bone)) {
+            if (shouldHide(bone, spec)) {
                snapshots.ifPresent(bone.getName(), snapshot -> {
                   snapshot.setScale(0.0F, 0.0F, 0.0F);
                   snapshot.skipRender(true);
@@ -149,6 +158,16 @@ public abstract class CharacterBoneVisibility {
             }
          }
       };
+   }
+
+   /**
+    * 取某个角色的骨骼约定。
+    *
+    * <p>来源表（{@code character/<id>/resources.json}）里写了 {@code bones} 段就按它走，
+    * 没写（以及非联动角色）就是本 MOD 约定。
+    */
+   protected static CharacterBoneSpec boneSpecOf(@Nullable PGCharacter character) {
+      return character == null ? CharacterBoneSpec.DEFAULT : CharacterResourceSources.bones(character.getTextureId());
    }
 
    /**
@@ -161,15 +180,35 @@ public abstract class CharacterBoneVisibility {
     * @param bone 待判断的骨骼
     */
    protected boolean shouldHide(GeoBone bone) {
-      if (WEAPON_BONE_NAME.equals(bone.getName())) {
+      return shouldHide(bone, CharacterBoneSpec.DEFAULT);
+   }
+
+   /**
+    * 按该角色的骨骼约定判断某根骨骼是否隐藏。
+    *
+    * <p>约定里 {@code body_root} 为 null 表示这个模型不做裁剪（本体之外的骨骼照常渲染），
+    * 联动角色常常这么写 —— 对方的模型里没有本 MOD 那套 {@code allbody} 分层。
+    *
+    * @param bone 待判断的骨骼
+    * @param spec 该角色的骨骼约定
+    */
+   protected boolean shouldHide(GeoBone bone, CharacterBoneSpec spec) {
+      if (spec.hidden().contains(bone.getName())) {
          return true;
       }
-      // allbody 的祖先容器（如顶层 Root → allbody → …）必须保留：
-      // 它本身在 allbody 之外，但它的子树承载着本体，隐藏它会连带把整棵树藏掉。
-      if (containsAllbodyDescendant(bone)) {
+      if (spec.conventional() && WEAPON_BONE_NAME.equals(bone.getName())) {
+         return true;
+      }
+      String bodyRoot = spec.bodyRoot();
+      if (bodyRoot == null) {
          return false;
       }
-      return !isInsideAllbody(bone);
+      // 本体根的祖先容器（如顶层 Root → allbody → …）必须保留：
+      // 它本身在本体之外，但它的子树承载着本体，隐藏它会连带把整棵树藏掉。
+      if (containsDescendant(bone, bodyRoot)) {
+         return false;
+      }
+      return !isInside(bone, bodyRoot);
    }
 
    /** 武器骨骼在模型里的固定命名。 */
@@ -184,10 +223,10 @@ public abstract class CharacterBoneVisibility {
     * <p>注意：allbody 不一定是模型的最顶层根（例如层级为 Root → allbody → …），
     * 因此这里逐级向上找，命中名为 {@code allbody} 即返回 true，而不是把骨骼一路顶到最顶根再比对。
     */
-   private static boolean isInsideAllbody(GeoBone bone) {
+   private static boolean isInside(GeoBone bone, String bodyRoot) {
       GeoBone cursor = bone;
       while (cursor != null) {
-         if (ALLBODY_BONE_NAME.equals(cursor.getName())) {
+         if (bodyRoot.equals(cursor.getName())) {
             return true;
          }
          cursor = cursor.getParent();
@@ -201,9 +240,9 @@ public abstract class CharacterBoneVisibility {
     * <p>用于保护 allbody 的祖先容器（如 Root → allbody → …）：这类骨骼自身可能在 allbody
     * 之外，但携带本体子树，一旦被隐藏会连带整个模型消失，因此必须保留。
     */
-   private static boolean containsAllbodyDescendant(GeoBone bone) {
+   private static boolean containsDescendant(GeoBone bone, String bodyRoot) {
       for (GeoBone child : bone.getChildBones()) {
-         if (ALLBODY_BONE_NAME.equals(child.getName()) || containsAllbodyDescendant(child)) {
+         if (bodyRoot.equals(child.getName()) || containsDescendant(child, bodyRoot)) {
             return true;
          }
       }

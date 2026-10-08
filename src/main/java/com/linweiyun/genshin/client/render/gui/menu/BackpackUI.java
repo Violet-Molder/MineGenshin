@@ -55,6 +55,7 @@ import net.minecraft.world.item.Item.TooltipContext;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.slf4j.Logger;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 public class BackpackUI {
    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
@@ -488,7 +489,7 @@ public class BackpackUI {
          if (equipped && entry.equippedByCharacterTextureId() != null) {
             UIElement avatarOverlay = new UIElement().addClass("equipped-avatar-overlay");
             avatarOverlay.style(
-               s -> s.background(SpriteTexture.of("minegenshin:character/" + entry.equippedByCharacterTextureId() + "/textures/avatar_hud.png"))
+               s -> s.background(SpriteTexture.of(CharacterResourceSources.avatarHud(entry.equippedByCharacterTextureId())))
             );
             itemElement.addChild(avatarOverlay);
          }
@@ -691,7 +692,7 @@ public class BackpackUI {
                   if (entry.equippedByCharacterTextureId() != null) {
                      UIElement avatarOverlay = new UIElement().addClass("equipped-avatar-overlay");
                      avatarOverlay.style(
-                        s -> s.background(SpriteTexture.of("minegenshin:character/" + entry.equippedByCharacterTextureId() + "/textures/avatar_hud.png"))
+                        s -> s.background(SpriteTexture.of(CharacterResourceSources.avatarHud(entry.equippedByCharacterTextureId())))
                      );
                      wrapper.addChild(avatarOverlay);
                   }

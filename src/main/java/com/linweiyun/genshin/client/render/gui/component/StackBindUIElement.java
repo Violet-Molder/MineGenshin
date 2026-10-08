@@ -8,6 +8,7 @@ import com.lowdragmc.lowdraglib2.registry.annotation.LDLRegister;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.ParametersAreNonnullByDefault;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 @ParametersAreNonnullByDefault
 @KJSBindings
@@ -27,7 +28,7 @@ public class StackBindUIElement extends BindableUIElement<PGCharacter> {
       if (this.character != null) {
           String textureId = character.getTextureId();
           this.style(s -> s.background(
-                  SpriteTexture.of("minegenshin:character/" + textureId + "/textures/avatar_hud.png")));
+                  SpriteTexture.of(CharacterResourceSources.avatarHud(textureId))));
       } else {
         this.style(s -> s.background(null));
       }

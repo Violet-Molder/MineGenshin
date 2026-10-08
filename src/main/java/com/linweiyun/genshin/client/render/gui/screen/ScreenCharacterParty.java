@@ -12,6 +12,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 public class ScreenCharacterParty extends Screen {
   final ModularUI modularUI;
@@ -52,8 +53,7 @@ public class ScreenCharacterParty extends Screen {
                   .setId("character-button-image-" + partyChar.getName().getString())
                   .addClass("character-button-image-pose")
                   .style(style -> style.overlay(
-                          SpriteTexture.of("minegenshin:character/"
-                                  + textureId + "/textures/pose_already.png")));
+                          SpriteTexture.of(CharacterResourceSources.splashReady(textureId))));
           haveCharacter = true;
       }
 

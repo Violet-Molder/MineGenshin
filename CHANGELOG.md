@@ -6,6 +6,42 @@
 
 ---
 
+## 21.1.0.3 — 2026-10-08（1.21.1 线）
+
+**状态：当前更改（未发布）** —— 本版本号没有进过发布渠道，改动一直挂在它下面。
+
+### 新增
+
+- 联动角色（`IBCharacter`）：有一类角色的模型 / 动画 / 贴图不在本 MOD，而在联动模组（IB）里；
+  对方不在时角色不注册、不登记动画、不进抽卡池；
+- 角色资源来源表 `assets/minegenshin/character/<id>/resources.json`：逐项声明模型 / 动画 / 贴图 /
+  头像 / 立绘 / 额外动画从哪读，取值可以是本 MOD 相对路径、`namespace:path`、
+  `@ib`（问对方同名角色）或 `@ib-item`（对方的角色信物图标）；
+- 来源表里可以声明模型骨骼约定：`bones.body_root` 本体根骨骼、`bones.weapon` 武器骨骼挂点
+  （可给缩放 / 偏移 / 旋转）、`bones.hide` 额外隐藏的骨骼 —— 联动角色的模型是对方的、不能改，
+  所以这些名字必须由本 MOD 这边声明；
+- 界面头像与立绘改走来源表（此前是硬编码的 `minegenshin:character/<id>/textures/...`）；
+  立绘还没画时自动退回小头像；
+- 第一个联动角色：星见雅（五星单手剑，UID 115201），模型 / 动画 / 贴图 / 头像取自 IB，
+  立绘归本 MOD。
+
+### 变更
+
+- `GenshinGeoCache` 在联动模组加载时额外扫描 `imaginary_branch:geo` 与 `imaginary_branch:animations`；
+- `GenshinAssets.fromModelPath / fromAnimationPath / fromTexturePath` 支持 `namespace:path` 写法
+  （不带冒号仍按本 MOD 处理，老行为不变）；
+- `CharacterBoneVisibility` 的骨骼裁剪改成「按角色声明」：写了 `bones.body_root` 就按声明走，
+  没写的角色仍是既有的 `allbody` / `weapon` 约定。
+
+### 说明
+
+- 对方的加密模型：先按普通资源直读（对方自己的资源包已经在全局生效，读到的是解密后的真模型），
+  读到加密字节或残骸时才调用对方的解密模块 —— 只调用，不改动对方；
+- 特效（`fx`）本次没有接入：对方的特效是 Photon 代码而不是文件，换路径拿不到；
+- 详细设计与验证方式见 `G:\AI\Codex\Skill\像素原神\调研\IB联动-设计与落地.md`。
+
+---
+
 ## 26.2.0.2 — 2026-10-06（兼容版本）
 
 **状态：当前更改（未发布）** —— 版本号进了 release 渠道才改标「已发布」，在此之前本节改动一直挂在 26.2.0.2 下。

@@ -11,6 +11,8 @@ import com.linweiyun.genshin.core.character.polearm.raiden_shogun.RaidenShogun;
 import com.linweiyun.genshin.core.character.polearm.shenhe.Shenhe;
 import com.linweiyun.genshin.core.character.claymore.sandrone.SandroneCharacter;
 import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
+import com.linweiyun.genshin.core.character.ib.IBLink;
+import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -25,6 +27,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import org.jetbrains.annotations.Nullable;
 
 public class ModCharacters {
    public static final DeferredRegister<PGCharacter> CHARACTERS = ModRegistries.CHARACTERS;
@@ -40,6 +43,16 @@ public class ModCharacters {
     public static final DeferredHolder<PGCharacter, Linweiyun> LINWEIYUN = register("linweiyun", 105001, Linweiyun::new);
     /** 测试用长柄角色（135009）—— 数值 / 资源 / 技能全部照抄林薇云，见 {@link SandroneCharacter}。 */
     public static final DeferredHolder<PGCharacter, SandroneCharacter> TEST = register(SandroneCharacter.ID, SandroneCharacter.UID, SandroneCharacter::new);
+
+    /**
+     * 联动角色星见雅 —— 模型 / 动画 / 贴图在对方模组（IB）里，所以<b>对方也在时才注册</b>。
+     *
+     * <p>对方不在时这个字段是 null：角色不进角色注册表、不进抽卡池、也不会有人来渲染她，
+     * 于是「本项目里不存在她的美术资源」不会变成运行期的一堆报错。
+     */
+    @Nullable
+    public static final DeferredHolder<PGCharacter, Miyabi> MIYABI =
+            IBLink.isLoaded() ? register(Miyabi.ID, Miyabi.UID, Miyabi::new) : null;
 
     private static <T extends PGCharacter> DeferredHolder<PGCharacter, T> register(String name, int uuid, Supplier<T> factory) {
       DeferredHolder<PGCharacter, T> holder = CHARACTERS.register(name, factory);

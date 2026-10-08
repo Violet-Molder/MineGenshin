@@ -77,6 +77,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 public final class CharacterEquipUI {
    private static final ResourceLocation STYLESHEET = ResourceLocation.parse("minegenshin:lss/character_equip.lss");
@@ -262,7 +263,7 @@ public final class CharacterEquipUI {
    }
 
    private static String avatarTexture(PGCharacter character) {
-      return "minegenshin:character/" + character.getTextureId() + "/textures/avatar_hud.png";
+      return CharacterResourceSources.avatarHud(character.getTextureId());
    }
 
    private static void fillMenu(CharacterEquipUI.State st) {

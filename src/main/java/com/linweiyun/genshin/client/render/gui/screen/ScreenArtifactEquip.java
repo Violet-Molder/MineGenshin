@@ -37,6 +37,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.slf4j.Logger;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 public class ScreenArtifactEquip extends Screen {
    private static final Logger LOG = ModLog.getLogger(LogGroup.RENDER);
@@ -477,7 +478,7 @@ public class ScreenArtifactEquip extends Screen {
 
          if (!e.fromBackpack && e.ownerTextureId != null) {
             UIElement avatar = new UIElement().addClass("artifact-avatar-overlay");
-            avatar.style(x -> x.background(SpriteTexture.of("minegenshin:character/" + e.ownerTextureId + "/textures/avatar_hud.png")));
+            avatar.style(x -> x.background(SpriteTexture.of(CharacterResourceSources.avatarHud(e.ownerTextureId))));
             el.addChild(avatar);
          }
 

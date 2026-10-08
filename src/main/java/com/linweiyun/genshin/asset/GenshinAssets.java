@@ -70,15 +70,15 @@ public final class GenshinAssets {
    }
 
    public static ResourceLocation fromModelPath(String relativePath) {
-      return id(stripSuffix(relativePath, ".geo.json"));
+      return idOrNamespaced(stripSuffix(relativePath, ".geo.json"));
    }
 
    public static ResourceLocation fromAnimationPath(String relativePath) {
-      return id(stripAnimationSuffix(relativePath));
+      return idOrNamespaced(stripAnimationSuffix(relativePath));
    }
 
    public static ResourceLocation fromTexturePath(String relativePath) {
-      return id(relativePath);
+      return idOrNamespaced(relativePath);
    }
 
    public static ResourceLocation characterModel(String characterId, String fileName) {
@@ -232,6 +232,19 @@ public final class GenshinAssets {
 
    public static ResourceLocation id(String path) {
       return ResourceLocation.fromNamespaceAndPath("minegenshin", path);
+   }
+
+   /**
+    * 相对路径 → 资源路径，<b>允许写成 {@code namespace:path}</b>。
+    *
+    * <p>不带冒号就是本 MOD（和 {@link #id} 一样）；带冒号时用写死的命名空间 ——
+    * 联动角色的资源在别的模组里，它的路径要能指过去，不能再被套上 {@code minegenshin:}。
+    */
+   public static ResourceLocation idOrNamespaced(String path) {
+      int colon = path.indexOf(':');
+      return colon <= 0
+              ? id(path)
+              : ResourceLocation.fromNamespaceAndPath(path.substring(0, colon), path.substring(colon + 1));
    }
 
    @Nullable
