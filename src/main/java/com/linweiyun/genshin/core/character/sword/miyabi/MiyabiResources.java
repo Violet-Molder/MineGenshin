@@ -103,6 +103,12 @@ public final class MiyabiResources {
     /** {@link #PLUNGE_STATE} 实际播的那条动画。 */
     public static final String PLUNGE_CLIP = "attack_2";
 
+    /** 落地后接着播完的状态名（同样映射到 {@link #PLUNGE_CLIP}）。 */
+    public static final String PLUNGE_RECOVER_STATE = "plunge_recover";
+
+    /** {@link #PLUNGE_CLIP} 的动画总长（刻）。 */
+    public static final int PLUNGE_CLIP_TICKS = COMBO_TICKS[1];
+
     /** 模型作者。 */
     private static final String MODEL_AUTHOR = "下一只风筝";
     private static final String MODEL_AUTHOR_URL = "https://space.bilibili.com/281665959";
@@ -149,6 +155,7 @@ public final class MiyabiResources {
     private static Map<String, String> animMapping() {
         Map<String, String> mapping = new LinkedHashMap<>(CharacterRenderData.defaultAnimMapping());
         mapping.put(PLUNGE_STATE, PLUNGE_CLIP);
+        mapping.put(PLUNGE_RECOVER_STATE, PLUNGE_CLIP);
         return Map.copyOf(mapping);
     }
 

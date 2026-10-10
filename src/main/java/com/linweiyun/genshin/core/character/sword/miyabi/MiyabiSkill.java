@@ -93,6 +93,26 @@ public class MiyabiSkill extends SkillBase {
     }
 
     @Override
+    public String plungingRecoveryAnimation() {
+        return MiyabiResources.PLUNGE_RECOVER_STATE;
+    }
+
+    @Override
+    public int plungingRecoveryTicks() {
+        return MiyabiResources.PLUNGE_CLIP_TICKS;
+    }
+
+    @Override
+    public String plungingLandingSound() {
+        return "imaginary_branch:miyabi_attack_2";
+    }
+
+    @Override
+    public float plungingLandingSoundVolume() {
+        return 1.4F;
+    }
+
+    @Override
     protected ActionSet buildDefaultActionSet(PGCharacter character) {
         ActionSet base = super.buildDefaultActionSet(character);
 

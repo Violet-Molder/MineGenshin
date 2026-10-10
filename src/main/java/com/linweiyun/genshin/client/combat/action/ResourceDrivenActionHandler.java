@@ -164,6 +164,9 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
 
    @Override
    public void tickCharge(Player player, int holdTicks) {
+      if (PlungeAttack.isActive()) {
+         return;
+      }
       PGCharacter character = currentCharacter(player);
       if (character != null) {
          int chargeTicks = character.getChargedAttackChargeTicks();
