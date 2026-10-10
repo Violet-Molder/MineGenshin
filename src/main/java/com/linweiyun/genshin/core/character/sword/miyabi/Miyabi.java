@@ -54,6 +54,9 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
     public static final int SNOW_STATE_TICKS = 160;
     public static final int SNOW_COVER_TICKS = 160;
 
+    /** 深雪冷却（刻）。 */
+    public static final int DEEP_SNOW_COOLDOWN_TICKS = 15 * 20;
+
     /** 飞雪自己的冷却（刻），与深雪独立。 */
     public static final int FLYING_SNOW_COOLDOWN_TICKS = 80;
 
@@ -109,7 +112,7 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
                 Component.translatable("character.name.miyabi"),
                 ModElements.CYRO.getId().toString(),
                 CharacterAscendAttribute.CDG,
-                20 * 20,
+                15 * 20,
                 15 * 20,
                 60.0F,
                 ID,
@@ -164,6 +167,10 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
         }
         if (flyingSnowCooldownTicks > 0) {
             flyingSnowCooldownTicks--;
+        }
+
+        if (isSnowState() && !snowEUsed) {
+            getData().setElementalSkillCooldownTick(flyingSnowCooldownTicks);
         }
     }
 
