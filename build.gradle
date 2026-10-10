@@ -284,11 +284,24 @@ if (privateBuildScript.isFile()) {
     apply from: privateBuildScript
 }
 
-// 每个 java 进程都走本分支的 JBR：Gradle daemon 用哪个 JVM 无所谓（IDE 会把它设成 project-jdk），
-// 这里按 toolchain 挑 JetBrains 的那份，26.2 → JBR 25、1.21.1 → JBR 21，版本跟着分支走。
+// 每个 java 进程都在启动前钉死：JVM 用本分支的 JBR（26.2→JBR25、1.21.1→JBR21），
+// 临时目录指到项目内。两件事都必须在这里做：
+//   ① Gradle / IDE 会给任务塞 executable（IDE 塞的是自己的 project-jdk），和 javaLauncher 打架；
+//   ② 系统临时目录下 NeoForm CLI 建 loopback 管道会失败（downloadAssets 挂在这）。
+// 放在 doFirst 才盖得住插件与 IDE 后写的值。
+def branchJbrHome = providers.gradleProperty('minegenshin.jbrHome')
+def devTempDir = layout.buildDirectory.dir('dev-temp').get().asFile
 tasks.withType(JavaExec).configureEach {
+    // launcher 与 executable 必须指向同一份 JBR，否则 Gradle 报「toolchain 不匹配」
     javaLauncher = javaToolchains.launcherFor {
         languageVersion = java.toolchain.languageVersion.get()
         vendor = JvmVendorSpec.JETBRAINS
+    }
+    environment 'TEMP', devTempDir.absolutePath
+    environment 'TMP', devTempDir.absolutePath
+    doFirst {
+        if (branchJbrHome.isPresent()) {
+            executable = branchJbrHome.get() + '/bin/java.exe'
+        }
     }
 }
