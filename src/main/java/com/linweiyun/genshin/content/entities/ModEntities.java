@@ -2,6 +2,7 @@ package com.linweiyun.genshin.content.entities;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.content.entities.area.StellarVortexEntity;
+import com.linweiyun.genshin.content.entities.area.StellarPrismEntity;
 import com.linweiyun.genshin.content.entities.area.TalismanSpiritArea;
 import com.linweiyun.genshin.content.entities.area.ThunderCloudEntity;
 import com.linweiyun.genshin.content.entities.misc.ElementalOrb;
@@ -9,6 +10,7 @@ import com.linweiyun.genshin.content.entities.misc.IceBlockProjectile;
 import com.linweiyun.genshin.content.entities.teyvat.monster.slime.LargeCryoSlime;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProjectile;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaSpiritSwordEntity;
+import com.linweiyun.genshin.content.entities.teyvat.skill.miyabi.MiyabiSlashEffect;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -103,6 +105,18 @@ public class ModEntities {
                                     Minegenshin.id("stellar_vortex"))
                             ));
 
+    public static final Supplier<EntityType<StellarPrismEntity>> STELLAR_PRISM =
+            ENTITIES.register(
+                    "stellar_prism",
+                    () -> EntityType.Builder.<StellarPrismEntity>of(StellarPrismEntity::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build(ResourceKey.create(
+                                    Registries.ENTITY_TYPE,
+                                    Minegenshin.id("stellar_prism"))
+                            ));
+
     public static final Supplier<EntityType<VesnaAttackProjectile>> VESNA_ATTACK_PROJECTILE =
             ENTITIES.register(
                     "vesna_attack_projectile",
@@ -125,6 +139,24 @@ public class ModEntities {
                             .build(ResourceKey.create(
                                     Registries.ENTITY_TYPE,
                                     Minegenshin.id("vesna_spirit_sword"))
+                            ));
+
+    /**
+     * 星见雅重击的斩击表现。
+     *
+     * <p>只画模型、不结算伤害，所以按「领域」登记在 {@link MobCategory#MISC} 下；
+     * 追踪 64 格、每刻同步一次：它一秒飞 20 格，跟得慢了就会一跳一跳。
+     */
+    public static final Supplier<EntityType<MiyabiSlashEffect>> MIYABI_SLASH =
+            ENTITIES.register(
+                    "miyabi_slash",
+                    () -> EntityType.Builder.<MiyabiSlashEffect>of(MiyabiSlashEffect::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build(ResourceKey.create(
+                                    Registries.ENTITY_TYPE,
+                                    Minegenshin.id("miyabi_slash"))
                             ));
 
     /**

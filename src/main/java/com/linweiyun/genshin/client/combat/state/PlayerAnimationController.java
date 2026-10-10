@@ -10,6 +10,8 @@ import com.geckolib.animation.object.PlayState;
 import com.geckolib.animation.state.AnimationPoint;
 import com.geckolib.animation.state.AnimationTest;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
+import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
+import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
@@ -19,6 +21,8 @@ import com.linweiyun.genshin.core.system.combat.animation.animatable.IPlayerAnim
 import com.linweiyun.genshin.core.system.combat.animation.config.CharacterAnimations;
 import com.linweiyun.genshin.core.system.combat.animation.config.FirstPersonAnims;
 import com.linweiyun.genshin.core.system.combat.animation.config.LocomotionAnims;
+import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
+import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import java.util.Map;
 import java.util.Objects;
 import java.util.WeakHashMap;
@@ -137,7 +141,29 @@ public final class PlayerAnimationController {
          controller.setTransitionTicks(0);
       }
 
-      return state.setAndContinue(target);
+      PlayState result = state.setAndContinue(target);
+      return plungeHoldReached(player, controller) ? PlayState.PAUSE : result;
+   }
+
+   /**
+    * 下落攻击把动画时间轴钉在目标刻：播到那一刻之后每帧返回 {@link PlayState#PAUSE}，
+    * GeckoLib 会把动画冻结在当前进度 —— 素材里没有下劈那一段的角色靠它借别段动画的一个姿态。
+    */
+   private static boolean plungeHoldReached(Player player, AnimationController<?> controller) {
+      double holdTick = plungingHoldTick(player);
+      return holdTick >= 0 && controller.getCurrentAnimationTime() * 20.0 >= holdTick;
+   }
+
+   /** 这个玩家此刻该把动画时间轴钉在哪一刻；不用钉就返回 -1。 */
+   private static double plungingHoldTick(Player player) {
+      PlayerCharactersAttachment attachment = player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+      PGCharacter character = attachment == null ? null : attachment.getCurrentCharacter();
+      if (character == null) {
+         return -1.0;
+      }
+
+      double hold = character.getPlungingAnimationHoldTick();
+      return hold >= 0 && character.getPlungingAnimation().equals(AnimationStateSync.stateOf(player)) ? hold : -1.0;
    }
 
    private static boolean previousWasOneShot(CharacterAnimations animations, Player player, @Nullable String previousName) {
@@ -172,6 +198,8 @@ public final class PlayerAnimationController {
             } else {
                LOG_LAST_ANIMATION.put(player, name);
             }
+            // 动画名一帧一换就是「来回横跳」，会不停触发过渡 —— 这类问题只有这条日志看得见
+            LOGGER.info("动画 {} → {}（状态={}，刻={}）", new Object[]{previous, name, stateName, player.tickCount});
          }
       }
    }
@@ -203,11 +231,30 @@ public final class PlayerAnimationController {
          }
       }
 
-      if (!AnimationAvailability.existsFor(player, animationName)) {
+      String clip = resolveAlias(player, animationName);
+      if (!AnimationAvailability.existsFor(player, clip)) {
          return null;
       } else {
-         return loop ? RawAnimation.begin().thenLoop(animationName) : RawAnimation.begin().thenPlayAndHold(animationName);
+         return loop ? RawAnimation.begin().thenLoop(clip) : RawAnimation.begin().thenPlayAndHold(clip);
       }
+   }
+
+   /**
+    * 状态名 → 实际播的动画名。
+    *
+    * <p>资源来源表随附的动画映射（{@code CharacterRenderData#animMapping}）就是干这个的：
+    * 状态名可以取一个素材里不存在的名字（例如下落攻击的 {@code plunge}），由映射指到真正那条动画。
+    * 映射里没写、或指过去又查不到时，照状态名本身找。
+    */
+   private static String resolveAlias(Player player, String animationName) {
+      String characterId = CharacterHelper.getActiveCharacterId(player);
+      CharacterRenderData data = characterId == null ? null : CharacterRenderRepository.get(characterId);
+      String mapped = data == null ? null : data.animMapping().get(animationName);
+      if (mapped == null || mapped.isEmpty() || mapped.equals(animationName)) {
+         return animationName;
+      }
+
+      return AnimationAvailability.existsFor(player, mapped) ? mapped : animationName;
    }
 
    public static boolean isFirstPerson(Player player) {

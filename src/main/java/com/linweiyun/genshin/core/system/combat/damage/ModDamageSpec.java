@@ -114,6 +114,18 @@ public class ModDamageSpec {
     /** 队伍级星扩散基础倍率提升（运行时覆盖，见 {@link #withStellarBaseBonusMult(float)}）。 */
     private float stellarBaseBonusMultValue = Float.NaN;
 
+    /** 星超导反应倍率：基础环境 1.0，极星辉域中最高 2.0。 */
+    private float stellarReactionCoefficient = 1f;
+
+    public ModDamageSpec withStellarReactionCoefficient(float coefficient) {
+        this.stellarReactionCoefficient = Math.max(0f, coefficient);
+        return this;
+    }
+
+    public float getStellarReactionCoefficient() {
+        return stellarReactionCoefficient;
+    }
+
     /** 给这一条伤害打开大权区（值 = 角色当前的大权加成，0.6 = +60%）。 */
     public ModDamageSpec withSovereignty(float bonus) {
         this.sovereigntyBonus = Math.max(0f, bonus);
@@ -517,6 +529,7 @@ public class ModDamageSpec {
         );
         copy.hitPoiseCoefficient = this.hitPoiseCoefficient;
         copy.hitImpact = this.hitImpact;
+        copy.stellarReactionCoefficient = this.stellarReactionCoefficient;
         return copy;
     }
 
@@ -537,6 +550,7 @@ public class ModDamageSpec {
         copy.damageBonus = this.damageBonus;
         copy.sovereigntyBonus = this.sovereigntyBonus;
         copy.stellarBaseBonusMultValue = this.stellarBaseBonusMultValue;
+        copy.stellarReactionCoefficient = this.stellarReactionCoefficient;
         copy.lunarContributors = this.lunarContributors;
         copy.stellarContributors = this.stellarContributors;
         copy.hitPoiseCoefficient = this.hitPoiseCoefficient;

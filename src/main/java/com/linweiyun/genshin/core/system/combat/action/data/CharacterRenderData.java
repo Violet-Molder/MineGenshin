@@ -3,6 +3,9 @@
 package com.linweiyun.genshin.core.system.combat.action.data;
 
 import com.linweiyun.genshin.asset.GenshinAssets;
+import com.linweiyun.genshin.asset.source.CharacterBoneSpec;
+import com.linweiyun.genshin.asset.source.CharacterResourceSlot;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +25,14 @@ public final class CharacterRenderData {
    private final List<String> translucentBones;
    private final String modelAuthor;
    private final String modelAuthorUrl;
+   /**
+    * 非 null = 这个角色的资源按来源表（{@code character/<id>/resources.json}）解析。
+    *
+    * <p>存 id 而不是存解析结果：来源表要读资源管理器，而 {@code XxxResources.RENDER_DATA} 是
+    * 静态字段，初始化可能早于资源就绪。解析推到 {@link #modelIdentifier()} 这类查询里做，
+    * 顺带也跟着资源重载走。
+    */
+   private final String sourceId;
 
    public static CharacterRenderData character(String id, Map<String, String> animMapping, float bodyScale, CharacterBoneMount... boneMounts) {
       return new CharacterRenderData(
@@ -33,6 +44,17 @@ public final class CharacterRenderData {
          bodyScale,
          boneMounts
       );
+   }
+
+   /**
+    * 资源来源表驱动的角色 —— 模型 / 动画 / 贴图 / 缩放 / 武器骨骼都可以在
+    * {@code character/<id>/resources.json} 里逐项改指向（联动角色走这条）。
+    *
+    * <p>这里给的三条路径是<b>兜底</b>：没写来源表、或来源表里那一项解析不出来时，
+    * 行为与 {@link #character} 完全一致。
+    */
+   public static CharacterRenderData sourced(String id, Map<String, String> animMapping, float bodyScale, CharacterBoneMount... boneMounts) {
+      return character(id, animMapping, bodyScale, boneMounts).withSourceId(id);
    }
 
    public CharacterRenderData(String id, String modelPath, String texturePath, String animationPath, Map<String, String> animMapping, float bodyScale) {
@@ -89,7 +111,7 @@ public final class CharacterRenderData {
       List<String> translucentBones,
       CharacterBoneMount... boneMounts
    ) {
-      this(id, modelPath, texturePath, animationPath, extraAnimationPaths, animMapping, bodyScale, translucentBones, boneMounts, null, null);
+      this(id, modelPath, texturePath, animationPath, extraAnimationPaths, animMapping, bodyScale, translucentBones, boneMounts, null, null, null);
    }
 
    private CharacterRenderData(
@@ -103,7 +125,8 @@ public final class CharacterRenderData {
       List<String> translucentBones,
       CharacterBoneMount[] boneMounts,
       String modelAuthor,
-      String modelAuthorUrl
+      String modelAuthorUrl,
+      String sourceId
    ) {
       this.id = id;
       this.modelPath = modelPath;
@@ -116,6 +139,7 @@ public final class CharacterRenderData {
       this.boneMounts = boneMounts == null ? List.of() : Arrays.stream(boneMounts).filter(m -> m != null && m.isValid()).toList();
       this.modelAuthor = blankToNull(modelAuthor);
       this.modelAuthorUrl = blankToNull(modelAuthorUrl);
+      this.sourceId = blankToNull(sourceId);
    }
 
    private static String blankToNull(String value) {
@@ -139,7 +163,9 @@ public final class CharacterRenderData {
    }
 
    public List<String> extraAnimationPaths() {
-      return this.extraAnimationPaths;
+      return this.sourceId == null
+         ? this.extraAnimationPaths
+         : CharacterResourceSources.extraAnimations(this.sourceId, this.extraAnimationPaths);
    }
 
    public CharacterRenderData withAnimationFile(String relativePath) {
@@ -157,7 +183,8 @@ public final class CharacterRenderData {
             this.translucentBones,
             this.boneMounts.toArray(new CharacterBoneMount[0]),
             this.modelAuthor,
-            this.modelAuthorUrl
+            this.modelAuthorUrl,
+            this.sourceId
          );
       } else {
          return this;
@@ -172,7 +199,23 @@ public final class CharacterRenderData {
    }
 
    public List<CharacterBoneMount> boneMounts() {
-      return this.boneMounts;
+      if (this.sourceId == null) {
+         return this.boneMounts;
+      }
+
+      CharacterBoneSpec spec = CharacterResourceSources.bones(this.sourceId);
+      if (spec.weaponBones().isEmpty()) {
+         return this.boneMounts;
+      }
+
+      List<CharacterBoneMount> merged = new ArrayList<>(this.boneMounts.size() + spec.weaponBones().size());
+      merged.addAll(this.boneMounts);
+      for (CharacterBoneMount mount : spec.weaponBones()) {
+         if (!merged.contains(mount)) {
+            merged.add(mount);
+         }
+      }
+      return List.copyOf(merged);
    }
 
    public List<String> translucentBones() {
@@ -192,7 +235,8 @@ public final class CharacterRenderData {
             Arrays.asList(boneNames),
             this.boneMounts.toArray(new CharacterBoneMount[0]),
             this.modelAuthor,
-            this.modelAuthorUrl
+            this.modelAuthorUrl,
+            this.sourceId
          )
          : this;
    }
@@ -209,7 +253,25 @@ public final class CharacterRenderData {
          this.translucentBones,
          this.boneMounts.toArray(new CharacterBoneMount[0]),
          author,
-         url
+         url,
+         this.sourceId
+      );
+   }
+
+   private CharacterRenderData withSourceId(String sourceId) {
+      return new CharacterRenderData(
+         this.id,
+         this.modelPath,
+         this.texturePath,
+         this.animationPath,
+         this.extraAnimationPaths,
+         this.animMapping,
+         this.bodyScale,
+         this.translucentBones,
+         this.boneMounts.toArray(new CharacterBoneMount[0]),
+         this.modelAuthor,
+         this.modelAuthorUrl,
+         sourceId
       );
    }
 
@@ -222,15 +284,18 @@ public final class CharacterRenderData {
    }
 
    public Identifier modelIdentifier() {
-      return GenshinAssets.fromModelPath(this.modelPath);
+      Identifier own = GenshinAssets.fromModelPath(this.modelPath);
+      return this.sourceId == null ? own : CharacterResourceSources.identifier(this.sourceId, CharacterResourceSlot.MODEL, own);
    }
 
    public Identifier textureIdentifier() {
-      return GenshinAssets.fromTexturePath(this.texturePath);
+      Identifier own = GenshinAssets.fromTexturePath(this.texturePath);
+      return this.sourceId == null ? own : CharacterResourceSources.identifier(this.sourceId, CharacterResourceSlot.TEXTURE, own);
    }
 
    public Identifier animationIdentifier() {
-      return GenshinAssets.fromAnimationPath(this.animationPath);
+      Identifier own = GenshinAssets.fromAnimationPath(this.animationPath);
+      return this.sourceId == null ? own : CharacterResourceSources.identifier(this.sourceId, CharacterResourceSlot.ANIMATION, own);
    }
 
    public Map<String, String> animMapping() {
@@ -238,7 +303,7 @@ public final class CharacterRenderData {
    }
 
    public float bodyScale() {
-      return this.bodyScale;
+      return this.sourceId == null ? this.bodyScale : CharacterResourceSources.scale(this.sourceId, this.bodyScale);
    }
 
    public boolean isValid() {

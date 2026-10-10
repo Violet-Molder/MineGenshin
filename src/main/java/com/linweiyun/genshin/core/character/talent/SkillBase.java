@@ -143,6 +143,16 @@ public class SkillBase {
       return DEFAULT_PLUNGING_ANIM;
    }
 
+   /**
+    * 下落攻击停在这条动画的哪一刻（刻，可带小数 —— 素材里的时间轴按秒写，1 秒 = 20 刻）；负数 = 整条循环播。
+    *
+    * <p>给「素材里没有下劈那一段、只能借别段动画的一个姿态」的角色用：
+    * 下坠期间动画时间轴钉在这一刻，看起来就是举着武器下劈。
+    */
+   public double plungingAnimationHoldTick() {
+      return -1.0;
+   }
+
    /** 下落攻击的加速下坠速度（格 / 刻，正数 = 向下）。 */
    public double plungingFallSpeed() {
       return DEFAULT_PLUNGING_FALL_SPEED;

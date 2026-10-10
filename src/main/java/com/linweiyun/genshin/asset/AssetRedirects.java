@@ -119,6 +119,13 @@ public final class AssetRedirects {
                      plan.put(vanillaId, mirrored);
                   }
                }
+
+               // 物品的「默认模型」：统一布局里只有 item/<id>/model.json，
+               // 而原版按物品 id 找 models/item/<id>.json —— 让默认 id 也指到同一个文件。
+               String defaultItemModel = models ? defaultItemModelFile(path) : null;
+               if (defaultItemModel != null) {
+                  plan.putIfAbsent(id("models/" + defaultItemModel), mirrored);
+               }
             }
          }
 
@@ -135,6 +142,23 @@ public final class AssetRedirects {
       } else {
          return true;
       }
+   }
+
+   /**
+    * {@code item/<id>/model.json} → {@code item/<id>.json}（原版物品默认模型在 {@code models/} 下的文件名）。
+    *
+    * <p>不是「物品目录里的 model.json」时返回 null。
+    */
+   @Nullable
+   private static String defaultItemModelFile(String path) {
+      String prefix = AssetCategory.ITEM.folder() + "/";
+      String suffix = "/" + ModAssetPaths.MODEL_FILE;
+      if (!path.startsWith(prefix) || !path.endsWith(suffix)) {
+         return null;
+      }
+
+      String id = path.substring(prefix.length(), path.length() - suffix.length());
+      return id.isEmpty() || id.indexOf(47) >= 0 ? null : prefix + id + ".json";
    }
 
    private static String stripTextureDir(String path) {

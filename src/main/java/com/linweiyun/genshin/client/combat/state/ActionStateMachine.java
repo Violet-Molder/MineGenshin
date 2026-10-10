@@ -50,6 +50,14 @@ public final class ActionStateMachine {
    public static int actionLockFrames = 0;
    public static int lockDelayFrames = 0;
    public static int movementLockFrames = 0;
+   /**
+    * 当前这一段动作是不是「移动输入打不断」的。
+    *
+    * <p>只有闪避这么用：方向在按下去那一刻就定了（见 {@code dodgeDirection}），
+    * 之后按着 WASD / 跳 / 蹲都不该把它顶掉。下一次 {@link #changeState} 或
+    * {@link #resetToDefault} 自动清掉。
+    */
+   private static boolean movementInterruptImmune = false;
    public static int comboStage = 1;
    public static int comboWindowFrames = 0;
    public static int attackHoldTimer = 0;
@@ -159,6 +167,10 @@ public final class ActionStateMachine {
          return false;
       }
 
+      if (movementInterruptImmune) {
+         return false;
+      }
+
       if (!movementFrozen() && !actionLocked() && animationTick > 0 && !"default".equals(currentState)) {
          ClientInput input = player.input;
          boolean isMoving = input.getMoveVector().lengthSquared() > 1.0E-5F;
@@ -231,6 +243,11 @@ public final class ActionStateMachine {
 
    public static boolean movementFrozen() {
       return lockDelayFrames <= 0 && movementLockFrames > 0;
+   }
+
+   /** 把当前这一段动作标成「移动输入打不断」（闪避用）；见 {@link #movementInterruptImmune}。 */
+   public static void markMovementInterruptImmune() {
+      movementInterruptImmune = true;
    }
 
    public static boolean canInterrupt(int requestedPriority) {
@@ -394,6 +411,7 @@ public final class ActionStateMachine {
       AttackApproach.cancel();
       BurstDive.cancel();
       dispatchCleanup(currentState, player);
+      movementInterruptImmune = false;
       if (followUpState != null) {
          LOGGER.info("[MineGenshin][收尾] 排队中的 '{}' 被 '{}' 顶掉", followUpState, newState);
       }
@@ -432,6 +450,7 @@ public final class ActionStateMachine {
       actionLockFrames = 0;
       lockDelayFrames = 0;
       movementLockFrames = 0;
+      movementInterruptImmune = false;
       clearFollowUpState();
       ClientTaskQueue.clear();
       if (player != null) {

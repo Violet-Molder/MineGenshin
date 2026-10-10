@@ -78,10 +78,19 @@ public class CharacterTickHandler {
                         com.linweiyun.elementlib.core.system.about.AttachmentProfile.WEAK.getBaseQuantity());
             }
             PlungeState.end(player);
+        } else if (player.getAbilities().flying) {
+            // 创造飞行会自己回来：这里把它按掉继续下劈，不能当成「打空」把这一下作废
+            player.getAbilities().flying = false;
+            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                serverPlayer.onUpdateAbilities();
+            }
         } else if (player.isInWater() || player.onClimbable()
-                || player.getAbilities().flying || player.isFallFlying() || player.isSpectator()) {
+                || player.isSpectator()) {
             // 没砸到地面（水里 / 梯子 / 开飞）：这一下打空，伤害不放
             PlungeState.end(player);
+        } else if (player.isFallFlying()) {
+            // 鞘翅姿态自己回来了：按掉继续下劈，不作废这一下
+            player.stopFallFlying();
         } else if (PlungeState.elapsedTicks(player) > PlungeState.MAX_TICKS) {
             // 兜底：怎么都不落地（蛛网 / 卡住 / 包丢了）就按打空结束，别把输入锁死
             PlungeState.end(player);

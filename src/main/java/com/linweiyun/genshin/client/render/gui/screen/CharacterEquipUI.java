@@ -80,6 +80,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 public final class CharacterEquipUI {
    private static final Identifier STYLESHEET = Identifier.parse("minegenshin:lss/character_equip.lss");
@@ -265,7 +266,7 @@ public final class CharacterEquipUI {
    }
 
    private static String avatarTexture(PGCharacter character) {
-      return "minegenshin:character/" + character.getTextureId() + "/textures/avatar_hud.png";
+      return CharacterResourceSources.avatarHud(character.getTextureId());
    }
 
    private static void fillMenu(CharacterEquipUI.State st) {
@@ -581,6 +582,9 @@ public final class CharacterEquipUI {
                   break;
                 case TALENT:
                    buildTalentPage(st);
+                   break;
+                case SKILL:
+                   buildSkillPage(st);
                    break;
                 case APPEARANCE:
                    buildAppearancePage(st);
@@ -1227,6 +1231,42 @@ public final class CharacterEquipUI {
 
    private static String talentKindKey2(int kind) {
       return "gui.minegenshin.character_equip.talent.kind." + talentKindKey(kind);
+   }
+
+   /** 技能页：左侧技能列表 + 右侧整页技能描述，文本全部走语言文件。 */
+   private static void buildSkillPage(CharacterEquipUI.State st) {
+      UIElement listBox = new UIElement().setId("ce-skill-list-box");
+      ScrollerView scroller = newScroller("ce-skill-scroller");
+      UIElement list = new UIElement().setId("ce-skill-list").addClass("ce-scroll-body");
+
+      for (int kind = 0; kind <= 4; kind++) {
+         list.addChild(talentRow(st, kind));
+      }
+
+      scroller.addScrollViewChild(list);
+      listBox.addChild(scroller);
+      st.panel.addChild(listBox);
+
+      int kind = clampTalent(st.selTalent);
+      st.detailCard.layout(l -> l.display(TaffyDisplay.FLEX));
+      UIElement card = new UIElement().addClass("ce-detail");
+      card.addChild(line(talentKindKey2(kind), "ce-note"));
+      card.addChild(line(Component.literal(talentName(st.character, kind)), "ce-title-name"));
+      card.addChild(line(unlockedLabelKey(st, kind), "ce-value-dim"));
+
+      ScrollerView descScroll = newScroller("ce-skill-detail");
+      UIElement desc = new UIElement();
+      desc.addChild(wrapLabel(Component.literal(talentDesc(st.character, kind))));
+      descScroll.addScrollViewChild(desc);
+      card.addChild(descScroll);
+
+      st.detailCard.addChild(card);
+   }
+
+   private static String unlockedLabelKey(CharacterEquipUI.State st, int kind) {
+      return talentUnlocked(st, kind)
+              ? "gui.minegenshin.character_equip.unlocked"
+              : "gui.minegenshin.character_equip.locked";
    }
 
    private static UIElement talentRow(CharacterEquipUI.State st, int kind) {
@@ -2499,6 +2539,7 @@ public final class CharacterEquipUI {
       ARTIFACT,
       CONSTELLATION,
       TALENT,
+      SKILL,
       /** 外观：装扮项那一页（内容来自角色自己的配置页，见 buildAppearancePage）。 */
       APPEARANCE,
       PROFILE;

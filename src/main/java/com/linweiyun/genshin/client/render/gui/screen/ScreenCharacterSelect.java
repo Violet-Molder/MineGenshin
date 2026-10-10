@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import com.linweiyun.genshin.asset.source.CharacterResourceSources;
 
 public class ScreenCharacterSelect extends Screen {
   final ModularUI modularUI;
@@ -152,8 +153,7 @@ public class ScreenCharacterSelect extends Screen {
                         .setId("Pose-Stand-" + partyChar.getName().getString())
                         .addClass("character-pose")
                         .style(style -> style.background(
-                                SpriteTexture.of("minegenshin:character/"
-                                        + partyChar.getTextureId() + "/textures/pose_prepare.png")));
+                                SpriteTexture.of(CharacterResourceSources.splash(partyChar.getTextureId()))));
 
             }
         }
@@ -198,8 +198,7 @@ public class ScreenCharacterSelect extends Screen {
                 var characterButton = new UIElement()
                         .addClass("character-avatar")
                         .style(style -> style.background(
-                                SpriteTexture.of("minegenshin:character/"
-                                        + textureId + "/textures/avatar.png")));
+                                SpriteTexture.of(CharacterResourceSources.avatar(textureId))));
 
                 characterButton
                         .addEventListener(UIEvents.MOUSE_ENTER, e -> {
@@ -220,8 +219,7 @@ public class ScreenCharacterSelect extends Screen {
                                     .setId("Pose-Stand-" + ownedChar.getName().getString())
                                     .addClass("character-pose")
                                     .style(style -> style.background(
-                                            SpriteTexture.of("minegenshin:character/"
-                                                    + textureId + "/textures/pose_prepare.png")));
+                                            SpriteTexture.of(CharacterResourceSources.splash(textureId))));
 
                             if (selectedCharacterButton.get() != null
                                     && selectedCharacterButton.get() != characterButton) {

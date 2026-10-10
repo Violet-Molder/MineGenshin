@@ -77,6 +77,12 @@ public final class DamageIndicatorFactory {
                 || ModReactionTypes.is(type, ModReactionTypes.STELLAR_SWIRL_ICE)) {
             return colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
         }
+        if (ModReactionTypes.is(type, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
+            return colorOf(WorldTextColorConfig.CYRO_COLOR);
+        }
+        if (ModReactionTypes.is(type, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)) {
+            return colorOf(WorldTextColorConfig.ELECTRO_COLOR);
+        }
         return colorOf(WorldTextColorConfig.VAPORIZE_COLOR);
     }
 
@@ -605,6 +611,26 @@ public final class DamageIndicatorFactory {
         }
         spawnNumber(target, source.getEntity(), finalDamage,
                 WHITE, getColorForElement(element), Style.NORMAL, options, true);
+    }
+
+    /** 星超导伤害数字：冰段用冰元素色、雷段用雷元素色。 */
+    public static void stellarDamageGradient(LivingEntity target, DamageSource source, float finalDamage,
+                                             GenshinElement element, ElementalReactionType reactionType,
+                                             Options options) {
+        if (source == null) {
+            return;
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
+            spawnNumber(target, source.getEntity(), finalDamage,
+                    WHITE, colorOf(WorldTextColorConfig.CYRO_COLOR), Style.NORMAL, options, true);
+            return;
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)) {
+            spawnNumber(target, source.getEntity(), finalDamage,
+                    WHITE, colorOf(WorldTextColorConfig.ELECTRO_COLOR), Style.NORMAL, options, true);
+            return;
+        }
+        stellarDamageGradient(target, source, finalDamage, element, options);
     }
 
     public static void stellarIceDamageGradient(LivingEntity target, DamageSource source, float finalDamage) {

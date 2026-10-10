@@ -46,15 +46,18 @@ final class StellarDamage {
     }
 
     /** 单人理论伤害的展开公式（不含加权）—— 多人时单独占一行。 */
-    private static final String SINGLE_FORMULA_BY_SKILL =
-            "单人理论伤害 = 【攻击力 × 星辉系数 × (1 + 基础倍率提升)】"
-                    + " × 【1 + 16×元素精通/(元素精通+2000) + 星烁加成】"
-                    + " × 【1 - 抗性】 × 【1 + 暴击伤害】 × 【擢升区】 × 【大权区】";
-
-    private static final String SINGLE_FORMULA_BY_REACTION =
-            "单人理论伤害 = 【(聚变等级系数 × 星辉系数 × (1 + 基础倍率提升) + 基础附加)】"
-                    + " × 【1 + 16×元素精通/(元素精通+2000) + 星烁加成】"
-                    + " × 【1 - 抗性】 × 【1 + 暴击伤害】 × 【擢升区】 × 【大权区】";
+    private static String singleFormula(boolean byReaction) {
+        double a = ReactionConfig.EM_A_STELLAR_SWIRL.get();
+        double b = ReactionConfig.EM_B_STELLAR_SWIRL.get();
+        String base = byReaction
+                ? "【(聚变等级系数 × 星辉系数 × (1 + 基础倍率提升) + 基础附加)】"
+                : "【攻击力 × 星辉系数 × (1 + 基础倍率提升)】";
+        return "单人理论伤害 = " + base
+                + " × 【1 + " + DamageTrace.fmt(a) + "×元素精通/(元素精通+"
+                + DamageTrace.fmt(b) + ") + 星烁加成】"
+                + " × 【反应倍率】"
+                + " × 【1 - 抗性】 × 【1 + 暴击伤害】 × 【擢升区】 × 【大权区】";
+    }
 
     private static final String COMBINE_FORMULA =
             "伤害 = 【第1名】 × 0.6 + 【第2名】 × 0.3 + 【第3名】 × 0.05 + 【第4名】 × 0.05";
@@ -98,7 +101,8 @@ final class StellarDamage {
         List<String> valueTexts = tracing ? new ArrayList<>(contributors.size()) : null;
         for (PGCharacter contributor : contributors) {
             Result result = calculatePerCharacter(contributor, target, reactionType, coefficient,
-                    baseBonusMult, baseBonusFlat, byReaction, spec.getSovereigntyBonus());
+                    baseBonusMult, baseBonusFlat, byReaction, spec.getSovereigntyBonus(),
+                    spec.getStellarReactionCoefficient());
             results.add(result);
             if (valueTexts != null) {
                 valueTexts.add(result.valueText);
@@ -114,7 +118,7 @@ final class StellarDamage {
             trace.slim(noWeighting
                     ? "伤害 = 单人理论伤害（直伤，不参与加权）"
                     : "伤害 = 单人理论伤害 × 权重（逐名求和）");
-            trace.fullLine(byReaction ? SINGLE_FORMULA_BY_REACTION : SINGLE_FORMULA_BY_SKILL);
+            trace.fullLine(singleFormula(byReaction));
             if (!noWeighting) {
                 trace.fullLine(COMBINE_FORMULA);
             }
@@ -149,13 +153,14 @@ final class StellarDamage {
                                         ElementalReactionType reactionType, double coefficient,
                                         float baseBonusMult, float baseBonusFlat, boolean byReaction) {
         return calculatePerCharacter(character, target, reactionType, coefficient,
-                baseBonusMult, baseBonusFlat, byReaction, 0f);
+                baseBonusMult, baseBonusFlat, byReaction, 0f, 1f);
     }
 
     private static Result calculatePerCharacter(PGCharacter character, LivingEntity target,
                                                 ElementalReactionType reactionType, double coefficient,
                                                 float baseBonusMult, float baseBonusFlat,
-                                                boolean byReaction, float sovereigntyBonus) {
+                                                boolean byReaction, float sovereigntyBonus,
+                                                float reactionCoefficient) {
         float atk = character == null ? 0f
                 : (float) character.getData().getAttributeTotalValue(ModAttributes.ATK.value());
         int level = com.linweiyun.genshin.core.system.combat.damage.CombatEntityAccessor
@@ -179,7 +184,7 @@ final class StellarDamage {
                 StellarGlimmerBranch.damageElementOf(reactionType), true);
         float sovereignty = 1.0f + sovereigntyBonus;
 
-        float damage = (float) (baseBoost * (1f + emBonus + glimmerBonus)
+        float damage = (float) (baseBoost * reactionCoefficient * (1f + emBonus + glimmerBonus)
                 * resistanceZone * critRoll.zone()
                 * DamageZones.elevationZone(character, branch) * sovereignty);
 
@@ -198,7 +203,10 @@ final class StellarDamage {
                     : DamageTrace.fmt(atk) + " × " + DamageTrace.fmt(coefficient)
                             + " × (1 + " + DamageTrace.fmt(baseBonusMult) + ")"
                             + " + " + DamageTrace.fmt(baseBonusFlat)) + "】"
-                    + " × 【1 + 16×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+2000)"
+                    + " × 【" + DamageTrace.fmt(reactionCoefficient) + "】"
+                    + " × 【1 + " + DamageTrace.fmt(ReactionConfig.EM_A_STELLAR_SWIRL.get())
+                            + "×" + DamageTrace.fmt(em) + "/(" + DamageTrace.fmt(em) + "+"
+                            + DamageTrace.fmt(ReactionConfig.EM_B_STELLAR_SWIRL.get()) + ")"
                             + " + " + DamageTrace.fmt(glimmerBonus) + "】"
                     + " × 【1 - " + DamageTrace.fmt(rawResistance) + "】"
                     + " × 【" + (critRoll.isCrit()

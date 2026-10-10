@@ -43,8 +43,10 @@ import java.util.List;
         public final float finalCharge;          // 大招能量回复
         public final int cooldown;               // 冷却（刻），0 表示无冷却
         public final int comboWindow;            // 连击窗口（刻），后摇结束后可接下一段的窗口
-        public String comboEndAnim = null;       // 最后一段连招结束后的收尾动画（仅最终段生效）
-        public int comboEndTicks = DEFAULT_COMBO_END_TICKS; // 收尾动画播多少刻
+        /** 这一段播完后接的后续动画名；null = 不接。连招的收尾段与两段式战技的第二段都用它，见 {@link #withComboEnd}。 */
+        public String comboEndAnim = null;
+        /** 后续动画播多少刻。 */
+        public int comboEndTicks = DEFAULT_COMBO_END_TICKS;
 
         /**
          * 这一段的「生效攻击距离」（格）。索敌距离通常大于它，差额就是突进要补的距离。

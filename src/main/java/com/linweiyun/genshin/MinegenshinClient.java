@@ -20,10 +20,12 @@ import com.linweiyun.genshin.content.entities.teyvat.monster.slime.LargeCryoSlim
 import com.linweiyun.genshin.client.combat.action.CharacterAnimationRegistry;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProjectileRenderer;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaSpiritSwordRenderer;
+import com.linweiyun.genshin.content.entities.teyvat.skill.miyabi.MiyabiSlashEffectRenderer;
 import com.linweiyun.genshin.client.render.entity.ElementalOrbRenderer;
 import com.linweiyun.genshin.client.render.entity.FieldTalismanSpiritRender;
 import com.linweiyun.genshin.client.render.entity.IceBlockProjectileRenderer;
 import com.linweiyun.genshin.client.render.entity.StellarVortexRenderer;
+import com.linweiyun.genshin.client.render.entity.StellarPrismRenderer;
 import com.linweiyun.genshin.client.render.entity.ThunderCloudRenderer;
 import com.linweiyun.genshin.client.render.gui.screen.ScreenArtifactInfo;
 import com.linweiyun.genshin.core.attachment.ClientAttachmentSync;
@@ -135,8 +137,11 @@ public class MinegenshinClient {
         event.registerEntityRenderer(
                 ModEntities.STELLAR_VORTEX.get(), StellarVortexRenderer::new);
         event.registerEntityRenderer(
+                ModEntities.STELLAR_PRISM.get(), StellarPrismRenderer::new);
+        event.registerEntityRenderer(
                 ModEntities.VESNA_ATTACK_PROJECTILE.get(), VesnaAttackProjectileRenderer::new);
         event.registerEntityRenderer(ModEntities.VESNA_SPIRIT_SWORD.get(), VesnaSpiritSwordRenderer::new);
+        event.registerEntityRenderer(ModEntities.MIYABI_SLASH.get(), MiyabiSlashEffectRenderer::new);
         // 冰块投射物：原版方块模型，不需要 GeckoLib
         event.registerEntityRenderer(ModEntities.ICE_BLOCK.get(), IceBlockProjectileRenderer::new);
     }

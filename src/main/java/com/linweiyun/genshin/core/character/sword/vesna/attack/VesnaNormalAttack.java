@@ -45,9 +45,7 @@ public final class VesnaNormalAttack {
 
         int stage = Math.max(1, comboStage);
         int naLevel = Math.max(1, character.getData().getNormalAttackLevel());
-        float multiplier = (float) (
-                ShenheTalentConfig.getNABase(stage)
-                        + ShenheTalentConfig.getNAPerLevel(stage) * (naLevel - 1));
+        float multiplier = (float) ShenheTalentConfig.getNormalAttack(stage, naLevel);
 
         Vec3 startPos = player.position();
         Vec3 lookDir = CombatAim.direction(player);

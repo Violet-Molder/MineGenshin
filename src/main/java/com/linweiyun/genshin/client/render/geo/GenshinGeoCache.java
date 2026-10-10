@@ -10,6 +10,7 @@ import com.linweiyun.genshin.asset.GenshinAssets;
 import com.linweiyun.genshin.asset.ModAssetPaths;
 import com.linweiyun.genshin.asset.pack.GeoPackSource;
 import com.linweiyun.genshin.asset.pack.GenshinGsonLoader;
+import com.linweiyun.genshin.core.character.ib.IBLink;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import com.mojang.serialization.JsonOps;
@@ -67,8 +68,41 @@ public final class GenshinGeoCache implements PreparableReloadListener {
             "geckolib/animations",
     };
 
+    /**
+     * 联动模组（IB）的根目录 —— 只有在对方加载时才扫。
+     *
+     * <p>{@code ib_character/<id>/renderer/} 是对方 26.2 的角色模型 / 动画（{@code render.json} 指的那些文件）。
+     * 对方放在 GeckoLib 原生根（{@code geckolib/models|animations}，文件名不带 {@code .geo.json} /
+     * {@code .animation.json}）下的资源，例如重击的斩击 {@code miyabi_slash}，由 GeckoLib 自己的缓存提供。
+     */
+    private static final String[] IB_ROOTS = {
+            "ib_character",
+    };
+
     private static final String MODEL_SUFFIX = ".geo.json";
     private static final String ANIMATION_SUFFIX = ".animation.json";
+
+    /**
+     * 本次要扫的「命名空间 + 根目录」组合。
+     *
+     * <p>本 MOD 的五个根永远扫；对方的三个根只在对方加载时补上 —— 对方不在时一个多余的查询都不做。
+     */
+    private static List<ScanTarget> scanTargets() {
+        List<ScanTarget> targets = new ArrayList<>(ROOTS.length + IB_ROOTS.length);
+        for (String root : ROOTS) {
+            targets.add(new ScanTarget(Minegenshin.MOD_ID, root));
+        }
+        if (IBLink.isLoaded()) {
+            for (String root : IB_ROOTS) {
+                targets.add(new ScanTarget(IBLink.MOD_ID, root));
+            }
+        }
+        return targets;
+    }
+
+    /** 一个扫描目标：扫哪个命名空间的哪个根目录。 */
+    private record ScanTarget(String namespace, String root) {
+    }
 
     /** 烘培好的模型：键是剥掉前缀后缀的资源路径（与 GeckoLib 的缓存键一致）。 */
     private static volatile Map<Identifier, BakedGeoModel> models = Map.of();
@@ -219,21 +253,26 @@ public final class GenshinGeoCache implements PreparableReloadListener {
         // 整包里的条目：同名时用哪一份由 GeoPackSource.usePacked 裁定（整包优先，local/ 例外）
         Map<Identifier, byte[]> packedEntries = GeoPackSource.entries(resourceManager);
 
-        for (String root : ROOTS) {
+        for (ScanTarget target : scanTargets()) {
+            String namespace = target.namespace();
+            String root = target.root();
             // 扫描阶段不受门禁影响：缓存始终全量扫描，
             // 角色 Geo 是否启用的门禁只在校验渲染执行时生效（见 CharacterRenderDispatcher）。
             Map<Identifier, Resource> resources;
             try {
-                resources = resourceManager.listResources(root, id -> id.getNamespace().equals(Minegenshin.MOD_ID));
+                resources = resourceManager.listResources(root, id -> id.getNamespace().equals(namespace));
             } catch (Exception e) {
-                LOGGER.warn("[GenshinGeoCache] 扫描根 '{}' 失败：{}", root, e.toString());
+                LOGGER.warn("[GenshinGeoCache] 扫描根 '{}:{}' 失败：{}", namespace, root, e.toString());
                 continue;
             }
 
             Set<Identifier> candidates = new LinkedHashSet<>(resources.keySet());
-            for (Identifier packed : packedEntries.keySet()) {
-                if (packed.getPath().startsWith(root + "/") && !resources.containsKey(packed)) {
-                    candidates.add(packed);
+            // 整包 / 免打包那套只属于本 MOD 的命名空间，对方的资源不进这个池子
+            if (Minegenshin.MOD_ID.equals(namespace)) {
+                for (Identifier packed : packedEntries.keySet()) {
+                    if (packed.getPath().startsWith(root + "/") && !resources.containsKey(packed)) {
+                        candidates.add(packed);
+                    }
                 }
             }
 
@@ -284,7 +323,14 @@ public final class GenshinGeoCache implements PreparableReloadListener {
                 }
 
                 try {
-                    if (isModel) {
+                    if (isModel && IBLink.MOD_ID.equals(namespace)) {
+                        // 对方的模型：先用普通资源读取，拿到加密字节 / 残骸时再调对方的解密模块（只调不改）
+                        byte[] bytes = IBLink.modelBytes(IBLink.trackIdOf(raw), IBLink.readBytes(onDisk));
+                        if (bytes == null) {
+                            continue;
+                        }
+                        foundModels.put(key, LOADER.bakeGeckoLibModelFile(raw, LOADER.readPacked(raw, bytes)));
+                    } else if (isModel) {
                         var json = onDisk != null
                                 ? LOADER.deserializeGeckoLibModelFile(raw, onDisk)
                                 : LOADER.readPacked(raw, packed);
@@ -301,7 +347,7 @@ public final class GenshinGeoCache implements PreparableReloadListener {
             }
 
             LOGGER.info("[GenshinGeoCache] 扫描根 '{}'：命中资源 {} 个（磁盘 {} / 资源包 {}），烘培成功 {} 个",
-                    root, candidates.size(), fromDisk, fromPack,
+                    namespace + ":" + root, candidates.size(), fromDisk, fromPack,
                     foundModels.size() + foundAnimations.size() - before);
         }
 

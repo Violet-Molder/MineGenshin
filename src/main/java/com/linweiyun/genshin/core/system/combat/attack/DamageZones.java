@@ -1,6 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.attack;
 
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.config.reaction.ReactionConfig;
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.genshin.core.system.combat.damage.CombatEntityAccessor;
 import com.linweiyun.genshin.core.system.combat.damage.CombatMath;
@@ -343,12 +344,16 @@ public final class DamageZones {
                 || ModReactionTypes.is(reactionType, ModReactionTypes.BURNING)
                 || ModReactionTypes.is(reactionType, ModReactionTypes.BLOOM)
                 || ModReactionTypes.is(reactionType, ModReactionTypes.HYPERBLOOM)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.BURGEON)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.BURGEON)) {
+            return (float) ((16.0 * em) / (em + 2000.0));
+        }
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)
                 || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_ICE)
                 || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)
                 || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
-            return (float) ((16.0 * em) / (em + 2000.0));
+            double a = ReactionConfig.EM_A_STELLAR_SWIRL.get();
+            double b = ReactionConfig.EM_B_STELLAR_SWIRL.get();
+            return (float) ((a * em) / (em + b));
         }
         return 0f;
     }

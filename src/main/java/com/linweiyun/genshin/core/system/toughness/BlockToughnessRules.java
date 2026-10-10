@@ -1,9 +1,16 @@
 package com.linweiyun.genshin.core.system.toughness;
 
 import com.linweiyun.genshin.config.PoiseConfig;
+import com.linweiyun.genshin.Minegenshin;
+import com.linweiyun.genshin.core.world.ModGameRules;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -12,10 +19,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
-/** 方块韧性表：显式注册优先，未注册的按硬度换算。 */
+/**
+ * 方块韧性表。
+ *
+ * <p>谁能被攻击破坏由三档决定，顺序如下：
+ * <ol>
+ *   <li>{@link #register} 显式登记过的 —— 永远参与；</li>
+ *   <li>{@link #ATTACK_BREAKABLE} 标签里的 —— 参与；</li>
+ *   <li>其余方块：游戏规则 {@code minegenshin:attack_breaks_blocks} 打开才按硬度换算参与
+ *       （默认关闭，也就是打不动）。</li>
+ * </ol>
+ */
 public final class BlockToughnessRules {
 
     public static final float NOT_PARTICIPATING = -1f;
+
+    /** 「可以被攻击破坏」的方块标签 —— 提瓦特矿物之类以后加进这个标签即可。 */
+    public static final TagKey<Block> ATTACK_BREAKABLE =
+            TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(Minegenshin.MOD_ID, "attack_breakable"));
 
     /** 大剑两刀消耗石头 80% 推出：214.8 / 0.8 / 1.5 = 179。 */
     public static final float HARDNESS_TO_TOUGHNESS = 179f;
@@ -49,6 +70,9 @@ public final class BlockToughnessRules {
                 || state.getBlock() instanceof LiquidBlock) {
             return NOT_PARTICIPATING;
         }
+        if (!state.is(ATTACK_BREAKABLE) && !attackBreakingEnabled(level)) {
+            return NOT_PARTICIPATING;
+        }
         float hardness = state.getDestroySpeed(level, pos);
         if (hardness <= 0f) {
             return NOT_PARTICIPATING;
@@ -60,5 +84,16 @@ public final class BlockToughnessRules {
 
     public static boolean participates(BlockState state, @Nullable BlockGetter level, @Nullable BlockPos pos) {
         return toughnessOf(state, level, pos) > 0f;
+    }
+
+    /** 这个方块有没有被「点名」可破坏（不看作弊规则）。 */
+    public static boolean namedBreakable(BlockState state) {
+        return state != null && state.is(ATTACK_BREAKABLE);
+    }
+
+    private static boolean attackBreakingEnabled(@Nullable BlockGetter level) {
+        return level instanceof ServerLevel world
+                && ModGameRules.ATTACK_BREAKS_BLOCKS != null
+                && world.getGameRules().get(ModGameRules.ATTACK_BREAKS_BLOCKS);
     }
 }

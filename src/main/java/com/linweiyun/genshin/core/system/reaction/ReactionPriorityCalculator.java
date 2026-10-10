@@ -102,6 +102,11 @@ public class ReactionPriorityCalculator {
         return hasStellarSwirlHousehold(level);
     }
 
+    /** 队伍里有没有星超导户口 —— 有的话超导要转成星超导。 */
+    public static boolean hasStellarConduceHousehold(ServerLevel level) {
+        return StellarGlimmer.conduceHousehold(level) != null;
+    }
+
     /** 队伍里能进入星烁状态的角色（和户口无关）。 */
     public static List<PGCharacter> getStellarStateHolders(ServerLevel level) {
         List<PGCharacter> result = new ArrayList<>();

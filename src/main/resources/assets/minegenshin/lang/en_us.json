@@ -6,6 +6,7 @@
   "character.name.sandrone": "Test",
   "character.name.columbina": "Columbina",
   "character.name.vesna": "Vesna",
+  "character.name.miyabi": "Miyabi",
   "minegenshin.configuration.section.minegenshin.character.toml": "Character Config",
   "minegenshin.configuration.section.minegenshin.character.toml.title": "Character Config",
   "minegenshin.configuration.section.minegenshin.world.text.color.toml": "World Text Color Config",
@@ -935,5 +936,12 @@
   "minegenshin.configuration.section.minegenshin.poise.toml.title": "Poise Config",
   "minegenshin.configuration.poise.freeze_force_break": "Freeze Breaks Poise",
   "minegenshin.configuration.poise.reaction_poise": "Reactions Deal Poise",
-  "minegenshin.configuration.poise.block_hardness_multiplier": "Block Toughness Multiplier"
+  "minegenshin.configuration.poise.block_hardness_multiplier": "Block Toughness Multiplier",
+  "gamerule.minegenshin:attack_breaks_blocks": "Attacks break blocks",
+  "gamerule.minegenshin:attack_breaks_blocks.description": "Off: only blocks named in #minegenshin:attack_breakable (Teyvat ores, for example) can be broken by attacks. On: every block with hardness takes part.",
+  "minegenshin.configuration.performance.shadow_alpha": "Text Shadow Opacity (1 = as solid as the text)",
+  "gui.minegenshin.character_equip.talent.miyabi.normal.desc": "Normal Attack - Windflower: up to five hits; hits 1-3 deal Physical DMG and hits 4-5 deal Cryo DMG. Under Radiance: Stellar Conduce, hits 4-5 become Stellar Conduce DMG (Cryo). Charged Attack deals Physical DMG and fires three sword qi that deal Cryo DMG (92% at Lv1, 210% at Lv10); under Radiance: Stellar Conduce the qi become Stellar Conduce DMG and grant one stack of Frostflake. In Snow state the Charged Attack becomes Frost Moon: Stellar Conduce DMG plus eight sword qi around the character.",
+  "gui.minegenshin.character_equip.talent.miyabi.skill.desc": "Elemental Skill - Deep Snow: slash forward for Cryo AoE DMG (235% at Lv1 to 432% at Lv10) and gain one stack of Frostflake. Cooldown 15s. Under Radiance: Stellar Conduce it becomes Stellar Conduce DMG (295% to 590%), consumes all Frostflake for +10% DMG per stack, and grants Snow Cover for 8s (each stack gives +8% Stellar Conduce DMG, +1% per talent level). Consuming more than 4 stacks enters Snow state for 8s: Frostflake converts to Rime, and the skill becomes Flying Snow (separate 4s cooldown). Flying Snow consumes all Rime for 432% to 864% Stellar Conduce DMG, with +(10 + 1.5 x level)% per Rime stack.",
+  "gui.minegenshin.character_equip.talent.miyabi.passive1.desc": "Stellar Household: party members triggering Superconduct trigger Stellar Conduce instead, and the whole party gains bonus base DMG for Stellar Conduce based on Miyabi ATK: +0.7% per 100 ATK, up to +14%.",
+  "gui.minegenshin.character_equip.page.skill": "Skills"
 }

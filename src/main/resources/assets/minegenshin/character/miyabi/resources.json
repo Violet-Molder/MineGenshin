@@ -1,0 +1,18 @@
+{
+  "ib_character": "miyabi",
+  "sources": {
+    "model": "@ib",
+    "animation": "@ib",
+    "texture": "@ib",
+    "avatar": "@ib-item",
+    "avatar_hud": "@ib-item",
+    "splash": "character/miyabi/textures/pose_prepare.png",
+    "splash_ready": "character/miyabi/textures/pose_already.png"
+  },
+  "bones": {
+    "body_root": "bone2",
+    "weapon": [
+      "blade_right"
+    ]
+  }
+}

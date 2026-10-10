@@ -58,6 +58,62 @@
 
 - `docs/systems/combat-attack.md` 改口径：攻击相关处理一律订阅事件网络，不再「都挤进一个入口」。
 
+### IB 联动与星见雅（2026-10-09 追加）
+
+把 1.21.1 线的 IB 联动整套与这两天的行为修复移植过来。
+
+**新增**
+
+- **IB 联动地基**：`IBCharacter`（联动角色标记）、`IBLink`（对方在不在 / 读对方的角色定义 /
+  取对方的模型字节）、`IBRenderDefinition`（对方 `basics.json` + `renderer/render.json` 的归拢）、
+  `IBDecryptBridge`（反射调对方的模型解密入口 `ModelDataPack#getResource`，只调不改）；
+- **角色资源来源表**：`assets/minegenshin/character/<id>/resources.json` 逐项声明
+  模型 / 动画 / 贴图 / 头像 / 立绘 / 额外动画从哪里读，取值支持 `@ib`、`@ib-item`、`namespace:path`；
+  还能声明模型骨骼约定（`bones.body_root` / `weapon` / `hide`）—— 对方的模型不能改，
+  武器挂在哪根骨骼必须由本 MOD 声明；界面头像 / 立绘也改走来源表，立绘缺失时退到头像；
+- **第一个联动角色：星见雅**（五星单手剑，UID 115201，冰元素），模型 / 动画 / 贴图 / 头像取自 IB，
+  立绘归本 MOD；角色注册、动画登记、抽卡池都以「对方在」为前提；
+  - **普攻五段**：`attack_1..attack_5`，时长取素材那五段（40 / 48 / 25 / 30 / 50 刻）；
+  - **战技**：`skill_energy`（25 刻）+ 收尾段 `skill_energy_continue`（60 刻）；
+  - **重击**：`heavy_1`（15 刻），长按 6 刻起手；
+  - **大招**：`final`（100 刻）；
+  - 动作音效沿用素材的音效事件（`imaginary_branch:miyabi_*`）；
+  - **星超导户口**：按自身攻击力给全队星超导基础伤害提升（只声明，转化未实现）；
+- **星见雅的重击特效**：素材里她的重击是一枚**斩击模型**，本 MOD 用自己的实体
+  `minegenshin:miyabi_slash` 复现：正前一道 + 左右各偏 0.6 共三道，**只画模型、不结算伤害**
+  （伤害走本 MOD 自己的动作管线）；模型 / 贴图 / 动画按来源表从 IB 读，不需要 Photon；
+- **星见雅的伤害结算**：普攻五段 / 重击 / 战技两段 / 大招 / 下落攻击各自在自己的伤害点打一下，
+  全是冰元素范围伤害；倍率、附着、衰减走本 MOD 那一套；多段伤害一律写成多个 `hits[]`；
+- **近战判定盒修宽**：从玩家自己的碰撞箱沿视线扫出去再外扩（横向 1.0~1.5 格、上下 1.5 格）；
+- **星见雅的下落攻击姿态**：素材里没有下劈那一段，借普攻第二段动画的中间姿态，
+  下落期间状态名走 `plunge`、由动画别名指到 `attack_2`，时间轴钉在 `0.3 × 20` 刻；
+- **新游戏规则 `minegenshin:attack_breaks_blocks`**（默认**关闭**）：关闭时只有被点名的方块
+  （`#minegenshin:attack_breakable` 标签、或代码里 `BlockToughnessRules.register` 登记过的）
+  参与韧性；打开后恢复「所有有硬度的方块都参与」；
+- **飘字阴影不透明度**：新配置 `performance.shadow_alpha`（默认 0.45）。
+
+**变更**
+
+- `GenshinGeoCache` 在联动模组加载时额外扫描对方的 `ib_character`（角色模型 / 动画）与
+  `geckolib/models|animations`（例如斩击 `miyabi_slash`）；
+- `GenshinAssets.fromModelPath / fromAnimationPath / fromTexturePath` 支持 `namespace:path` 写法；
+- `ActionStep.comboEndAnim`（后续动画名）不再只对连招最后一段生效：战技 / 重击 / 大招也会读它
+  （`ResourceDrivenActionHandler.queueFollowUp`）；
+- 开发运行把临时目录固定到项目内的 `build/dev-temp`（Codex 会话给 C 盘 `%TEMP%` 加了沙箱 ACL，
+  JDK 在那里建不出 NIO selector 的自连接管道，表现是打开单人存档时崩在 `Load world`）；
+- `build.gradle` 增加**本地联调**段（仅开发运行环境）：把 IB 26.2 的产物与它的必需前置 Curios
+  挂进 `runClient / runServer / runData`，不进产物、不影响发布构建；候选产物逐个读 jar 里的
+  minecraft 版本区间核对，本地依赖 jar 放在项目内的 `libs/`（不进仓库，见 `.gitignore`）。
+
+**修复**
+
+- **下落攻击**：状态名 `plunge` 由动画别名指到 `attack_2`；每刻压制创造飞行与滑翔；
+  中途作废时发 `characterPlungeCancelRPCPacket` 清服务端 `PlungeState`（否则那条状态会挂到
+  玩家下次落地，「正常落地」也会按下落攻击结算）；姿态用动画时间轴钉在目标刻来冻结；
+- **重击清连击段数**：客户端与服务端两份都要清，否则下一次普攻会接着上一段往下算；
+- **单手剑 / 长柄武器的重击开头那一下普攻只在「该是第 1 段」时打**
+  （`deferNormalAttackOnPress` 判据 + `comboStage > 1`）；
+
 ---
 
 ## 1.0.7 — 2026-09-28（内部版本）

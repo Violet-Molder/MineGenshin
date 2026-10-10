@@ -18,6 +18,7 @@ public class PerformanceConfig {
    public static BooleanValue BATCH_SUBMIT;
    public static BooleanValue SHADOW;
    public static DoubleValue SHADOW_OFFSET;
+   public static DoubleValue SHADOW_ALPHA;
    public static BooleanValue RENDER_OPTIMIZE_CHARACTER;
    public static BooleanValue DEBUG_DISABLE_BONE_UPDATERS;
    public static BooleanValue DEBUG_DISABLE_SUPPORT_LAYERS;
@@ -64,6 +65,9 @@ public class PerformanceConfig {
       SHADOW_OFFSET = builder.translation("minegenshin.configuration.performance.shadow_offset")
          .comment("阴影相对文字往右下偏多少，单位是「字体像素」——也就是跟着飘字大小等比缩放的量。0 = 阴影被正文字压住（等于看不见），1 = 与香草文字阴影同距。飘字在世界空间里比原版 HUD 的同类文字大（约 1.36 倍命名牌），同一个 1 像素在屏幕上会更显眼，所以默认取一半")
          .defineInRange("shadow_offset", 0.5, 0.0, 2.0);
+      SHADOW_ALPHA = builder.translation("minegenshin.configuration.performance.shadow_alpha")
+         .comment("阴影的不透明度倍率：1 = 和正文一样实，0 = 完全看不见。阴影是同一行字再写一遍，太实会糊进笔画里、连字都变粗，所以默认取 0.45")
+         .defineInRange("shadow_alpha", 0.45, 0.0, 1.0);
       builder.pop();
       builder.push("render-optimize");
       RENDER_OPTIMIZE_CHARACTER = builder.translation("minegenshin.configuration.performance.render_optimize_character")

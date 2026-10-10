@@ -42,6 +42,8 @@ logs/
 !**/src/**/logs/
 
 ### 本地私有目录：不上传 ###
+# 本地联调用的第三方 mod 产物（例如 IB 的 26.2 jar）：只在本机开发环境里加载，不进仓库。
+/libs/
 /src/private/
 
 /src/main/java/com/linweiyun/genshin/test/

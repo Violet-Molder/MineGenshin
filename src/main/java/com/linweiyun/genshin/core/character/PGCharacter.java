@@ -420,6 +420,12 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       return current != null ? current.plungingAnimation() : SkillBase.DEFAULT_PLUNGING_ANIM;
    }
 
+   /** 下落攻击停在这条动画的哪一刻（刻，可带小数）；负数 = 整条循环播。 */
+   public double getPlungingAnimationHoldTick() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingAnimationHoldTick() : -1.0;
+   }
+
    /** 下落攻击的加速下坠速度（格 / 刻，<b>正数 = 向下</b>）。 */
    public double getPlungingFallSpeed() {
       SkillBase current = this.getSkill();

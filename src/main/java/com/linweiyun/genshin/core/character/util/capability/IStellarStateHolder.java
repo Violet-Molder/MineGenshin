@@ -21,4 +21,9 @@ public interface IStellarStateHolder {
     default boolean canHoldStellarState() {
         return true;
     }
+
+    /** 辉映·星超导挂上后持续多少刻；各角色自定。 */
+    default int stellarConduceDurationTicks() {
+        return 160;
+    }
 }

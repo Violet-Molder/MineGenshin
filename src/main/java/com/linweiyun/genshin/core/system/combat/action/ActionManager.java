@@ -61,6 +61,8 @@ public class ActionManager {
          LOGGER.warn("[ActionManager] [{}] requestChargedAttack: actionSet=null", side);
          return false;
       } else {
+         // 重击打断连击段数：服务端这份也要清，否则下一次普攻请求会接着上一段往下算
+         this.resetCombo();
          return this.request(player, character, set.getChargedAttack());
       }
    }

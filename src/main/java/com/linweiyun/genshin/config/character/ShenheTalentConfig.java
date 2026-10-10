@@ -180,6 +180,35 @@ public class ShenheTalentConfig {
         return new ArrayList<>(BY_KEY.keySet());
     }
 
+    /** 五星单手剑普攻逐级倍率表（每段 15 级）。 */
+    private static final double[][] NA_TABLE = {
+            {0.4042, 0.4371, 0.4700, 0.5170, 0.5499, 0.5875, 0.6392, 0.6909, 0.7426, 0.7990, 0.8554, 0.9118, 0.9682, 1.0246, 1.0810},
+            {0.4868, 0.5264, 0.5660, 0.6226, 0.6622, 0.7075, 0.7698, 0.8320, 0.8943, 0.9622, 1.0301, 1.0980, 1.1660, 1.2339, 1.3018},
+            {0.2808, 0.3036, 0.3265, 0.3592, 0.3820, 0.4081, 0.4440, 0.4800, 0.5159, 0.5551, 0.5942, 0.6334, 0.6726, 0.7118, 0.7510},
+            {0.5917, 0.6398, 0.6880, 0.7568, 0.8050, 0.8600, 0.9357, 1.0114, 1.0870, 1.1696, 1.2522, 1.3347, 1.4173, 1.4998, 1.5824},
+            {0.6244, 0.6752, 0.7260, 0.7986, 0.8494, 0.9075, 0.9874, 1.0672, 1.1471, 1.2342, 1.3213, 1.4084, 1.4956, 1.5827, 1.6698},
+            {0.7224, 0.7812, 0.8400, 0.9240, 0.9828, 1.0500, 1.1424, 1.2348, 1.3272, 1.4280, 1.5288, 1.6296, 1.7304, 1.8312, 1.9320},
+    };
+
+    /** 普攻某段、某级的倍率（占攻击力）；越界时钳到表内。 */
+    public static double getNormalAttack(int segment, int level) {
+        if (segment < 1 || segment > NA_TABLE.length) {
+            return 0.0;
+        }
+        double[] row = NA_TABLE[segment - 1];
+        return row[Math.max(1, Math.min(row.length, level)) - 1];
+    }
+
+    /** 五星单手剑重击逐级倍率（占攻击力）。 */
+    private static final double[] CHARGED_TABLE = {
+            1.3304, 1.4387, 1.5470, 1.7017, 1.8100, 1.9338, 2.1039, 2.2741, 2.4443, 2.6299,
+            2.8155, 3.0012, 3.1868, 3.3725, 3.5581
+    };
+
+    public static double getChargedAttack(int level) {
+        return CHARGED_TABLE[Math.max(1, Math.min(CHARGED_TABLE.length, level)) - 1];
+    }
+
     public static double getNABase(int segment) {
         return switch (segment) {
             case 1 -> NA_BASE_1.get();
