@@ -21,7 +21,7 @@ import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 /**
  * 薇斯娜的<b>重击</b>。
  *
- * <p>对索敌目标造成星扩散-风伤害（基于 {@link ElementalReactionType#STELLAR_SWIRL_WIND}）。
+ * <p>对索敌目标造成星扩散的风段伤害（基于 {@link ElementalReactionType#STELLAR_SWIRL_WIND}）。
  * 巡风列装模式下额外发射 2 枚风铃弹射物。
  */
 public final class VesnaChargedAttack {

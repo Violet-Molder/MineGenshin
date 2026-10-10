@@ -904,5 +904,8 @@
   "minegenshin.configuration.section.minegenshin.poise.toml.title": "韧性配置",
   "minegenshin.configuration.poise.freeze_force_break": "冻结直接破韧",
   "minegenshin.configuration.poise.reaction_poise": "反应自带削韧",
-  "minegenshin.configuration.poise.block_hardness_multiplier": "方块韧性换算倍率"
+  "minegenshin.configuration.poise.block_hardness_multiplier": "方块韧性换算倍率",
+  "gamerule.minegenshin:attack_breaks_blocks": "攻击可破坏方块",
+  "gamerule.minegenshin:attack_breaks_blocks.description": "关闭时：只有被点名的方块（#minegenshin:attack_breakable，例如以后的提瓦特矿物）会被攻击破坏，其余方块打不动。打开时：所有有硬度的方块都按硬度换算参与。",
+  "minegenshin.configuration.performance.shadow_alpha": "飘字阴影不透明度（1 = 与正文一样实）"
 }

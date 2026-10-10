@@ -133,7 +133,7 @@ public class VesnaSkill extends SkillBase {
     /**
      * 大招「致礼·献予女皇陛下」的<b>灵剑伤害</b>倍率表（Lv1~Lv15）。
      *
-     * <p>灵剑伤害与「灵剑星扩散伤害」是<b>同一档数值</b>（转成星扩散-风时用同一个倍率），
+     * <p>灵剑伤害与「灵剑星扩散伤害」是<b>同一档数值</b>（转成星扩散的风段时用同一个倍率），
      * 所以只有这一张表。
      */
     public static final float[] BURST_SWORD_DAMAGE = {
@@ -374,7 +374,7 @@ public class VesnaSkill extends SkillBase {
 
     /** 变移第一段：薇斯娜 150% 攻击力的风元素伤害。 */
     private static final float BIANYI_HIT_MULTIPLIER = 1.5f;
-    /** 变移第二段（灵剑）：薇斯娜 200% 攻击力的伤害；星扩散状态下转为星扩散-风直伤。 */
+    /** 变移第二段（灵剑）：薇斯娜 200% 攻击力的伤害；星扩散状态下转为星扩散的风段直伤。 */
     private static final float BIANYI_SPIRIT_SWORD_MULTIPLIER = 2.0f;
     /** 变移的攻击范围（格）。 */
     private static final float BIANYI_RANGE = 2.5f;
@@ -388,7 +388,7 @@ public class VesnaSkill extends SkillBase {
      *   <li>150% 攻击力的<b>风元素伤害</b>（普通直伤）；</li>
      *   <li>200% 攻击力的<b>灵剑伤害</b> ——
      *       「灵剑」现在<b>不生成真实实体</b>（还没做特效），它的含义就是这一下伤害：
-     *       处于<b>辉映·星扩散</b>时转换成「星扩散-风」直伤（走星烁管线）；</li>
+     *       处于<b>辉映·星扩散</b>时转换成「星扩散的风段」直伤（走星烁管线）；</li>
      *   <li>巡风列装模式下额外唤出<b>风翎</b>协同攻击（复用风铃弹射物）。</li>
      * </ol>
      */
@@ -408,7 +408,7 @@ public class VesnaSkill extends SkillBase {
         dealAoeAnemoDamage(player, vesna, center, BIANYI_RANGE, BIANYI_HIT_MULTIPLIER,
                 AttachmentType.WEAK.getInitialAmount(), false);
 
-        // ② 200% 灵剑：星扩散下转成星扩散-风直伤（吃户口基础倍率与大权）
+        // ② 200% 灵剑：星扩散下转成星扩散的风段直伤（吃户口基础倍率与大权）
         dealAoeAnemoDamage(player, vesna, center, BIANYI_RANGE, BIANYI_SPIRIT_SWORD_MULTIPLIER,
                 AttachmentType.WEAK.getInitialAmount(), hasRadianceStellarSwirl(vesna),
                 AttackType.ELEMENTAL_SKILL, DecayGroups.DEFAULT_ELEMENTAL_SKILL,
@@ -584,7 +584,7 @@ public class VesnaSkill extends SkillBase {
     /**
      * 风元素范围伤害（大招 / 战技 / 灵剑共用）。
      *
-     * @param stellarSwirl      是否转化为「星扩散-风」（走星烁管线）
+     * @param stellarSwirl      是否转化为「星扩散的风段」（走星烁管线）
      * @param attackType        攻击类型（决定增伤/衰减标签）
      * @param decayGroup        衰减组别（战技 / 大招各一套）
      * @param sovereigntyBonus  这一段的「大权」加成（整肃层数 ×10%；不是灵剑那几段就传 0）
@@ -607,7 +607,7 @@ public class VesnaSkill extends SkillBase {
 
                     ModDamageSpec spec;
                     if (stellarSwirl) {
-                        // 转成星扩散-风时用<b>同一个倍率</b>（文案里「灵剑伤害」与「灵剑星扩散伤害」同值）
+                        // 转成星扩散的风段时用<b>同一个倍率</b>（文案里「灵剑伤害」与「灵剑星扩散伤害」同值）
                         spec = ModDamageSpec.stellarDirect(
                                 ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(),
                                 elementAmount, multiplier)

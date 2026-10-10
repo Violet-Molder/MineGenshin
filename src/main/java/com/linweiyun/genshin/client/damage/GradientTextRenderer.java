@@ -52,6 +52,14 @@ public final class GradientTextRenderer {
     /** 阴影亮度系数 */
     private static final float SHADOW_BRIGHTNESS = 0.25f;
 
+    /**
+     * 阴影不透明度的兜底倍率（配置没读出来时用）。
+     *
+     * <p>阴影是同一行字再写一遍：不透明度拉满时，笔画边上那半像素会跟正文糊在一起、
+     * 看起来又粗又脏 —— 所以默认给正文的一半不到，只当作一点点托底。
+     */
+    private static final float FALLBACK_SHADOW_ALPHA = 0.45f;
+
     /** 逐顶点上色共用的缓冲包装（只有渲染主线程会碰） */
     private static final GradientBufferSource BUFFER_SOURCE = new GradientBufferSource();
     /** 阴影趟复用的一份位姿，避免每条飘字新建矩阵 */
@@ -67,6 +75,9 @@ public final class GradientTextRenderer {
 
     /** 本帧的阴影右下偏移（字体像素，每帧读一次配置） */
     private static float shadowOffsetPx = FALLBACK_SHADOW_OFFSET_PX;
+
+    /** 本帧的阴影不透明度倍率（每帧读一次配置） */
+    private static float shadowAlpha = FALLBACK_SHADOW_ALPHA;
 
     private GradientTextRenderer() {}
 
@@ -135,10 +146,20 @@ public final class GradientTextRenderer {
         }
     }
 
+    /** 飘字阴影的不透明度倍率（0~1）；配置没加载时用兜底值。 */
+    private static float shadowAlpha() {
+        try {
+            return (float) PerformanceConfig.SHADOW_ALPHA.get().doubleValue();
+        } catch (Throwable ignored) {
+            return FALLBACK_SHADOW_ALPHA;
+        }
+    }
+
     /** 一帧只读一次配置：整帧的阴影开关与偏移必须是同一份快照。 */
     private static void refreshShadowSettings() {
         shadowEnabled = shadowEnabled();
         shadowOffsetPx = shadowOffset();
+        shadowAlpha = shadowAlpha();
     }
 
     // ============================ 顶点包装 ============================
@@ -291,6 +312,9 @@ public final class GradientTextRenderer {
             }
 
             int alpha = this.alpha8;
+            if (this.darken) {
+                alpha = Math.round(alpha * shadowAlpha);
+            }
             if (incomingAlpha8 < 255) {
                 alpha = alpha * Math.max(0, incomingAlpha8) / 255;
             }

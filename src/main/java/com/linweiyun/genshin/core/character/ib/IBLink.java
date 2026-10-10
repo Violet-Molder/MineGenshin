@@ -21,33 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * 与对方模组（IB）的唯一接缝 —— 「对方在不在」「对方那个角色长什么样」「对方的模型怎么拿到」。
- *
- * <h2>这一层只读、只调，不改对方</h2>
- * 本类只做三件事：查模组是否加载、读对方的 {@code ib_character/*} 定义文件、取对方的模型字节。
- * 对方的类、事件、资源包一律不碰。
- *
- * <h2>资源怎么定位</h2>
- * 对方是「同名查找」：本 MOD 的 {@code minegenshin:character/miyabi/…} 对应的就是对方的
- * {@code imaginary_branch:ib_character/miyabi/…}。对方的文件夹布局与本 MOD 不同
- * （对方把模型放 {@code geo/}、动画放 {@code animations/}、贴图放 {@code textures/character/}，
- * 每个角色自己的 {@code basics.json} 与 {@code renderer/render.json} 说明这三者的具体文件名），
- * 所以这里不猜路径，直接问对方那两份文件。
- *
- * <h2>加密模型</h2>
- * 对方把真模型 XOR 之后伪装成 {@code sounds/&lt;id&gt;_bgm.ogg}，再由它自己的资源包在运行时还原。
- * 那个资源包是<b>全局生效</b>的（注册在对方的事件总线上、Position.TOP），所以正常情况下
- * 这里用普通 {@link ResourceManager} 读 {@code geo/&lt;id&gt;.geo.json} 拿到的已经是解密后的真模型 ——
- * 这就是「能直接读就直接读」。读到的东西不是合法 geo JSON（说明那份还是加密字节或残骸）时，
- * 才转去调用对方的解密模块（见 {@link IBDecryptBridge}）。
- */
 public final class IBLink {
-
-    /** 对方的模组 id / 资源命名空间。 */
     public static final String MOD_ID = "imaginary_branch";
 
-    /** 对方每个角色一个文件夹的根目录（对方叫 {@code ib_character}，不是本 MOD 的 {@code character}）。 */
     public static final String CHARACTER_ROOT = "ib_character";
 
     private static final String BASICS_FILE = "basics.json";
@@ -67,8 +43,6 @@ public final class IBLink {
 
     private IBLink() {
     }
-
-    /** 对方模组在不在。整个联动（角色注册、动画登记、资源解析）都以它为准。 */
     public static boolean isLoaded() {
         Boolean cached = loaded;
         if (cached != null) {
@@ -79,7 +53,6 @@ public final class IBLink {
         try {
             modList = ModList.get();
         } catch (Throwable notReady) {
-            // 模组列表还没建好：这次按「不在」处理，但别把结论缓存下来（下一次再问）
             LOGGER.warn("[IBLink] 模组列表尚未就绪，本次按「{} 不在」处理", MOD_ID);
             return false;
         }
@@ -98,12 +71,9 @@ public final class IBLink {
         return present;
     }
 
-    /** 对方命名空间下的资源路径。 */
     public static ResourceLocation asset(String relativePath) {
         return ResourceLocation.fromNamespaceAndPath(MOD_ID, relativePath);
     }
-
-    /** 对方那个角色的定义；对方不在、或对方没这个角色时返回 null。 */
     @Nullable
     public static IBRenderDefinition definition(String ibCharacterId) {
         if (!isLoaded() || ibCharacterId == null || ibCharacterId.isEmpty()) {
@@ -149,13 +119,6 @@ public final class IBLink {
         return read;
     }
 
-    /**
-     * 取对方那个角色的模型字节，喂给 GeckoLib 烘培。
-     *
-     * @param ibCharacterId 对方侧角色 id
-     * @param direct        普通资源读取拿到的那份字节（可能已经是解密后的真模型，也可能是加密字节 / 残骸）；可为 null
-     * @return 可解析的模型 JSON 字节；两条路都拿不到时返回 null
-     */
     @Nullable
     public static byte[] modelBytes(String ibCharacterId, @Nullable byte[] direct) {
         if (looksLikeGeo(direct)) {
@@ -228,7 +191,6 @@ public final class IBLink {
                 readLang(basics));
     }
 
-    /** 对方写的是相对自己命名空间根目录的路径，也可能写成 {@code namespace:path}。 */
     @Nullable
     private static ResourceLocation resolve(@Nullable String rawPath) {
         if (rawPath == null || rawPath.isBlank()) {
@@ -300,7 +262,6 @@ public final class IBLink {
         return minecraft == null ? null : minecraft.getResourceManager();
     }
 
-    /** 给扫描用：把 {@code <任意前缀>/<id>.geo.json} 里的 id 取出来。 */
     @Nullable
     public static String trackIdOf(ResourceLocation location) {
         String path = location.getPath();
@@ -312,7 +273,6 @@ public final class IBLink {
         return path.substring(slash + 1, path.length() - GEO_SUFFIX.length());
     }
 
-    /** 读一份对方资源的原始字节；读不到返回 null。 */
     @Nullable
     public static byte[] readBytes(@Nullable Resource resource) {
         if (resource == null) {

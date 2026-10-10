@@ -13,6 +13,7 @@ import com.linweiyun.genshin.core.character.sword.vesna.Vesna;
 import com.linweiyun.genshin.core.character.sword.vesna.VesnaAnimations;
 import com.linweiyun.genshin.core.character.ib.IBLink;
 import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
+import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiAnimations;
 
 /**
  * 角色动作系统的登记表 —— <b>加角色就在这里加一行</b>。
@@ -58,7 +59,7 @@ public final class CharacterAnimationRegistry {
 
         // 星见雅：联动角色，模型与动画都在对方模组里；对方不在时她连角色都没注册，这里也不能登记。
         if (IBLink.isLoaded()) {
-            registerPlaceholder(Miyabi.ID);
+            CharacterActions.register(Miyabi.ID, ResourceDrivenActionHandler.INSTANCE, MiyabiAnimations.INSTANCE);
         }
     }
 

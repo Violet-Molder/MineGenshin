@@ -256,12 +256,6 @@ public class LivingEntityHurtMixin {
             } catch (Throwable t) {
                 LOGGER.error("[DI-Mixin] DamageIndicatorFactory threw", t);
             }
-        } else {
-            // 「伤害为 0 所以不飘字」会随每次无效命中触发（护盾挡下、免疫、0 伤判定），
-            // 热路径上节流（见 HotPathLog）
-            if (HotPathLog.allow(LOGGER, "di-skip-zero-damage", "飘字因 0 伤跳过")) {
-                LOGGER.warn("[DI-Mixin] skip spawn because finalDamage <= 0");
-            }
         }
 
         level.broadcastDamageEvent(target, source);

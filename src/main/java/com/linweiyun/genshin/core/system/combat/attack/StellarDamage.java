@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * <b>星烁反应管线</b> —— 辉映·星扩散（{@link StellarGlimmerBranch#SWIRL}）
- * 与辉映·星超导（{@link StellarGlimmerBranch#CONDUCE}）共用这一条。
+ * <b>星烁反应管线</b> —— 星扩散（{@link StellarGlimmerBranch#SWIRL}）
+ * 与星超导（{@link StellarGlimmerBranch#CONDUCE}）共用这一条。
  *
  * <h2>单人理论伤害（不含加权）</h2>
  * <pre>
@@ -75,7 +75,7 @@ final class StellarDamage {
         if (tracing) {
             trace.headAttack(spec.getAttackType(), StellarGlimmerBranch.damageElementOf(reactionType));
             trace.head("反应", reactionType);
-            trace.head("分支", branch == null ? "非星烁" : branch.displayName());
+            trace.head("反应", branch == null ? "非星烁" : branch.reactionName());
             trace.headEntities(null, target, logAttacker == null ? null : logAttacker.getName());
         }
 

@@ -11,6 +11,8 @@ import software.bernie.geckolib.animation.AnimationState;
 import software.bernie.geckolib.animation.AnimationProcessor;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.character.util.CharacterHelper;
+import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderData;
+import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
 import com.linweiyun.genshin.util.log.LogGroup;
 import com.linweiyun.genshin.util.log.ModLog;
 import com.linweiyun.genshin.core.network.NetworkManager;
@@ -41,6 +43,15 @@ public final class PlayerAnimationController {
    private static final Map<Player, String> LOG_LAST_STATE = new WeakHashMap<>();
    /** 本地玩家上一次广播出去的飞行片段名（变了才发包，不刷屏）。 */
    private static final Map<Player, String> LAST_SENT_FLIGHT_CLIP = new WeakHashMap<>();
+   /**
+    * 动画对象上一次看到的动画刻，用来抓「同一段动画的时间轴被推走一大截」。
+    *
+    * <p>键必须是<b>动画对象</b>而不是玩家：同一个玩家在世界里和预览界面里会各有一个动画对象，
+    * 按玩家记会把两者的刻交错在一起，看着像"每帧倒退"。
+    */
+   private static final Map<GeoAnimatable, Double> LAST_ANIM_TICK = new WeakHashMap<>();
+   /** 一帧内前进超过这么多刻就算异常（正常一帧最多 1/20 秒 = 1 刻）。 */
+   private static final double ANIM_TICK_JUMP_THRESHOLD = 2.0;
    private static int lastEmptyFrameTick = Integer.MIN_VALUE;
 
    private PlayerAnimationController() {
@@ -110,7 +121,7 @@ public final class PlayerAnimationController {
       RawAnimation target = hasActionState
          ? pickAction(player, targetAnim, isLocalPlayer && ActionStateMachine.currentStateLoops())
          : pickLocomotion(player, animations.locomotionFor(player), isMoving, movedX, movedY, movedZ);
-      logAnimationFlow(player, target, targetAnim, hasActionState);
+      probeAnimationTimeline(state, targetName(target));
       if (hasActionState) {
          suspendLocomotionTransient(player);
       }
@@ -165,15 +176,43 @@ public final class PlayerAnimationController {
             LOGGER.info("状态 {} → {}（刻={}）", new Object[]{previousState, stateName, player.tickCount});
          }
 
-         String name = target == null ? null : targetName(target);
-         String previous = LOG_LAST_ANIMATION.get(player);
-         if (!Objects.equals(previous, name)) {
+        String name = target == null ? null : targetName(target);
+        String previous = LOG_LAST_ANIMATION.get(player);
+        if (!Objects.equals(previous, name)) {
             if (name == null) {
                LOG_LAST_ANIMATION.remove(player);
             } else {
                LOG_LAST_ANIMATION.put(player, name);
             }
-         }
+            // 动画名一帧一换就是「来回横跳」，会不停触发过渡 —— 这类问题只有这条日志看得见
+            LOGGER.info("动画 {} → {}（状态={}，刻={}）", new Object[]{previous, name, stateName, player.tickCount});
+        }
+      }
+   }
+
+   /**
+    * 时间轴探针：同一段动画里，动画刻在单帧内被推走一大截（或倒退）就报一条。
+    *
+    * <p>正常一帧最多前进 1/20 秒 = 1 刻。出现几刻以上的跳变说明这一段被重置 / 重新入队，
+    * 表现就是肉眼看到的「一卡一卡」。只在本地玩家的渲染帧上跑，且只在异常时出声。
+    */
+   private static void probeAnimationTimeline(AnimationState<?> state, @Nullable String name) {
+      if (name == null || !LOGGER.isWarnEnabled()) {
+         return;
+      }
+
+      GeoAnimatable animatable = state.getAnimatable();
+      double tick = state.getAnimationTick();
+      Double previous = LAST_ANIM_TICK.put(animatable, tick);
+
+      if (previous == null) {
+         return;
+      }
+
+      double delta = tick - previous;
+      if (delta < -0.5 || delta > ANIM_TICK_JUMP_THRESHOLD) {
+         LOGGER.warn("动画 '{}' 时间轴跳变：{} → {}（Δ={}，对象={}）",
+                 new Object[]{name, previous, tick, delta, animatable.getClass().getSimpleName()});
       }
    }
 
@@ -204,11 +243,30 @@ public final class PlayerAnimationController {
          }
       }
 
-      if (!AnimationAvailability.existsFor(player, animationName)) {
+      String clip = resolveAlias(player, animationName);
+      if (!AnimationAvailability.existsFor(player, clip)) {
          return null;
       } else {
-         return loop ? RawAnimation.begin().thenLoop(animationName) : RawAnimation.begin().thenPlayAndHold(animationName);
+         return loop ? RawAnimation.begin().thenLoop(clip) : RawAnimation.begin().thenPlayAndHold(clip);
       }
+   }
+
+   /**
+    * 状态名 → 实际播的动画名。
+    *
+    * <p>资源来源表随附的动画映射（{@code CharacterRenderData#animMapping}）就是干这个的：
+    * 状态名可以取一个素材里不存在的名字（例如下落攻击的 {@code plunge}），由映射指到真正那条动画。
+    * 映射里没写、或指过去又查不到时，照状态名本身找。
+    */
+   private static String resolveAlias(Player player, String animationName) {
+      String characterId = CharacterHelper.getActiveCharacterId(player);
+      CharacterRenderData data = characterId == null ? null : CharacterRenderRepository.get(characterId);
+      String mapped = data == null ? null : data.animMapping().get(animationName);
+      if (mapped == null || mapped.isEmpty() || mapped.equals(animationName)) {
+         return animationName;
+      }
+
+      return AnimationAvailability.existsFor(player, mapped) ? mapped : animationName;
    }
 
    public static boolean isFirstPerson(Player player) {

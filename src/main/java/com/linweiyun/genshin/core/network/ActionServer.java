@@ -177,6 +177,24 @@ public final class ActionServer {
       RPCPacketDistributor.rpcToServer("characterPlungingAttackRPCPacket");
    }
 
+   /**
+    * <b>下落攻击中途作废</b>：客户端那边因为落水 / 上梯 / 又飞起来 / 换人而收状态，
+    * 但服务端是靠自己的落地检测收的 —— 不告诉它，那条状态会挂到玩家下次落地，
+    * 于是「正常落地」也会按下落攻击结算。
+    */
+   @RPCPacket("characterPlungeCancelRPCPacket")
+   public static void characterPlungeCancelRPCPacket(RPCSender sender) {
+      if (!sender.isServer()) {
+         ServerPlayer sp = sender.asPlayer();
+         if (sp == null) return;
+         PlungeState.clear(sp);
+      }
+   }
+
+   public static void cancelPlungingAttackToServer() {
+      RPCPacketDistributor.rpcToServer("characterPlungeCancelRPCPacket");
+   }
+
    // ==================== 工具 ====================
 
     /** 没有目标时传 -1（{@code level().getEntity(-1)} 拿到 null）。 */

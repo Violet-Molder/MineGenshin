@@ -126,6 +126,16 @@ neoForge {
             // You can set various levels here.
             // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
             logLevel = org.slf4j.event.Level.DEBUG
+
+            // 临时目录指到项目内（build/dev-temp）：Codex 会话给 C 盘的 %TEMP% 加了沙箱 ACL，
+            // JDK 在那建 NIO selector 的自连接管道（unix socket）会失败 ——
+            // 表现为打开单人存档时崩在 "Load world / Unable to establish loopback connection"。
+            // 这里指的是项目自己的 build 目录（已被 gitignore），与前面几行一样对所有运行配置生效。
+            def devTempDir = layout.buildDirectory.dir('dev-temp').get().asFile
+            devTempDir.mkdirs()
+            environment 'TEMP', devTempDir.absolutePath
+            environment 'TMP', devTempDir.absolutePath
+            systemProperty 'java.io.tmpdir', devTempDir.absolutePath
         }
     }
 
@@ -145,6 +155,70 @@ neoForge {
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
     runtimeClasspath.extendsFrom localRuntime
+}
+
+// ==================== 本地联调：联动方（IB）与它的前置 ====================
+// 只进开发运行环境（runClient / runServer / runData），不进产物、不影响发布构建。
+//
+// 只认 1.21.1 的 IB 产物：IB 那个仓库同时在放 26.2 线，它的 build/libs 会被那一边的构建覆盖
+// （2026-10-08 确实被覆盖过一次），所以这里逐个读 jar 里的 neoforge.mods.toml 核对 minecraft
+// 版本区间，不是 1.21.1 的一律跳过并说明原因。
+//
+// 查找顺序（先找到先算）：
+//   1. -PibLocalJar=<jar> 显式指定；
+//   2. 本项目的本地依赖目录 libs/imaginary_branch-*.jar（jar 不进仓库，见 .gitignore）；
+//   3. IB 仓库的 build/libs/imaginary_branch-*.jar（-PibLocalDir=... 可改）。
+// IB 的必需前置里，geckolib 与 photon 本项目本来就有，只差 Curios，所以联调期一起带上。
+def ibJarIs1211 = { File jar ->
+    if (jar == null || !jar.isFile()) {
+        return false
+    }
+    def zip = new java.util.zip.ZipFile(jar)
+    try {
+        def entry = zip.getEntry('META-INF/neoforge.mods.toml')
+        return entry != null
+                && (zip.getInputStream(entry).getText('UTF-8') =~ /versionRange\s*=\s*"\[1\.21\.1\]"/).find()
+    } finally {
+        zip.close()
+    }
+}
+
+def ibJarCandidates = []
+def ibExplicitJar = providers.gradleProperty('ibLocalJar').getOrElse('')
+if (!ibExplicitJar.isEmpty()) {
+    ibJarCandidates << file(ibExplicitJar)
+}
+ibJarCandidates.addAll(fileTree(file('libs')) {
+    include 'imaginary_branch-*.jar'
+    exclude '*-sources.jar', '*-javadoc.jar'
+}.files.sort())
+def ibRepoDir = file(providers.gradleProperty('ibLocalDir').getOrElse('E:/MCMOD/IB-1.21.1-NeoForge'))
+ibJarCandidates.addAll(fileTree(new File(ibRepoDir, 'build/libs')) {
+    include 'imaginary_branch-*.jar'
+    exclude '*-sources.jar', '*-javadoc.jar'
+}.files.sort())
+
+def ibJar = ibJarCandidates.find { ibJarIs1211(it) }
+def ibSkippedJars = ibJarCandidates.findAll { it.isFile() && !ibJarIs1211(it) }
+
+if (ibJar != null) {
+    repositories {
+        maven { url = 'https://maven.theillusivec4.top/' }
+    }
+    dependencies {
+        localRuntime files(ibJar)
+        localRuntime 'top.theillusivec4.curios:curios-neoforge:9.5.1+1.21.1'
+    }
+    logger.lifecycle("[IB联动] 开发环境将加载 IB（1.21.1）：${ibJar}，外加 Curios 9.5.1+1.21.1")
+    if (!ibSkippedJars.isEmpty()) {
+        logger.lifecycle("[IB联动] 已跳过不是 1.21.1 的 IB 产物：${ibSkippedJars*.name.join(', ')}")
+    }
+} else {
+    def reason = ibSkippedJars.isEmpty()
+            ? '没找到 IB 产物'
+            : "找到的 IB 产物都不是 1.21.1 的（${ibSkippedJars*.name.join(', ')}）"
+    logger.lifecycle("[IB联动] ${reason}，本次开发环境不加载 IB；"
+            + "请把 IB 1.21.1 的 jar 放到本项目的 libs/ 目录，或用 -PibLocalJar=<jar> 指定")
 }
 
 

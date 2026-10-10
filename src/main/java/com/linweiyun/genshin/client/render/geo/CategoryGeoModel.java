@@ -54,6 +54,9 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
     private final AssetSet assets;
     @Nullable
     private AssetSet fallback;
+    /** 已经交给 GeckoLib 动画处理器登记过骨骼的那个模型，见 {@link #activateOwnModel}。 */
+    @Nullable
+    private BakedGeoModel processorModel;
 
     public CategoryGeoModel(AssetCategory category, String id) {
         this.category = category;
@@ -129,17 +132,38 @@ public class CategoryGeoModel<T extends GeoAnimatable> extends GeoModel<T> {
     }
 
     public BakedGeoModel getBakedModel(ResourceLocation location) {
-        BakedGeoModel own = AssetGeoCache.model(location);
+        BakedGeoModel own = this.activateOwnModel(AssetGeoCache.model(location));
         if (own != null) {
             return own;
         }
 
-        BakedGeoModel shared = GenshinGeoCache.model(location);
+        BakedGeoModel shared = this.activateOwnModel(GenshinGeoCache.model(location));
         return shared != null ? shared : super.getBakedModel(location);
     }
 
+    /**
+     * 把「自己缓存里的烘焙模型」交给 GeckoLib 的动画处理器。
+     *
+     * <p>GeckoLib 的 {@code GeoModel.getBakedModel} 在命中它自己的缓存时会做这件事，
+     * 而我们从自己的缓存直接返回就绕过了它 —— 后果是
+     * {@code GeoModel.handleAnimations} 里 {@code !processor.getRegisteredBones().isEmpty()}
+     * 这个前置条件不成立，动画<b>完全不推进</b>（模型照常显示、也不报错）。
+     * 本类不继承 {@code GenshinGeoModel}（那边有一份同样的实现），所以这里单独补一份。
+     */
     @Nullable
-    public Animation getBakedAnimation(T animatable, String name) throws RuntimeException {
+    private BakedGeoModel activateOwnModel(@Nullable BakedGeoModel model) {
+        if (model != null && model != this.processorModel) {
+            this.getAnimationProcessor().setActiveModel(model);
+            this.processorModel = model;
+        }
+
+        return model;
+    }
+
+    /** 与 {@link #getBakedModel(ResourceLocation)} 对称：先问本 MOD 的两级缓存，再退回 GeckoLib。 */
+    @Nullable
+    @Override
+    public Animation getAnimation(T animatable, String name) throws RuntimeException {
         ResourceLocation file = this.getAnimationResource(animatable);
         Animation own = AssetGeoCache.animation(file, name);
         if (own != null) {

@@ -5,6 +5,7 @@ package com.linweiyun.genshin.client.combat.action;
 import com.linweiyun.genshin.client.camera.ThirdPersonCamera;
 import com.linweiyun.genshin.client.combat.AttackApproach;
 import com.linweiyun.genshin.client.combat.BurstDive;
+import com.linweiyun.genshin.client.combat.PlungeAttack;
 import com.linweiyun.genshin.client.combat.state.ActionStateMachine;
 import com.linweiyun.genshin.client.combat.state.AnimationAvailability;
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
@@ -26,6 +27,7 @@ import com.linweiyun.genshin.core.system.combat.animation.action.CharacterAction
 import com.linweiyun.genshin.core.system.combat.animation.action.CharacterActions;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
 import com.linweiyun.genshin.core.system.combat.targeting.TargetPolicy;
+import com.linweiyun.genshin.core.system.poise.WeaponPoiseTable;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -79,7 +81,22 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
    @Override
    public boolean deferNormalAttackOnPress(Player player) {
       PGCharacter character = currentCharacter(player);
-      return character != null && character.isSustainedChargedAttack();
+      if (character == null) {
+         return false;
+      }
+      if (character.isSustainedChargedAttack()) {
+         return true;
+      }
+      // 单手剑 / 长柄武器的重击是「按住接重击」，它开头那一下普攻只能是第 1 段：
+      // 连击已经走到第 2 段以后时，按下先不打 —— 松手才按当前段数接着连，按住就直接进重击。
+      return ActionStateMachine.comboStage > 1 && holdChargeWeapon(character);
+   }
+
+   /** 单手剑 / 长柄武器。 */
+   private static boolean holdChargeWeapon(PGCharacter character) {
+      WeaponPoiseTable.WeaponClass weapon = WeaponPoiseTable.weaponOf(character);
+      return weapon == WeaponPoiseTable.WeaponClass.SWORD
+              || weapon == WeaponPoiseTable.WeaponClass.POLEARM;
    }
 
    @Override
@@ -106,6 +123,7 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
       }
 
       engageAndPlay(player, def, 2, null, target -> ActionServer.triggerCharacterSkill(holdFlag, target));
+      queueFollowUp(player, def);
       return true;
    }
 
@@ -119,6 +137,7 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
             if (playable(player, def)) {
                if (ActionCastGuard.canCast(player, character, ActionKind.ELEMENTAL_BURST, 0)) {
                   engageAndPlay(player, def, 4, null, ActionServer::triggerCharacterBurst);
+                  queueFollowUp(player, def);
                   if (def.step.diveBurst != null && player instanceof LocalPlayer localPlayer) {
                      BurstDive.begin(localPlayer, CombatTargeting.current(player), def.step);
                   }
@@ -160,6 +179,10 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
                         engageAndPlay(player, def, 2, null, ActionServer::performChargedAttackToServer);
                      }
 
+                     queueFollowUp(player, def);
+                     // 重击打断连击段数：这一下之后的下一次普攻从第 1 段重来
+                     ActionStateMachine.comboStage = 1;
+                     ActionStateMachine.comboWindowFrames = 0;
                      ActionStateMachine.chargedAttackTriggered = true;
                   }
                }
@@ -170,12 +193,30 @@ public final class ResourceDrivenActionHandler implements CharacterActionHandler
 
    @Override
    public void releaseAttack(Player player, int chargeTicks) {
+      // 下落攻击是触发式的：点一下进入，期间松开左键不收状态（姿态要一直保持到下劈结束）
+      if (PlungeAttack.isActive()) {
+         return;
+      }
       if (ActionStateMachine.currentStateLoops()) {
          if (player instanceof LocalPlayer) {
             ActionStateMachine.resetToDefault();
             ThirdPersonCamera.setFollowBody(false);
             ActionServer.interruptActionToServer(InterruptReason.CHARGE_RELEASE.ordinal());
          }
+      }
+   }
+
+   /**
+    * 单步动作的「后续片段」：{@link ActionStep#comboEndAnim} 声明这一段播完后接哪条动画。
+    *
+    * <p>连招本来只在最后一段用它；这里同样给战技 / 重击 / 大招用 —— 两段式招式
+    * （例如星见雅的战技 {@code skill_energy} → {@code skill_energy_continue}）靠它表达。
+    * 名字查不到时什么都不做，只播第一段。
+    */
+   private static void queueFollowUp(Player player, ActionDefinition def) {
+      String followUp = def.step.comboEndAnim;
+      if (followUp != null && AnimationAvailability.existsFor(player, followUp)) {
+         ActionStateMachine.queueFollowUpState(followUp, def.step.comboEndTicks);
       }
    }
 

@@ -9,6 +9,7 @@ import com.linweiyun.genshin.content.entities.misc.IceBlockProjectile;
 import com.linweiyun.genshin.content.entities.teyvat.monster.slime.LargeCryoSlime;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProjectile;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaSpiritSwordEntity;
+import com.linweiyun.genshin.content.entities.teyvat.skill.miyabi.MiyabiSlashEffect;
 import com.linweiyun.genshin.core.world.TeyvatWorldInvasion;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
@@ -103,6 +104,21 @@ public class ModEntities {
                             .clientTrackingRange(8)
                             .updateInterval(10)
                             .build(Minegenshin.id("vesna_spirit_sword").toString()));
+
+    /**
+     * 星见雅重击的斩击表现。
+     *
+     * <p>只画模型、不结算伤害，所以按「领域」登记在 {@link MobCategory#MISC} 下；
+     * 追踪 64 格、每刻同步一次：它一秒飞 20 格，跟得慢了就会一跳一跳。
+     */
+    public static final Supplier<EntityType<MiyabiSlashEffect>> MIYABI_SLASH =
+            ENTITIES.register(
+                    "miyabi_slash",
+                    () -> EntityType.Builder.<MiyabiSlashEffect>of(MiyabiSlashEffect::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build(Minegenshin.id("miyabi_slash").toString()));
 
     /**
      * 技能投射物：一块悬空旋转、砸向玩家的原版冰块。

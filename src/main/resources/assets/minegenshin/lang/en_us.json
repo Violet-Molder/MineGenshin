@@ -936,5 +936,8 @@
   "minegenshin.configuration.section.minegenshin.poise.toml.title": "Poise Config",
   "minegenshin.configuration.poise.freeze_force_break": "Freeze Breaks Poise",
   "minegenshin.configuration.poise.reaction_poise": "Reactions Deal Poise",
-  "minegenshin.configuration.poise.block_hardness_multiplier": "Block Toughness Multiplier"
+  "minegenshin.configuration.poise.block_hardness_multiplier": "Block Toughness Multiplier",
+  "gamerule.minegenshin:attack_breaks_blocks": "Attacks break blocks",
+  "gamerule.minegenshin:attack_breaks_blocks.description": "Off: only blocks named in #minegenshin:attack_breakable (Teyvat ores, for example) can be broken by attacks. On: every block with hardness takes part.",
+  "minegenshin.configuration.performance.shadow_alpha": "Text Shadow Opacity (1 = as solid as the text)"
 }

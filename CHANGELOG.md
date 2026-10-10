@@ -22,16 +22,99 @@
   所以这些名字必须由本 MOD 这边声明；
 - 界面头像与立绘改走来源表（此前是硬编码的 `minegenshin:character/<id>/textures/...`）；
   立绘还没画时自动退回小头像；
-- 第一个联动角色：星见雅（五星单手剑，UID 115201），模型 / 动画 / 贴图 / 头像取自 IB，
-  立绘归本 MOD。
+- 第一个联动角色：**星见雅**（五星单手剑，UID 115201，**风元素**），模型 / 动画 / 贴图 / 头像取自 IB，
+  立绘归本 MOD；动作按素材对齐：
+  - **普攻五段**：`attack_1..attack_5`，时长取素材那五段（40 / 48 / 25 / 30 / 50 刻）；
+  - **战技**：取「能量满」的那一套 —— 第一段 `skill_energy`（25 刻）+ 收尾段 `skill_energy_continue`（60 刻）；
+  - **重击**：取「能量不满」的那一套 —— `heavy_1`（15 刻），长按 6 刻起手；
+  - **大招**：`final`（100 刻，素材里 5 秒）；
+  - 动作音效沿用素材的音效事件（`imaginary_branch:miyabi_*`）；
+  - **星扩散户口**：冰扩散 → 星扩散，并按自身攻击力给全队基础伤害提升（与薇斯娜同一条公式）。
+- **星见雅的重击特效**：素材里她的重击表现是一枚**斩击模型**（`geo/miyabi_slash` +
+  `animations/miyabi_slash` + 20 帧的动画贴图 `textures/entities/bullet/miyabi_slash.png`）——
+  在那一下的伤害点（第 4 刻）生成，沿视线直线飞出，碰到方块或飞满 40 刻消失。本 MOD 用**自己的实体**
+  `minegenshin:miyabi_slash` 复现这一下：正前一道 + 左右各偏 0.6 共三道，**只画模型、不结算伤害**
+  （伤害不由它结算 —— 本 MOD 的伤害走自己的动作管线）；模型 / 贴图 / 动画按来源表从 IB 读，本 MOD 里没有这些文件，也不需要
+  Photon —— 素材里她的 32 个 `.fx` 里本来就没有 `miyabi*`。
+- **星见雅的伤害结算**：普攻五段 / 重击 / 战技两段 / 大招 / 下落攻击各自在自己的**伤害点**打一下
+  （时刻由动作表那些 `hits[]` 决定），全是风元素范围伤害；倍率、附着、衰减都走本 MOD 那套
+  （倍率读申鹤 / 薇斯娜那张表，拆她自己的表时只改一处引用）。重击那一下与斩击模型同一刻。
+- **星见雅的伤害点按素材对齐**：段数与延时照抄素材的星见雅，倍率才是本 MOD 自己配的 ——
+  普攻五段 1 / 1 / 2 / 4 / 4 下（第 3 段起是多段），战技 8 刻起每 2 刻一下共 11 下，
+  重击 3 下（素材里那三道斩击，同一刻），大招 44 刻一下 + 73 刻起每 5 刻一下共 5 下。
+  **多段伤害一律写成多个 `hits[]`**（不是「一个 hit + 技能内部再打多段」）；
+  执行期（`protectDuration`）跟着盖住最后一个伤害点，否则后半段会算进后摇、走一步就没了。
+- **近战的判定盒修宽**：以前是按「脚底位置 + 视线 × 攻击距离」铺一条线再外扩，Y 轴几乎只有
+  上下 1 格；现在从**玩家自己的碰撞箱**沿视线扫出去再外扩（横向 1.0~1.5 格、上下 1.5 格），
+  站在高一级 / 低一级方块上的目标都够得到。普攻 / 重击 / 战技共用这一套。
+- **星见雅的下落攻击姿态**：素材里没有下劈那一段，所以借**普攻第二段动画**的中间姿态
+  （第 24 刻，正好是举剑下劈）：下落期间状态名走 `plunge`，由动画别名指到 `attack_2`，
+  时间轴钉在这一刻不动（每次渲染扣掉 `partialTick`，所以不会一格一格抖）。落地照常走基类的
+  下落攻击结算（半径 3 格、风元素）。
+- **动作基类新增两处通用能力**：`plungingAnimationHoldTick()`（下落攻击可以把时间轴钉在动画的某一刻，
+  默认 -1 = 整条循环播）；动作状态名可以与素材里的动画名不同 —— `CharacterRenderData` 的
+  动画映射（别名）现在真的会被解析（先按状态名找，找不到再按映射指的那条找）。
+- **新游戏规则 `minegenshin:attack_breaks_blocks`**（默认**关闭**）：关闭时攻击**不能**破坏方块 ——
+  只有被点名的方块参与韧性，也就是写进 `#minegenshin:attack_breakable` 标签的、或代码里
+  `BlockToughnessRules.register` 显式登记过的；打开后恢复「所有有硬度的方块都参与」。
+  提瓦特矿物之类的可破坏方块以后往那个标签里加即可（标签文件在
+  `data/minegenshin/tags/block/attack_breakable.json`）。元素附着、反应、脚本破坏都不受这条规则影响。
+- **星见雅的模型署名**：「下一只风筝」（模型来自联动模组，作者不变）。
+- **星见雅的户口换成星超导**：此前的星扩散户口取消，改成星超导户口（她那份按攻击力给全队
+  基础伤害提升的公式不变）。**只有户口**：超导 → 星超导 的转化与星超导那条反应本 MOD 还没实现。
+- **飘字阴影不再糊进笔画**：阴影是同一行字再写一遍，之前不透明度与正文一样实、又只偏 0.5 字体像素，
+  笔画边上半像素和正文糊在一起，看起来又粗又脏。现在阴影有独立的不透明度倍率
+  （新配置 `performance.shadow_alpha`，默认 0.45）。
+- **反应名与辉映的叫法统一**：反应只有两个名字 —— **星扩散**、**星超导**；风段 / 冰段靠飘字底部
+  颜色区分，不写进名字（`StellarGlimmerBranch` 现在分开给 `reactionName()` 与 `stateName()`）；
+  **辉映是体系 / 状态**，不是反应 —— 「辉映·星烁」是体系统称、「辉映·星扩散」「辉映·星超导」
+  是两个**状态（buff）**的名字，被触发出来的那条反应就叫星扩散 / 星超导。
 
 ### 变更
 
+- 开发环境对齐联动方：`neo_version` 21.1.217 → **21.1.250**（IB 的产物声明依赖
+  `neoforge [21.1.250,)`，低版本会让 IB 直接加载失败）；`mods.toml` 里 neoforge 的依赖下限随之变为 21.1.250；
+- `build.gradle` 增加**本地联调**段（仅开发运行环境）：把 IB 1.21.1 的产物与它的必需前置 Curios
+  挂进 `runClient / runServer / runData`，不进产物、不影响发布构建；候选产物**逐个读 jar 里的
+  minecraft 版本区间核对**，不是 1.21.1 的一律跳过（IB 仓库的 `build/libs` 与它的 26.2 线共用，
+  会被那一边的构建覆盖）；本地依赖 jar 放在
+  项目内的 `libs/`（不进仓库，见 `.gitignore`），也可用 `-PibLocalJar=<jar>` 指定；
 - `GenshinGeoCache` 在联动模组加载时额外扫描 `imaginary_branch:geo` 与 `imaginary_branch:animations`；
 - `GenshinAssets.fromModelPath / fromAnimationPath / fromTexturePath` 支持 `namespace:path` 写法
   （不带冒号仍按本 MOD 处理，老行为不变）；
 - `CharacterBoneVisibility` 的骨骼裁剪改成「按角色声明」：写了 `bones.body_root` 就按声明走，
   没写的角色仍是既有的 `allbody` / `weapon` 约定。
+- `ActionStep.comboEndAnim`（后续动画名）不再只对连招最后一段生效：战技 / 重击 / 大招也会读它
+  （`ResourceDrivenActionHandler.queueFollowUp`），两段式招式靠它表达 —— 星见雅的战技
+  `skill_energy → skill_energy_continue` 就是这么接的。
+
+### 修复
+
+- 开发运行（`runClient` / `runServer` / `runData` / `runGameTestServer`）把临时目录固定到项目内的
+  `build/dev-temp`：Codex 会话给 C 盘的 `%TEMP%` 加了沙箱 ACL，JDK 在那里建不出 NIO selector 的
+  自连接管道，表现是**打开单人存档时崩在 `Load world`**：
+  `java.lang.IllegalStateException: failed to create a child event loop` →
+  `java.io.IOException: Unable to establish loopback connection` →
+  `java.net.SocketException: Invalid argument: connect`。改完后开发运行的 JVM 里
+  `java.io.tmpdir` 就是 `build/dev-temp`（Netty 启动日志会打印这一条）。
+- **所有 GeckoLib 模型都不播动画**（模型正常显示、日志一条报错都没有），两处原因一起修：
+  1. `getBakedModel` 从本 MOD 自己的缓存返回模型时**绕过了 GeckoLib 的骨骼登记**：
+     4.9.3 的 `GeoModel.getBakedModel` 里那句 `getAnimationProcessor().setActiveModel(model)`
+     是全库唯一的登记点，而 `GeoModel.handleAnimations` 推进动画的前置条件正是
+     `!processor.getRegisteredBones().isEmpty()` —— 骨骼没登记就直接跳过 `tickAnimation`，
+     所以动画控制器一次都不跑（这也是「完全静止且零报错」的来源）。现在从自己缓存取到模型后补一次登记。
+  2. 动画钩子名写成了 GeckoLib 5.x 的 `getBakedAnimation`，而本分支用的是 **4.9.3**
+     （`GeoModel` 里只有 `getAnimation`），那两处实际是死代码；改名为 `getAnimation` 并加 `@Override`。
+  三处改动：`GenshinGeoModel`（骨骼登记 + 动画钩子）、`CategoryGeoModel`（同上两处）；物品与实体同样受益。
+- **动画「一卡一卡」（相邻帧来回抖、整体还偏慢）**：动画的时间基准喂错了。
+  GeckoLib 4.9.3 的 `GeoModel.handleAnimations` 对「实现了 `GeoReplacedEntity` 的动画对象」按
+  `currentTick + partialTick` 算本帧时间，而它期望 `DataTickets.TICK` 是**整数刻**
+  —— GeckoLib 自己的 `GeoReplacedEntityRenderer` 会喂 `entity.tickCount`，`partialTick` 由它自己加。
+  我们走的是 `GeoObjectRenderer`，没人喂 → `currentTick` 回退成**墙钟**（本来就连续），
+  再叠加一次 0→1 的 `partialTick`，等于每刻推进近一倍、到刻边界又倒回约 1 刻。
+  日志探针实测到每帧 `+1.0 / −0.6 刻` 的来回跳。修法：`CharacterPlayerModel.handleAnimations`
+  里补 `DataTickets.TICK = player.tickCount`（整数），时间轴恢复成 `刻 + partialTick` 的连续斜坡，
+  仍是**客户端每帧结算**（同步的只有状态名，时间轴从不上网）。
 
 ### 说明
 
