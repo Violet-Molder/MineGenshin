@@ -212,7 +212,9 @@ public final class PlungeAttack {
     private static void end(LocalPlayer player, boolean landed) {
         active = false;
         PlungeState.end(player);
-        ActionStateMachine.resetToDefault();
+        if (!landed || !startRecovery(player)) {
+            ActionStateMachine.resetToDefault();
+        }
         LOGGER.info("[下落攻击] 结束：{} | 水中={} 梯子={} 滑翔={} 飞行={} 旁观={} 坐骑={} 已过刻={}",
                 landed ? "落地" : "中途作废",
                 player.isInWater(), player.onClimbable(), player.isFallFlying(),
@@ -221,6 +223,31 @@ public final class PlungeAttack {
         if (!landed) {
             ActionServer.cancelPlungingAttackToServer();
         }
+    }
+
+    /**
+     * 落地续播：从下坠时钉住的那一刻继续把同一条动画播完，而不是当场回常。
+     */
+    private static boolean startRecovery(LocalPlayer player) {
+        PGCharacter character = currentCharacter(player);
+        if (character == null) {
+            return false;
+        }
+        String recovery = character.getPlungingRecoveryAnimation();
+        int ticks = character.getPlungingRecoveryTicks();
+        if (recovery == null || recovery.isEmpty() || ticks <= 0) {
+            return false;
+        }
+        int hold = (int) Math.floor(Math.max(0.0, character.getPlungingAnimationHoldTick()));
+        ActionStateMachine.changeState(recovery, ActionStateMachine.PRIO_ATTACK,
+                ticks, 0, -1, 0, false);
+        ActionStateMachine.animationTick = Math.max(1, ticks - hold);
+        String sound = character.getPlungingLandingSound();
+        if (sound != null && !sound.isEmpty()) {
+            ActionStateMachine.playLocalSound(player, sound,
+                    character.getPlungingLandingSoundVolume(), 1.0F);
+        }
+        return true;
     }
 
     @Nullable

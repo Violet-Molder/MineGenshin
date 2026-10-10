@@ -426,6 +426,28 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       return current != null ? current.plungingAnimationHoldTick() : -1.0;
    }
 
+   /** 落地后接着播的状态名（走动画别名映射）；null = 不续播。 */
+   public String getPlungingRecoveryAnimation() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingRecoveryAnimation() : null;
+   }
+
+   /** 落地续播状态的动画总长（刻）。 */
+   public int getPlungingRecoveryTicks() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingRecoveryTicks() : 0;
+   }
+
+   public String getPlungingLandingSound() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingLandingSound() : null;
+   }
+
+   public float getPlungingLandingSoundVolume() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.plungingLandingSoundVolume() : 1.0F;
+   }
+
    /** 下落攻击的加速下坠速度（格 / 刻，<b>正数 = 向下</b>）。 */
    public double getPlungingFallSpeed() {
       SkillBase current = this.getSkill();

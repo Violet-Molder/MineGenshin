@@ -39,6 +39,7 @@ public final class MiyabiAnimations implements CharacterAnimations {
             "dodge_front", "dodge_back", "dodge_left", "dodge_right",
             // 下落攻击：状态名是我们自己的，实际播普攻第二段（别名见 MiyabiResources#PLUNGE_CLIP）
             MiyabiResources.PLUNGE_STATE,
+            MiyabiResources.PLUNGE_RECOVER_STATE,
             "final");
 
     private static final Map<String, String> STATE_SOUNDS = Map.ofEntries(

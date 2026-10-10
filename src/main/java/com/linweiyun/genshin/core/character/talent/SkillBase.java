@@ -158,6 +158,30 @@ public class SkillBase {
       return DEFAULT_PLUNGING_FALL_SPEED;
    }
 
+   /**
+    * 落地后接着播的状态名（走动画别名映射）；返回 null = 不续播，直接回常。
+    *
+    * <p>给「下坠时钉在某个姿态」的角色用：落地后从 {@link #plungingAnimationHoldTick()} 那一刻继续把同一条动画播完。
+    */
+   public String plungingRecoveryAnimation() {
+      return null;
+   }
+
+   /** 落地续播状态的动画总长（刻）；&lt;= 0 表示不续播。 */
+   public int plungingRecoveryTicks() {
+      return 0;
+   }
+
+   /** 落地那一刻播放的音效 id；null = 不放。 */
+   public String plungingLandingSound() {
+      return null;
+   }
+
+   /** 落地音效音量。 */
+   public float plungingLandingSoundVolume() {
+      return 1.0F;
+   }
+
    public void elementalSkill(Player player, PGCharacter character, int skillTime) {
    }
 
