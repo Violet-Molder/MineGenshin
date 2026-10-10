@@ -135,7 +135,8 @@ public final class ElementLibBridge {
 
             @Override
             public boolean stellarConduce(Entity attacker, LivingEntity target) {
-                return false;
+                return target != null && target.level() instanceof ServerLevel level
+                        && ReactionPriorityCalculator.hasStellarConduceHousehold(level);
             }
 
             @Override

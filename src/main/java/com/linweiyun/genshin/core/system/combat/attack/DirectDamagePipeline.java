@@ -170,6 +170,10 @@ final class DirectDamagePipeline {
                     // 「没挂上去就没有反应」是附着与反应之间的唯一顺序约束；先手元素保留 = 共存。
                     canReact = false;
                 } else {
+                    if (target.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                        com.linweiyun.genshin.content.entities.area.StellarPrismEntity.recordAttachment(
+                                serverLevel, target.position(), spec.getElement());
+                    }
                     reactionResult = attachResult.reaction();
                 }
             }

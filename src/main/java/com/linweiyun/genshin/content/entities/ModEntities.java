@@ -2,6 +2,7 @@ package com.linweiyun.genshin.content.entities;
 
 import com.linweiyun.genshin.Minegenshin;
 import com.linweiyun.genshin.content.entities.area.StellarVortexEntity;
+import com.linweiyun.genshin.content.entities.area.StellarPrismEntity;
 import com.linweiyun.genshin.content.entities.area.TalismanSpiritArea;
 import com.linweiyun.genshin.content.entities.area.ThunderCloudEntity;
 import com.linweiyun.genshin.content.entities.misc.ElementalOrb;
@@ -135,6 +136,16 @@ public class ModEntities {
                             .clientTrackingRange(8)
                             .updateInterval(2)
                             .build(Minegenshin.id("ice_block").toString())
+            );
+
+    public static final DeferredHolder<EntityType<?>, EntityType<StellarPrismEntity>> STELLAR_PRISM =
+            ENTITIES.register(
+                    "stellar_prism",
+                    () -> EntityType.Builder.<StellarPrismEntity>of(StellarPrismEntity::new, MobCategory.MISC)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(64)
+                            .updateInterval(1)
+                            .build(Minegenshin.id("stellar_prism").toString())
             );
 
     public static void register(IEventBus eventBus) {

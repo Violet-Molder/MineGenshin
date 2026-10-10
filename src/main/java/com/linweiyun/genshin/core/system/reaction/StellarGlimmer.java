@@ -125,4 +125,48 @@ public final class StellarGlimmer {
         }
         return total;
     }
+
+    /** 队伍里第一个星超导户口；没有就返回 null。 */
+    @Nullable
+    public static IStellarHousehold.StellarHousehold conduceHousehold(@Nullable Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return null;
+        }
+        for (Player player : serverLevel.players()) {
+            PlayerCharactersAttachment attachment = player.getData(
+                    AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+            for (int i = 0; i < 4; i++) {
+                PGCharacter member = attachment.getPartyCharacter(i);
+                if (member instanceof IStellarHousehold provider) {
+                    IStellarHousehold.StellarHousehold household = provider.stellarHousehold();
+                    if (household != null && household.branch() == StellarGlimmerBranch.CONDUCE) {
+                        return household;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 全队星超导反应基础伤害提升，取队伍里最高的一份。 */
+    public static float conduceBaseBonusMult(@Nullable Level level) {
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return 0f;
+        }
+        float best = 0f;
+        for (Player player : serverLevel.players()) {
+            PlayerCharactersAttachment attachment = player.getData(
+                    AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+            for (int i = 0; i < 4; i++) {
+                PGCharacter member = attachment.getPartyCharacter(i);
+                if (member instanceof IStellarHousehold provider) {
+                    IStellarHousehold.StellarHousehold household = provider.stellarHousehold();
+                    if (household != null && household.branch() == StellarGlimmerBranch.CONDUCE) {
+                        best = Math.max(best, household.baseBonusMult());
+                    }
+                }
+            }
+        }
+        return best;
+    }
 }

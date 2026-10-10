@@ -16,6 +16,7 @@ import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProj
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaSpiritSwordRenderer;
 import com.linweiyun.genshin.content.entities.teyvat.skill.miyabi.MiyabiSlashEffectRenderer;
 import com.linweiyun.genshin.client.render.entity.ElementalOrbRenderer;
+import com.linweiyun.genshin.client.render.entity.StellarPrismRenderer;
 import com.linweiyun.genshin.client.render.entity.FieldTalismanSpiritRender;
 import com.linweiyun.genshin.client.render.entity.IceBlockProjectileRenderer;
 import com.linweiyun.genshin.client.render.entity.StellarVortexRenderer;
@@ -90,6 +91,7 @@ public class MinegenshinClient {
         event.registerEntityRenderer(ModEntities.MIYABI_SLASH.get(), MiyabiSlashEffectRenderer::new);
         // 冰块投射物：原版方块模型，不需要 GeckoLib
         event.registerEntityRenderer(ModEntities.ICE_BLOCK.get(), IceBlockProjectileRenderer::new);
+        event.registerEntityRenderer(ModEntities.STELLAR_PRISM.get(), StellarPrismRenderer::new);
     }
 
 

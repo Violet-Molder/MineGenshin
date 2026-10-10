@@ -14,6 +14,7 @@ import com.linweiyun.genshin.content.effect.character.impl.DamageBonusEffect;
 import com.linweiyun.genshin.content.effect.character.impl.DiebianForsakenWindEffect;
 import com.linweiyun.genshin.content.effect.character.impl.DiebianLoyalWindEffect;
 import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarConduceEffect;
+import com.linweiyun.genshin.content.effect.character.impl.StellarConduceFieldEffect;
 import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarSwirlEffect;
 import com.linweiyun.genshin.content.effect.character.shenhe.IcyQuillEffect;
 import com.linweiyun.genshin.core.system.registry.ModRegistries;
@@ -62,6 +63,11 @@ public class ModCharacterEffects {
     public static final DeferredHolder<ICharacterEffect, RadianceStellarConduceEffect> RADIANCE_STELLAR_CONDUCE_EFFECT = CHARACTER_EFFECTS.register(
             "radiance_stellar_conduce",
             RadianceStellarConduceEffect::new
+    );
+
+    public static final DeferredHolder<ICharacterEffect, StellarConduceFieldEffect> STELLAR_CONDUCE_FIELD_EFFECT = CHARACTER_EFFECTS.register(
+            "stellar_conduce_field",
+            StellarConduceFieldEffect::new
     );
 
     // ======= 圣遗物套装效果 =======
