@@ -44,6 +44,25 @@ SITE_DOCS_ROOT=/path/to/repo java -jar minegenshin-web.jar
 
 菜单会自动出现（`docs.js` 的 `DOCS_PAGES` 里补一个同名条目即可）。
 
+## 版本切换（26.2 / 1.21.1）
+
+站点现在是**双线文档**：同一个主题在两条技术线上各一篇，`DocCatalog.Doc` 多带两个字段：
+
+```java
+new Doc("rendering-photon2-reference", "Minecraft 26.2 渲染与 Photon2 完全参考",
+        "docs/rendering-photon2-reference.md", "渲染与特效", V26_2, "rendering-photon2-reference-1.21.1"),
+new Doc("rendering-photon2-reference-1.21.1", "Minecraft 1.21.1 渲染与 Photon2 完全参考",
+        "docs/rendering-photon2-reference-1.21.1.md", "渲染与特效", V1_21_1, "rendering-photon2-reference"),
+```
+
+- `version`：`V26_2` / `V1_21_1` / `V_BOTH`（通用）。通用文档没有切换器。
+- `counterpart`：对面版本的 slug。两边互相声明，缺一个也能反向找到。
+- 页面右上角的 `#versionbar` 由 `SiteTemplate.versionBar(...)` 渲染：当前版本高亮，
+  另一版本指向对应篇；对面没有对应篇时退到那个版本的入口篇（`HUB_26_2` / `HUB_1_21_1`）。
+- 侧边栏的版本徽章来自 `/api/docs` 返回的 `version` 字段（`docs.js` 渲染成 `.ver-badge`）。
+
+加一篇分版本文档的步骤：Markdown 放进 `docs/` → `DocCatalog.DOCS` 加两行（版本 + 对应篇）→
+`docs.js` 的 `FALLBACK_MENU` 补两条（`file://` 兜底用）。
 ## 依赖隔离说明
 
 | 关注点 | 结论 |

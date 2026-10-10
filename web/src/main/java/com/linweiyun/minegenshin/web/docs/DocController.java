@@ -34,7 +34,7 @@ public class DocController {
     @GetMapping("/api/docs")
     public java.util.List<java.util.Map<String, String>> menu() {
         return DocCatalog.DOCS.stream()
-                .map(d -> java.util.Map.of("slug", d.slug(), "title", d.title(), "group", d.group()))
+                .map(d -> java.util.Map.of("slug", d.slug(), "title", d.title(), "group", d.group(), "version", d.version()))
                 .toList();
     }
 
@@ -64,7 +64,7 @@ public class DocController {
             String markdown = Files.readString(file, StandardCharsets.UTF_8);
             return ResponseEntity.ok()
                     .contentType(MediaType.TEXT_HTML)
-                    .body(SiteTemplate.docPage(doc.get().slug(), doc.get().title(), doc.get().source(),
+                    .body(SiteTemplate.docPage(doc.get().slug(), doc.get().title(), doc.get().source(), DocCatalog.versionOptions(doc.get()),
                             renderer.render(markdown)));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

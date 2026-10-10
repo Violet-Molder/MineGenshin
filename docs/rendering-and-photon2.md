@@ -2,6 +2,10 @@
 
 > **本文针对的版本**：Minecraft `26.2` · NeoForge `26.2.0.88` · Java `25` · Photon `26.2.2.3` · LDLib2 `26.2.2.41.a` · GeckoLib `5.5.6`
 >
+> **1.21.1 线**：同一主题的 1.21.1 版是另一篇 —— [渲染与 Photon2 特效（1.21.1）](rendering-and-photon2-1.21.1.md)。
+> 那一篇讲的就是本文提到的「1.20/1.21 时代的 API」（立即模式、core shader JSON、GeckoLib 4），
+> 页面上用右上角的版本切换在两条线之间跳。
+>
 > **本文与 `docs/rendering_guide_for_photon2.md` 的关系**：那份文档的 Blaze3D 部分是 1.20/1.21 时代的 API
 > （`RenderSystem.setShader`、`BufferUploader.drawWithShader`、`Tesselator.end()`、`RenderType.create`），
 > 在 26.2 里**已经不存在了**；它的 Photon2 部分只有标题和目录，正文从未写出。本文是重新写的完整版本：

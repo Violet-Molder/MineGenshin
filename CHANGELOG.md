@@ -114,6 +114,26 @@
 - **单手剑 / 长柄武器的重击开头那一下普攻只在「该是第 1 段」时打**
   （`deferNormalAttackOnPress` 判据 + `comboStage > 1`）；
 
+### 文档（2026-10-10 追加）
+
+文档站改成双线：渲染教程在 26.2 之外各补一份 1.21.1 版，页面右上角加版本切换。
+
+**新增**
+
+- 新增 `docs/rendering-photon2-reference-1.21.1.md`（**Minecraft 1.21.1 渲染与 Photon2 完全参考**，约 960 行，12 章）；
+- 新增 `docs/rendering-and-photon2-1.21.1.md`（**渲染与 Photon2 特效（1.21.1）**，约 870 行，10 章）。
+
+**变更**
+
+- 文档站：`DocCatalog` 增加版本与对应篇字段，页面右上角加 `#versionbar` 版本切换（26.2 / 1.21.1），
+  侧边栏与首页显示版本标签；`MarkdownRenderer` 补两篇新文档的互链映射；`web/README.md` 记下这套约定；
+- 两篇 26.2 渲染文档顶部加「1.21.1 版是另一篇」的指引。
+
+内容按本机 source jar 重新核对：NeoForge `21.1.250`、Photon `2.2.8`、LDLib2 `2.2.42`、GeckoLib `4.9.3`。
+**Photon 2.2.8 里没有 GeckoLib 集成**（sources jar 与 all.jar 里 `geckolib` / `bernie` 命中数都是 0），
+1.21.1 线的 GeckoLib 是 4.9.3；文里也写明 1.21.1 的 `GeoRenderIntercept` 仍是空实现，
+26.2 的 GPU 蒙皮与几何接管结论不适用。
+
 ---
 
 ## 1.0.7 — 2026-09-28（内部版本）

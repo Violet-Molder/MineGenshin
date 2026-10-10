@@ -292,6 +292,57 @@ pre code .tok-type    { color: var(--tok-type); font-weight: 600; }
   border-bottom: 1px dashed var(--line);
 }
 
+/* ---------- 版本切换（页面右上角） ---------- */
+
+#versionbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin: -8px 0 14px;
+}
+
+#versionbar .vlabel {
+  color: var(--ink-soft);
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.vchip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1;
+}
+
+.vchip:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+.vchip.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 侧边栏的版本小徽章 */
+.ver-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: 1px;
+}
+
 /* ---------- 表格 ---------- */
 
 .table-wrap {
@@ -512,7 +563,7 @@ h2:hover .anchor, h3:hover .anchor { opacity: 1; }
 }
 
 @media print {
-  #sidebar, #mobilebar, #nav-overlay, #menu-toggle, #to-top, .copy-btn { display: none !important; }
+  #sidebar, #mobilebar, #nav-overlay, #menu-toggle, #to-top, #versionbar, .copy-btn { display: none !important; }
   #content { padding: 0; max-width: none; }
   pre { background: #f2f4f7; color: #111; border: 1px solid #ccc; }
 }

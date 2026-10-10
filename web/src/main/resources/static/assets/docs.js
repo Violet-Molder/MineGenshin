@@ -26,9 +26,11 @@ const FALLBACK_MENU = [
   { slug: "character-implementations", title: "角色实现清单", group: "深入文档", href: "/doc/character-implementations" },
   { slug: "port-targeting", title: "索敌系统移植参考", group: "深入文档", href: "/doc/port-targeting" },
   { slug: "port-targeting-patch", title: "索敌移植补丁记录", group: "深入文档", href: "/doc/port-targeting-patch" },
-  { slug: "rendering-photon2", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2" },
-  { slug: "rendering-photon2-reference", title: "Minecraft 26.2 渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference" },
-  { slug: "ldlib2-node-graph", title: "LDLib2 节点图工具包", group: "扩展框架", href: "/doc/ldlib2-node-graph" },
+  { slug: "rendering-photon2-reference", title: "Minecraft 26.2 渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference", version: "26.2" },
+  { slug: "rendering-photon2-reference-1.21.1", title: "Minecraft 1.21.1 渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference-1.21.1", version: "1.21.1" },
+  { slug: "rendering-photon2", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2", version: "26.2" },
+  { slug: "rendering-photon2-1.21.1", title: "渲染与 Photon2 特效（1.21.1）", group: "渲染与特效", href: "/doc/rendering-photon2-1.21.1", version: "1.21.1" },
+  { slug: "ldlib2-node-graph", title: "LDLib2 节点图工具包", group: "扩展框架", href: "/doc/ldlib2-node-graph", version: "26.2" },
   { slug: "readme", title: "项目介绍", group: "项目", href: "/doc/readme" },
   { slug: "changelog", title: "更新日志", group: "项目", href: "/doc/changelog" },
 ];
@@ -40,7 +42,7 @@ async function loadMenu() {
       const docs = await res.json();
       const items = [{ slug: "index", title: "文档首页", group: "导览", href: "/" }];
       for (const d of docs) {
-        items.push({ slug: d.slug, title: d.title, group: d.group, href: "/doc/" + d.slug });
+        items.push({ slug: d.slug, title: d.title, group: d.group, href: "/doc/" + d.slug, version: d.version });
       }
       return items;
     }
@@ -318,7 +320,7 @@ async function buildSidebar() {
   const menu = await loadMenu();
   const parts = [];
 
-  parts.push('<a class="brand" href="/">MineGenshin 文档<small>Minecraft 26.2 · NeoForge · Java 25</small></a>');
+  parts.push('<a class="brand" href="/">MineGenshin 文档<small>Minecraft 26.2 · 1.21.1 双线文档</small></a>');
   parts.push('<input id="filter" class="search" type="search" placeholder="过滤目录…" autocomplete="off">');
 
   const groups = [...new Set(menu.map((m) => m.group))];
@@ -327,7 +329,8 @@ async function buildSidebar() {
     for (const page of menu.filter((m) => m.group === group)) {
       const id = page.slug === "index" ? "index" : page.slug;
       const active = id === current ? ' class="active"' : "";
-      parts.push(`<li><a href="${page.href}"${active}>${page.title}</a></li>`);
+      const badge = page.version ? `<span class="ver-badge">${page.version}</span>` : "";
+      parts.push(`<li><a href="${page.href}"${active}>${page.title}${badge}</a></li>`);
     }
     parts.push("</ul>");
   }
