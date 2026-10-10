@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Client" type="Application" factoryName="Application">
+    <envs>
+      <env name="TEMP" value="E:\MCMOD\MineGenshin\build\dev-temp" />
+      <env name="TMP" value="E:\MCMOD\MineGenshin\build\dev-temp" />
+    </envs>
+    <option name="ALTERNATIVE_JRE_PATH" value="E:/Java/jbr-25.0.4-windows-x64-b508.27" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="net.neoforged.devlaunch.Main" />
+    <module name="MineGenshin.main" />
+    <option name="PROGRAM_PARAMETERS" value="@E:\MCMOD\MineGenshin\build\moddev\clientRunProgramArgs.txt" />
+    <option name="VM_PARAMETERS" value="@E:\MCMOD\MineGenshin\build\moddev\clientRunVmArgs.txt -Dfml.modFolders=minegenshin%%E:\MCMOD\MineGenshin\build\classes\java\main;minegenshin%%E:\MCMOD\MineGenshin\build\resources\main;minegenshin%%E:\MCMOD\MineGenshin\build\classes\java\geoPlugin;minegenshin%%E:\MCMOD\MineGenshin\build\resources\geoPlugin" />
+    <option name="WORKING_DIRECTORY" value="E:\MCMOD\MineGenshin\run" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

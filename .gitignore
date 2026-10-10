@@ -12,7 +12,8 @@ build/
 out/
 !**/src/**/out/
 
-.run/
+.run/*
+!.run/Client.run.xml
 
 ### Eclipse ###
 .apt_generated
