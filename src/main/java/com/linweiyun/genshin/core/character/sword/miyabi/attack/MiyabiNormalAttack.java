@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
+import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiTalent;
+
 import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiResources;
@@ -31,8 +33,7 @@ public final class MiyabiNormalAttack {
     public static void execute(Player player, PGCharacter character, int comboStage) {
         int stage = Math.max(1, Math.min(MiyabiResources.MAX_COMBO, comboStage));
         int level = Math.max(1, character.getData().getNormalAttackLevel());
-        float multiplier = (float) (ShenheTalentConfig.getNABase(stage)
-                + ShenheTalentConfig.getNAPerLevel(stage) * (level - 1));
+        float multiplier = MiyabiTalent.normalAttackMultiplier(stage, level);
 
         MiyabiDamage.forward(player, character, AttackType.NORMAL_ATTACK, ModElements.FYSIKOS.get(),
                 DecayGroups.DEFAULT_NORMAL_ATTACK, REACH, WIDTH, HEIGHT, multiplier);
