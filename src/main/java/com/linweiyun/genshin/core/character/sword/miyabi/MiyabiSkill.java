@@ -93,6 +93,28 @@ public class MiyabiSkill extends SkillBase {
     }
 
     @Override
+    public double textValue(PGCharacter character, String key) {
+        int na = Math.max(1, character.getData().getNormalAttackLevel());
+        int sk = Math.max(1, character.getData().getElementalSkillLevel());
+        return switch (key) {
+            case "na1" -> MiyabiTalent.normalAttackMultiplier(1, na);
+            case "na2" -> MiyabiTalent.normalAttackMultiplier(2, na);
+            case "na3" -> MiyabiTalent.normalAttackMultiplier(3, na);
+            case "na4" -> MiyabiTalent.normalAttackMultiplier(4, na);
+            case "na5" -> MiyabiTalent.normalAttackMultiplier(5, na);
+            case "charged" -> MiyabiTalent.chargedAttackMultiplier(na);
+            case "qi" -> MiyabiTalent.swordQi(na);
+            case "frost_moon" -> MiyabiTalent.frostMoon(na);
+            case "deep_snow" -> MiyabiTalent.deepSnow(sk);
+            case "deep_snow_conduce" -> MiyabiTalent.deepSnowConduce(sk);
+            case "flying_snow" -> MiyabiTalent.flyingSnowTotal(sk);
+            case "snow_cover" -> MiyabiTalent.snowCoverPerStack(sk);
+            case "rime_per_stack" -> MiyabiTalent.rimePerStack(sk);
+            default -> 0.0;
+        };
+    }
+
+    @Override
     public String plungingRecoveryAnimation() {
         return MiyabiResources.PLUNGE_RECOVER_STATE;
     }

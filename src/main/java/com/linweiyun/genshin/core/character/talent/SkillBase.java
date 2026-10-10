@@ -163,6 +163,11 @@ public class SkillBase {
     *
     * <p>给「下坠时钉在某个姿态」的角色用：落地后从 {@link #plungingAnimationHoldTick()} 那一刻继续把同一条动画播完。
     */
+   /** 描述文本里 {@code {v:键}} 在当前等级下的值（占攻击力的倍率，1.0 = 100%）。 */
+   public double textValue(PGCharacter character, String key) {
+      return 0.0;
+   }
+
    public String plungingRecoveryAnimation() {
       return null;
    }

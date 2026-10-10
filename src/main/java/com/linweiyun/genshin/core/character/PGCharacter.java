@@ -426,6 +426,12 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       return current != null ? current.plungingAnimationHoldTick() : -1.0;
    }
 
+   /** 描述文本里 {@code {v:键}} 在当前等级下的值。 */
+   public double getTalentTextValue(String key) {
+      SkillBase current = this.getSkill();
+      return current != null ? current.textValue(this, key) : 0.0;
+   }
+
    /** 落地后接着播的状态名（走动画别名映射）；null = 不续播。 */
    public String getPlungingRecoveryAnimation() {
       SkillBase current = this.getSkill();

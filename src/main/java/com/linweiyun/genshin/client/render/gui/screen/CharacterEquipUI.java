@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.client.render.gui.screen;
 
+import com.linweiyun.genshin.client.render.gui.text.CharacterText;
+
 import com.linweiyun.genshin.client.render.character.bones.BoneRenderState;
 import com.linweiyun.genshin.client.render.character.bones.BoneUpdater;
 import com.linweiyun.genshin.client.combat.state.AnimationAvailability;
@@ -579,9 +581,6 @@ public final class CharacterEquipUI {
                   break;
                 case TALENT:
                    buildTalentPage(st);
-                   break;
-                case SKILL:
-                   buildSkillPage(st);
                    break;
                 case APPEARANCE:
                    buildAppearancePage(st);
@@ -1204,7 +1203,7 @@ public final class CharacterEquipUI {
          detail.addChild(
             line(unlocked ? "gui.minegenshin.character_equip.unlocked" : "gui.minegenshin.character_equip.locked", unlocked ? "ce-value-dim" : "ce-note")
          );
-         detail.addChild(wrapLabel(Component.literal(talentDesc(st.character, kind))));
+         detail.addChild(wrapLabel(CharacterText.parse(talentDesc(st.character, kind), st.character::getTalentTextValue)));
       } else {
          detail.addChild(
             line("gui.minegenshin.character_equip.talent_level", "ce-value-dim", active ? talentLevel(st, kind) : 0, active ? talentLevelCap(st, kind) : 0)
@@ -1230,31 +1229,6 @@ public final class CharacterEquipUI {
       return "gui.minegenshin.character_equip.talent.kind." + talentKindKey(kind);
    }
 
-   private static void buildSkillPage(CharacterEquipUI.State st) {
-      UIElement listBox = new UIElement().setId("ce-skill-list-box");
-      ScrollerView scroller = newScroller("ce-skill-scroller");
-      UIElement list = new UIElement().setId("ce-skill-list").addClass("ce-scroll-body");
-      for (int kind = 0; kind <= 4; kind++) {
-         list.addChild(talentRow(st, kind));
-      }
-      scroller.addScrollViewChild(list);
-      listBox.addChild(scroller);
-      st.panel.addChild(listBox);
-      int kind = clampTalent(st.selTalent);
-      st.detailCard.layout(l -> l.display(TaffyDisplay.FLEX));
-      UIElement card = new UIElement().addClass("ce-detail");
-      card.addChild(line(talentKindKey2(kind), "ce-note"));
-      card.addChild(line(Component.literal(talentName(st.character, kind)), "ce-title-name"));
-      card.addChild(line(talentUnlocked(st, kind)
-              ? "gui.minegenshin.character_equip.unlocked"
-              : "gui.minegenshin.character_equip.locked", "ce-value-dim"));
-      ScrollerView descScroll = newScroller("ce-skill-detail");
-      UIElement desc = new UIElement();
-      desc.addChild(wrapLabel(Component.literal(talentDesc(st.character, kind))));
-      descScroll.addScrollViewChild(desc);
-      card.addChild(descScroll);
-      st.detailCard.addChild(card);
-   }
 
    private static UIElement talentRow(CharacterEquipUI.State st, int kind) {
       boolean unlocked = talentUnlocked(st, kind);
@@ -1386,7 +1360,7 @@ public final class CharacterEquipUI {
 
    private static String tr(String... keys) {
       for (String key : keys) {
-         String value = I18n.get(key, new Object[0]);
+         String value = Component.translatable(key).getString();
          if (!value.equals(key)) {
             return value;
          }
@@ -1445,7 +1419,7 @@ public final class CharacterEquipUI {
       st.sub
          .addChild(subHeader(st, Component.translatable("gui.minegenshin.character_equip.level_up_title", new Object[]{levelTargetName(st, st.levelTarget)})));
       UIElement body = new UIElement().setId("ce-sub-body");
-      List<CharacterEquipUI.Mat> mats = levelMaterials(st);
+      List<CharacterEquipUI.Mat> mats = mergeMaterials(levelMaterials(st));
       ScrollerView left = newScroller("ce-mat-scroller");
       UIElement matList = new UIElement().setId("ce-mat-list").addClass("ce-scroll-body");
       if (mats.isEmpty()) {
@@ -1732,6 +1706,23 @@ public final class CharacterEquipUI {
       } else if (st.levelTarget == -2) {
          NetworkManager.sendAscendWeaponToServer();
       }
+   }
+
+   /** 同类物品合并成一条：数量累加，选中仍指向第一叠。 */
+   private static List<CharacterEquipUI.Mat> mergeMaterials(List<CharacterEquipUI.Mat> in) {
+      java.util.LinkedHashMap<net.minecraft.world.item.Item, CharacterEquipUI.Mat> byItem = new java.util.LinkedHashMap<>();
+      for (CharacterEquipUI.Mat mat : in) {
+         net.minecraft.world.item.Item item = mat.stack().getItem();
+         CharacterEquipUI.Mat prev = byItem.get(item);
+         if (prev == null) {
+            byItem.put(item, mat);
+         } else {
+            ItemStack merged = prev.stack().copy();
+            merged.setCount(prev.stack().getCount() + mat.stack().getCount());
+            byItem.put(item, new CharacterEquipUI.Mat(merged, prev.source(), prev.index(), prev.expValue()));
+         }
+      }
+      return new ArrayList<>(byItem.values());
    }
 
    private static UIElement materialRow(CharacterEquipUI.State st, CharacterEquipUI.Mat mat) {
@@ -2526,7 +2517,6 @@ public final class CharacterEquipUI {
       ARTIFACT,
       CONSTELLATION,
       TALENT,
-      SKILL,
       /** 外观：装扮项那一页（内容来自角色自己的配置页，见 buildAppearancePage）。 */
       APPEARANCE,
       PROFILE;
