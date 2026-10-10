@@ -85,7 +85,7 @@
   <h1>🎯 图形学学习笔记：4×4 变换矩阵</h1>
   <p class="subtitle">从 Minecraft 渲染管线的实际代码出发，彻底理解变换矩阵的每一部分在做什么。结合交互式 3D 可视化，亲手"摸"到矩阵和空间坐标的对应关系。</p>
   <p style="color:#7aa9dd;font-size:.9em;margin:12px 0 0;">
-    🔗 关联文档：<a href="/doc/rendering-photon2-reference" style="color:#7aa9dd;text-decoration:underline;">Minecraft 26.2 渲染与 Photon2 完全参考</a>
+    🔗 关联文档：<a href="/doc/rendering-26.2-reference-intro" style="color:#7aa9dd;text-decoration:underline;">Minecraft 26.2 渲染与 Photon2 完全参考</a>
     · <a href="/doc/rendering-photon2" style="color:#7aa9dd;text-decoration:underline;">渲染与 Photon2 特效</a>
   </p>
 </div>
@@ -106,7 +106,7 @@
 
 <h2 id="sec1">1. 问题的起点：渲染文档里的一行代码</h2>
 
-<p>在 <a href="/doc/rendering-photon2-reference">渲染文档 §1.5</a> 里有这样一段代码：</p>
+<p>在 <a href="/doc/rendering-26.2-reference-intro">渲染文档 §1.5</a> 里有这样一段代码：</p>
 
 <pre><code class="language-java">// 提交时拿到的位姿 → 世界坐标（在渲染回调里）
 Matrix4f bonePose = new Matrix4f(info.poseStack().last().pose());
@@ -281,7 +281,7 @@ v'' = v' + t                  ← 向量加法
 <h2 id="sec6">6. 世界坐标 ↔ 相机空间</h2>
 
 <p>回到最初的问题。为什么 <span class="code-inline">getTranslation()</span> 提取出来的是"相机空间"坐标？</p>
-<p>因为 <strong>Minecraft 26.2 的提交阶段，PoseStack 的原点是相机，不是世界原点</strong>（见<a href="/doc/rendering-photon2-reference#sec15">渲染文档 §1.5</a>）。</p>
+<p>因为 <strong>Minecraft 26.2 的提交阶段，PoseStack 的原点是相机，不是世界原点</strong>（见<a href="/doc/rendering-26.2-reference-frame">渲染文档 §1.5</a>）。</p>
 <p>在 <span class="code-inline">LevelRenderer.submitEntities()</span> 内部：</p>
 
 <pre><code class="language-java">// 所有实体的世界坐标在提交给渲染器之前，已被减去相机位置
@@ -408,7 +408,7 @@ Vec3 world = new Vec3(
 </div>
 
 <p style="text-align:center;margin:40px 0 20px;color:var(--ink-soft);font-size:.9em;">
-  🔗 继续学习：<a href="/doc/rendering-photon2-reference">Minecraft 26.2 渲染与 Photon2 完全参考</a>
+  🔗 继续学习：<a href="/doc/rendering-26.2-reference-intro">Minecraft 26.2 渲染与 Photon2 完全参考</a>
   · <a href="/doc/rendering-photon2">渲染与 Photon2 特效</a>
 </p>
 

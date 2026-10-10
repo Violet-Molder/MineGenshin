@@ -1,57 +1,88 @@
 /* 文档站导航：跨页菜单 + 页内目录自动生成 + 滚动高亮 + 过滤 + 移动端抽屉。
    不依赖任何构建工具或网络资源。 */
 
-/* 菜单由后端 /api/docs 提供（DocCatalog 是唯一来源）；取不到时用这份兜底。 */
-const FALLBACK_MENU = [
-  { slug: "index", title: "文档首页", group: "导览", href: "/" },
-  { slug: "sys-registry", title: "注册中心与内容注册", group: "系统详解", href: "/doc/sys-registry" },
-  { slug: "sys-character", title: "角色系统", group: "系统详解", href: "/doc/sys-character" },
-  { slug: "sys-attachment-sync", title: "附件与数据同步", group: "系统详解", href: "/doc/sys-attachment-sync" },
-  { slug: "sys-combat-attack", title: "战斗 · 攻击与伤害管线", group: "系统详解", href: "/doc/sys-combat-attack" },
-  { slug: "sys-combat-action", title: "战斗 · 动作与动画", group: "系统详解", href: "/doc/sys-combat-action" },
-  { slug: "sys-flight", title: "飞行与下落攻击", group: "系统详解", href: "/doc/sys-flight" },
-  { slug: "sys-element-reaction", title: "元素附着与元素反应", group: "系统详解", href: "/doc/sys-element-reaction" },
-  { slug: "sys-element-host", title: "元素载体：可附着宿主", group: "系统详解", href: "/doc/sys-element-host" },
-  { slug: "sys-attribute-effect", title: "属性与角色效果", group: "系统详解", href: "/doc/sys-attribute-effect" },
-  { slug: "sys-loot-monster", title: "掉落与怪物等级", group: "系统详解", href: "/doc/sys-loot-monster" },
-  { slug: "sys-shield-status", title: "护盾与状态", group: "系统详解", href: "/doc/sys-shield-status" },
-  { slug: "sys-poise-control", title: "韧性与控制", group: "系统详解", href: "/doc/sys-poise-control" },
-  { slug: "sys-render-asset", title: "资源、渲染与界面", group: "系统详解", href: "/doc/sys-render-asset" },
-  { slug: "sys-network-event", title: "网络、事件与数据生成", group: "系统详解", href: "/doc/sys-network-event" },
-  { slug: "sys-performance", title: "性能优化系统", group: "系统详解", href: "/doc/sys-performance" },
-  { slug: "graphics-matrix-notes", title: "图形学学习笔记：4×4 变换矩阵", group: "图形学学习笔记", href: "/graphics-matrix-notes.html" },
-  { slug: "entity-development", title: "实体开发文档", group: "深入文档", href: "/entity-development.html" },
-  { slug: "entity-ai", title: "实体 AI 指南", group: "深入文档", href: "/doc/entity-ai" },
-  { slug: "character-system", title: "角色系统详解（薇斯娜）", group: "深入文档", href: "/doc/character-system" },
-  { slug: "character-implementations", title: "角色实现清单", group: "深入文档", href: "/doc/character-implementations" },
-  { slug: "port-targeting", title: "索敌系统移植参考", group: "深入文档", href: "/doc/port-targeting" },
-  { slug: "port-targeting-patch", title: "索敌移植补丁记录", group: "深入文档", href: "/doc/port-targeting-patch" },
-  { slug: "rendering-photon2-reference", title: "渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference", version: "26.2" },
-  { slug: "rendering-photon2-reference-1.21.1", title: "渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference-1.21.1", version: "1.21.1" },
-  { slug: "rendering-photon2", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2", version: "26.2" },
-  { slug: "rendering-photon2-1.21.1", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2-1.21.1", version: "1.21.1" },
-  { slug: "ldlib2-node-graph", title: "LDLib2 节点图工具包", group: "扩展框架", href: "/doc/ldlib2-node-graph" },
-  { slug: "readme", title: "项目介绍", group: "项目", href: "/doc/readme" },
-  { slug: "changelog", title: "更新日志", group: "项目", href: "/doc/changelog" },
+/* 菜单来自后端 /api/docs（DocCatalog 是唯一来源）。下面这份是 file:// 直接打开时的兜底，
+   结构与 DocCatalog 一致：分类（group）→ 文档（section）→ 章节页。 */
+
+const FALLBACK_LOOSE = [
+  ["sys-registry", "注册中心与内容注册", "系统详解"],
+  ["sys-character", "角色系统", "系统详解"],
+  ["sys-attachment-sync", "附件与数据同步", "系统详解"],
+  ["sys-combat-attack", "战斗 · 攻击与伤害管线", "系统详解"],
+  ["sys-combat-action", "战斗 · 动作与动画", "系统详解"],
+  ["sys-flight", "飞行与下落攻击", "系统详解"],
+  ["sys-element-reaction", "元素附着与元素反应", "系统详解"],
+  ["sys-element-host", "元素载体：可附着宿主", "系统详解"],
+  ["sys-attribute-effect", "属性与角色效果", "系统详解"],
+  ["sys-loot-monster", "掉落与怪物等级", "系统详解"],
+  ["sys-shield-status", "护盾与状态", "系统详解"],
+  ["sys-poise-control", "韧性与控制", "系统详解"],
+  ["sys-render-asset", "资源、渲染与界面", "系统详解"],
+  ["sys-network-event", "网络、事件与数据生成", "系统详解"],
+  ["sys-performance", "性能优化系统", "系统详解"],
+  ["ldlib2-node-graph", "LDLib2 节点图工具包", "扩展框架"],
+  ["graphics-matrix-notes", "图形学学习笔记：4×4 变换矩阵", "图形学学习笔记"],
+  ["entity-development", "实体开发文档", "深入文档"],
+  ["entity-ai", "实体 AI 指南", "深入文档"],
+  ["character-system", "角色系统详解（薇斯娜）", "深入文档"],
+  ["character-implementations", "角色实现清单", "深入文档"],
+  ["port-targeting", "索敌系统移植参考", "深入文档"],
+  ["port-targeting-patch", "索敌移植补丁记录", "深入文档"],
+  ["readme", "项目介绍", "项目"],
+  ["changelog", "更新日志", "项目"],
 ];
+
+const FALLBACK_BOOKS = [
+  { book: "渲染与 Photon2 完全参考", sub: "reference", chapters: [
+    ["intro", "0. 导读"], ["frame", "1. 心智模型：一帧是怎么画出来的"], ["blaze3d", "2. Blaze3D API 地图"],
+    ["shaders", "3. 着色器、渲染管线与 GPU 数据"], ["entity-render", "4. 实体渲染与渲染状态"],
+    ["geckolib", "5. GeckoLib：骨骼动画与渲染层"], ["transform", "6. 坐标空间、矩阵与四元数"],
+    ["gpu-skinning", "7. GPU 蒙皮与渲染性能"], ["photon-runtime", "8. Photon2：从编辑器到运行时"],
+    ["photon-api", "9. Photon2 Java API 与运行时注入"], ["practice", "10. 项目实战"],
+    ["troubleshooting", "11. 排错手册"], ["appendix", "12. 附录"],
+  ] },
+  { book: "渲染与 Photon2 特效", sub: "effects", chapters: [
+    ["mental-model", "1. 先建立正确的心智模型"], ["blaze3d", "2. Blaze3D 是什么、怎么写"],
+    ["coordinates", "3. 坐标空间完全指南"], ["geckolib", "4. GeckoLib 的渲染管线"],
+    ["shaders", "5. 着色器与渲染类型"], ["photon", "6. Photon2 的渲染架构"],
+    ["practice", "7. 实战：把渲染接到 Photon"], ["performance", "8. 性能"],
+    ["troubleshooting", "9. 排错手册"], ["appendix", "10. 附录"],
+  ] },
+];
+
+function fallbackMenu() {
+  const items = [{ slug: "index", title: "文档首页", group: "导览", section: "", href: "/", version: "" }];
+  for (const [slug, title, group] of FALLBACK_LOOSE) {
+    items.push({ slug: slug, title: title, group: group, section: "", href: "/doc/" + slug, version: "" });
+  }
+  for (const book of FALLBACK_BOOKS) {
+    for (const version of ["26.2", "1.21.1"]) {
+      for (const [id, title] of book.chapters) {
+        const slug = "rendering-" + version + "-" + book.sub + "-" + id;
+        items.push({ slug: slug, title: title, group: "渲染与特效", section: book.book, href: "/doc/" + slug, version: version });
+      }
+    }
+  }
+  return items;
+}
 
 async function loadMenu() {
   try {
     const res = await fetch("/api/docs", { headers: { accept: "application/json" } });
     if (res.ok) {
       const docs = await res.json();
-      const items = [{ slug: "index", title: "文档首页", group: "导览", href: "/" }];
+      const items = [{ slug: "index", title: "文档首页", group: "导览", section: "", href: "/", version: "" }];
       for (const d of docs) {
-        items.push({ slug: d.slug, title: d.title, group: d.group, href: "/doc/" + d.slug, version: d.version || "" });
+        items.push({ slug: d.slug, title: d.title, group: d.group, section: d.section || "",
+                     href: "/doc/" + d.slug, version: d.version || "" });
       }
       return items;
     }
   } catch (e) {
-    /* 直接用 file:// 打开时没有后端，走兜底 */
+    /* file:// 直接打开时没有后端，走兜底 */
   }
-  return FALLBACK_MENU;
+  return fallbackMenu();
 }
-
 /* ---------- 版本状态 ----------
    站点一次只显示一套目录：带版本的文档按当前版本出一篇，其余文档两条线共用。
    当前版本 = 页面自带的版本 → 上次选择 → 站点默认。 */
@@ -375,93 +406,83 @@ function wireBackToTop() {
   onScroll();
 }
 
-/* ---------- 侧边栏：分组 → 页面 → 页内章节 的树 ---------- */
+/* ---------- 侧边栏：纯导航（分类 → 文档 → 章节页） ----------
+   默认全部收起，只有点击才展开；没有任何自动展开、自动跟随高亮。 */
 
-/** 把正文的 h2/h3 收成一棵树（h3 挂在它前面的 h2 下），顺便给标题补锚点。 */
-function collectSections(content) {
-  const pageTitle = content.querySelector("h1");
-  const tree = [];
-  let currentH2 = null;
-  [...content.querySelectorAll("h1, h2, h3")]
-    .filter((h) => h !== pageTitle)
-    .forEach((h) => {
-      if (!h.id) h.id = slug(h.textContent);
-      // 取标题文字时先摘掉自己加的 # 锚点，重复构建也不会把 # 算进文字
-      const clean = h.cloneNode(true);
-      clean.querySelectorAll("a.anchor").forEach((a) => a.remove());
-      const node = { id: h.id, text: clean.textContent.trim(), level: h.tagName === "H3" ? 3 : 2, children: [] };
-      if (node.level === 3 && currentH2) {
-        currentH2.children.push(node);
-      } else {
-        tree.push(node);
-        currentH2 = node.level === 2 ? node : null;
-      }
-      if (!h.querySelector("a.anchor")) {
-        const anchor = document.createElement("a");
-        anchor.className = "anchor";
-        anchor.href = `#${h.id}`;
-        anchor.textContent = "#";
-        h.appendChild(anchor);
-      }
-    });
-  return tree;
-}
-
-function sectionTree(items) {
-  return items.map((item) => {
-    if (item.children.length) {
-      return `<li class="nav-sub-item"><details class="nav-sub">` +
-        `<summary><span class="nav-caret" aria-hidden="true"></span>` +
-        `<a href="#${item.id}" class="toc-link">${item.text}</a></summary>` +
-        `<ul class="nav-sub-list">${sectionTree(item.children)}</ul></details></li>`;
-    }
-    const lv = item.level === 3 ? " lv3" : "";
-    return `<li class="nav-sub-item"><a href="#${item.id}" class="toc-link${lv}">${item.text}</a></li>`;
-  }).join("");
-}
-
-function navPage(page, isCurrent, sections) {
-  const versionAttr = page.version ? ` data-version="${page.version}"` : "";
-  const label = `<a href="${page.href}"${isCurrent ? ' class="active"' : ""}>${page.title}</a>`;
-  const body = isCurrent && sections && sections.length
-    ? `<details class="nav-page" open><summary><span class="nav-caret" aria-hidden="true"></span>` +
-      `${label}</summary>` +
-      `<ul class="nav-sub-list">${sectionTree(sections)}</ul></details>`
-    : label;
-  return `<li class="nav-item"${versionAttr} data-title="${page.title}">${body}</li>`;
+function navPageItem(page) {
+  const version = page.version ? ` data-version="${page.version}"` : "";
+  return `<li class="nav-item"${version} data-title="${page.title}"><a href="${page.href}">${page.title}</a></li>`;
 }
 
 async function buildSidebar() {
   const sidebar = document.getElementById("sidebar");
-  const content = document.getElementById("content");
-  if (!sidebar || !content) return;
-
+  if (!sidebar) return;
   const current = document.body.dataset.page || "";
   const menu = await loadMenu();
-  const sections = collectSections(content);
 
   const parts = [];
   parts.push('<a class="brand" href="/">MineGenshin 文档<small>NeoForge Mod 开发文档</small></a>');
   parts.push('<input id="filter" class="search" type="search" placeholder="过滤目录…" autocomplete="off">');
 
   for (const group of [...new Set(menu.map((m) => m.group))]) {
-    // 两个版本的配对条目都渲染出来，由 applyVersion 决定哪一篇可见（切换版本时不用重建）
-    const pages = menu.filter((m) => m.group === group);
-    if (!pages.length) continue;
-    parts.push('<details class="nav-group" open><summary><span class="nav-caret" aria-hidden="true"></span>' +
+    const inGroup = menu.filter((m) => m.group === group);
+    parts.push('<details class="nav-group"><summary><span class="nav-caret" aria-hidden="true"></span>' +
       `<span class="nav-group-title">${group}</span></summary><ul class="nav-list">`);
-    for (const page of pages) {
-      parts.push(navPage(page, page.slug === current, sections));
+    for (const page of inGroup.filter((m) => !m.section)) {
+      parts.push(navPageItem(page));
+    }
+    for (const book of [...new Set(inGroup.filter((m) => m.section).map((m) => m.section))]) {
+      parts.push('<li class="nav-book"><details class="nav-book-details">' +
+        '<summary><span class="nav-caret" aria-hidden="true"></span>' +
+        `<span class="nav-book-title">${book}</span></summary><ul class="nav-list">`);
+      for (const page of inGroup.filter((m) => m.section === book)) {
+        parts.push(navPageItem(page));
+      }
+      parts.push("</ul></details></li>");
     }
     parts.push("</ul></details>");
   }
 
   sidebar.innerHTML = parts.join("");
+
+  const link = sidebar.querySelector(`li.nav-item a[href="/doc/${current}"]`);
+  if (link) link.classList.add("active");
+
   wireFilter();
-  wireScrollSpy();
 }
 
-/** 过滤只看页面级条目：命中的组自动展开，没有命中的组收起。 */
+/* ---------- 右侧「本页」：只列当前页的 h2/h3，纯链接，不动左栏 ---------- */
+
+function buildOutline() {
+  const outline = document.getElementById("outline");
+  const content = document.getElementById("content");
+  if (!outline || !content) return;
+  const headings = [...content.querySelectorAll("h2, h3")];
+  if (!headings.length) {
+    outline.hidden = true;
+    return;
+  }
+  const parts = ['<div class="outline-title">本页</div><ul class="outline-list">'];
+  for (const h of headings) {
+    if (!h.id) h.id = slug(h.textContent);
+    const clean = h.cloneNode(true);
+    clean.querySelectorAll("a.anchor").forEach((a) => a.remove());
+    const lv = h.tagName === "H3" ? " lv3" : "";
+    parts.push(`<li><a href="#${h.id}" class="outline-link${lv}">${clean.textContent.trim()}</a></li>`);
+    if (!h.querySelector("a.anchor")) {
+      const anchor = document.createElement("a");
+      anchor.className = "anchor";
+      anchor.href = `#${h.id}`;
+      anchor.textContent = "#";
+      h.appendChild(anchor);
+    }
+  }
+  parts.push("</ul>");
+  outline.innerHTML = parts.join("");
+  outline.hidden = false;
+}
+
+/** 过滤目录只筛页面级条目；输入时把命中的分类展开（这是用户输入触发的）。 */
 function wireFilter() {
   const input = document.getElementById("filter");
   if (!input) return;
@@ -480,35 +501,6 @@ function wireFilter() {
   });
 }
 
-function wireScrollSpy() {
-  const links = [...document.querySelectorAll(".toc-link")];
-  if (!links.length) return;
-  const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
-  const openParents = (el) => {
-    let details = el.closest("details");
-    while (details) {
-      details.open = true;
-      details = details.parentElement ? details.parentElement.closest("details") : null;
-    }
-  };
-  const observer = new IntersectionObserver(
-    (entries) => {
-      const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-      if (!visible.length) return;
-      links.forEach((a) => a.classList.remove("active"));
-      const link = byId.get(visible[0].target.id);
-      if (link) {
-        link.classList.add("active");
-        openParents(link);
-        // 手机上侧边栏是抽屉：自动滚动高亮会让抽屉自己乱跳，所以只在桌面端跟随
-        if (!isMobile()) link.scrollIntoView({ block: "nearest" });
-      }
-    },
-    { rootMargin: "-10% 0px -75% 0px", threshold: [0, 1] }
-  );
-  document.querySelectorAll("#content h1, #content h2, #content h3").forEach((h) => observer.observe(h));
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   if (document.body.dataset.version) setStoredVersion(document.body.dataset.version);
   wireMobileNav();
@@ -518,4 +510,5 @@ document.addEventListener("DOMContentLoaded", () => {
   wireBackToTop();
   wireVersionSwitch();
   buildSidebar().then(() => applyVersion(activeVersion()));
+  buildOutline();
 });

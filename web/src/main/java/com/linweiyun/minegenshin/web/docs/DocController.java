@@ -39,7 +39,7 @@ public class DocController {
     @GetMapping("/api/docs")
     public java.util.List<java.util.Map<String, String>> menu() {
         return DocCatalog.DOCS.stream()
-                .map(d -> java.util.Map.of("slug", d.slug(), "title", d.title(), "group", d.group(), "version", d.version(), "counterpart", d.counterpart() == null ? "" : d.counterpart()))
+                .map(d -> java.util.Map.of("slug", d.slug(), "title", d.title(), "group", d.group(), "section", d.section(), "version", d.version(), "counterpart", d.counterpart() == null ? "" : d.counterpart()))
                 .toList();
     }
 

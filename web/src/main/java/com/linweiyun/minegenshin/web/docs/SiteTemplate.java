@@ -32,6 +32,7 @@ public final class SiteTemplate {
                   <main id="content">
                 %s
                   </main>
+                  <aside id="outline" hidden></aside>
                 </div>
                 <script src="/assets/docs.js"></script>
                 </body>

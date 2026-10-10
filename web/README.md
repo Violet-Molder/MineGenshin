@@ -44,36 +44,28 @@ SITE_DOCS_ROOT=/path/to/repo java -jar minegenshin-web.jar
 
 菜单会自动出现；顺带在 `docs.js` 的 `FALLBACK_MENU` 里补一个同名条目（那是直接用 `file://` 打开时的兜底）。
 
-## 版本切换与左侧目录
+## 目录结构与版本切换
 
-站点是**双线文档**：同一个主题在 26.2 与 1.21.1 上各一篇，但一次只显示一套目录 ——
-配对的两篇（渲染参考、渲染特效）按当前版本只出一篇，其它文档两条线共用，条目上一律不挂版本字样。
+文档按 NeoForge 官方文档的做法组织：**一页只讲一个主题**，目录由 `DocCatalog` 给出三级结构 ——
+分类（`group`）→ 文档（`section`）→ 章节页。渲染教程按章拆页，两条技术线各一套：
 
-`DocCatalog.Doc` 因此多两个字段，只有真正分版本的文档才填：
-
-```java
-new Doc("rendering-photon2-reference", "渲染与 Photon2 完全参考",
-        "docs/rendering-photon2-reference.md", "渲染与特效", V26_2, "rendering-photon2-reference-1.21.1"),
-new Doc("rendering-photon2-reference-1.21.1", "渲染与 Photon2 完全参考",
-        "docs/rendering-photon2-reference-1.21.1.md", "渲染与特效", V1_21_1, "rendering-photon2-reference"),
+```
+渲染与特效 / 渲染与 Photon2 完全参考 / 2. Blaze3D API 地图   ← 一页
+docs/rendering/26.2/reference/blaze3d.md                     ← 它的源文件
+docs/rendering/1.21.1/reference/blaze3d.md                   ← 1.21.1 线上同名的那一页
 ```
 
-- `version`：`V26_2` / `V1_21_1`；留空表示两条线共用。
-- `counterpart`：对面版本的 slug，两边互相声明，只写一边也能反向找到。
-- **标题两条线写成一样的**：版本由切换按钮表达，不写进标题（页面正文第一段本来就会写适用版本）。
+- 左侧目录是**纯导航**：分类与文档两级都可展开收缩，**默认全部收起，只有点击才展开**；
+  没有自动展开、没有滚动跟随，当前页只做高亮。
+- 页内 h2/h3 不放左栏，而是页面右侧的「本页」目录（`#outline`，宽度 < 1280px 时隐藏）。
+- 只有真正分版本的页面才填 `version` / `counterpart`；两条线的同名章节互相配对。
+  右上角版本按钮在成对的页面上跳同名章，在共享页面上就地切换（左栏与首页卡片跟着换，正文不动）。
+  选过的版本记在 `localStorage["minegenshin.docs.version"]`，默认取 `DocCatalog.DEFAULT_VERSION`。
 
-页面右上角的 `#versionbar` 由 `SiteTemplate.versionBar(...)` 渲染，是两个按钮：
-
-- 当前页带配对（`Doc.versioned()`）→ 另一个版本按钮带 `data-href`，点它跳到对应篇；
-- 其余页面 → 没有 `data-href`，点它**就地切换**：左栏里配对的那两篇换一条线、首页卡片跟着换，正文不动。
-- 选过的版本记在 `localStorage["minegenshin.docs.version"]`；没记过时用 `DocCatalog.DEFAULT_VERSION`。
-
-左侧目录是一条可展开收缩的树（`docs.js`）：分组（`details.nav-group`）→ 页面 → 当前页的
-页内章节（`details.nav-page` 里的 h2/h3，h3 挂在各自 h2 下）。页内章节挂在当前页节点下面，
-**不再有独立的「本页目录」块**；滚动高亮会自动展开对应的章节节点。
-
-加一篇分版本文档的步骤：Markdown 放进 `docs/` → `DocCatalog.DOCS` 加两行（同标题，各自的版本 + 对应篇）→
-`docs.js` 的 `FALLBACK_MENU` 补两条（`file://` 兜底用），标题保持与 catalog 一致。
+加一页的步骤：Markdown 放进 `docs/`（分章的书放 `docs/rendering/<线>/<reference|effects>/<id>.md`）→
+在 `DocCatalog.DOCS`（散篇）或 `DocCatalog.REFERENCE` / `EFFECTS`（分章的书）里加一行 →
+`docs.js` 的 `FALLBACK_LOOSE` / `FALLBACK_BOOKS` 兜底表里补一条。标题与 catalog 保持一致
+（正文第一行 `# 标题` 会被渲染器丢掉）。
 ## 依赖隔离说明
 
 | 关注点 | 结论 |
