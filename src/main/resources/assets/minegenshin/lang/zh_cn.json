@@ -907,5 +907,9 @@
   "minegenshin.configuration.poise.block_hardness_multiplier": "方块韧性换算倍率",
   "gamerule.minegenshin:attack_breaks_blocks": "攻击可破坏方块",
   "gamerule.minegenshin:attack_breaks_blocks.description": "关闭时：只有被点名的方块（#minegenshin:attack_breakable，例如以后的提瓦特矿物）会被攻击破坏，其余方块打不动。打开时：所有有硬度的方块都按硬度换算参与。",
-  "minegenshin.configuration.performance.shadow_alpha": "飘字阴影不透明度（1 = 与正文一样实）"
+  "minegenshin.configuration.performance.shadow_alpha": "飘字阴影不透明度（1 = 与正文一样实）",
+  "gui.minegenshin.character_equip.page.skill": "技能",
+  "gui.minegenshin.character_equip.talent.miyabi.normal.desc": "普通攻击·风花：最多五段，一至三段物理、四至五段冰元素伤害；处于辉映·星超导时四、五段转为星超导伤害（冰）。重击造成物理伤害并发射三道剑气，剑气命中造成冰元素伤害；辉映·星超导下剑气转为星超导伤害并叠加一层落霜。星雪状态下重击变为霜月：造成星超导伤害并向四周发射八道剑气。",
+  "gui.minegenshin.character_equip.talent.miyabi.skill.desc": "元素战技·深雪：拔刀向前斩击，造成冰元素范围伤害并叠加一层落霜，冷却 15 秒。辉映·星超导下转为星超导伤害，消耗全部落霜，每层使本次伤害提升 10%，并获得 8 秒覆雪（每层使星超导伤害提升 8%，每级 +1%）；消耗超过 4 层时进入 8 秒星雪，落霜等量转为烈霜，战技变为飞雪（独立冷却 4 秒）。飞雪消耗全部烈霜，造成多段星超导伤害，每层烈霜使本次伤害提升 (10+1.5×等级)%。",
+  "gui.minegenshin.character_equip.talent.miyabi.passive1.desc": "队伍中的角色触发超导时转为触发星超导，并基于星见雅的攻击力提升全队星超导反应的基础伤害：每 100 点攻击力提升 0.7%，至多提升 14%。"
 }

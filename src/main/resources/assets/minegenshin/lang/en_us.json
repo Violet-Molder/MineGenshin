@@ -939,5 +939,9 @@
   "minegenshin.configuration.poise.block_hardness_multiplier": "Block Toughness Multiplier",
   "gamerule.minegenshin:attack_breaks_blocks": "Attacks break blocks",
   "gamerule.minegenshin:attack_breaks_blocks.description": "Off: only blocks named in #minegenshin:attack_breakable (Teyvat ores, for example) can be broken by attacks. On: every block with hardness takes part.",
-  "minegenshin.configuration.performance.shadow_alpha": "Text Shadow Opacity (1 = as solid as the text)"
+  "minegenshin.configuration.performance.shadow_alpha": "Text Shadow Opacity (1 = as solid as the text)",
+  "gui.minegenshin.character_equip.page.skill": "Skills",
+  "gui.minegenshin.character_equip.talent.miyabi.normal.desc": "Normal Attack: up to five hits; hits 1-3 Physical, hits 4-5 Cryo. Under Radiance: Stellar Conduce, hits 4-5 become Stellar Conduce DMG. Charged Attack deals Physical DMG and fires three sword qi dealing Cryo DMG; under Radiance: Stellar Conduce the qi become Stellar Conduce DMG and grant one Frostflake stack. In Snow state the Charged Attack becomes Frost Moon: Stellar Conduce DMG plus eight sword qi.",
+  "gui.minegenshin.character_equip.talent.miyabi.skill.desc": "Elemental Skill - Deep Snow: forward slash for Cryo DMG and one Frostflake stack, 15s cooldown. Under Radiance: Stellar Conduce it becomes Stellar Conduce DMG, consumes all Frostflake (+10% DMG per stack) and grants Snow Cover for 8s (each stack +8% Stellar Conduce DMG, +1% per talent level). Consuming more than 4 stacks enters Snow state for 8s: Frostflake converts to Rime and the skill becomes Flying Snow (separate 4s cooldown). Flying Snow consumes all Rime for multi-hit Stellar Conduce DMG, +(10 + 1.5 x level)% per Rime stack.",
+  "gui.minegenshin.character_equip.talent.miyabi.passive1.desc": "Party members triggering Superconduct trigger Stellar Conduce instead; the party gains bonus base DMG for Stellar Conduce based on Miyabi ATK: +0.7% per 100 ATK, up to +14%."
 }

@@ -580,6 +580,9 @@ public final class CharacterEquipUI {
                 case TALENT:
                    buildTalentPage(st);
                    break;
+                case SKILL:
+                   buildSkillPage(st);
+                   break;
                 case APPEARANCE:
                    buildAppearancePage(st);
                    break;
@@ -1225,6 +1228,32 @@ public final class CharacterEquipUI {
 
    private static String talentKindKey2(int kind) {
       return "gui.minegenshin.character_equip.talent.kind." + talentKindKey(kind);
+   }
+
+   private static void buildSkillPage(CharacterEquipUI.State st) {
+      UIElement listBox = new UIElement().setId("ce-skill-list-box");
+      ScrollerView scroller = newScroller("ce-skill-scroller");
+      UIElement list = new UIElement().setId("ce-skill-list").addClass("ce-scroll-body");
+      for (int kind = 0; kind <= 4; kind++) {
+         list.addChild(talentRow(st, kind));
+      }
+      scroller.addScrollViewChild(list);
+      listBox.addChild(scroller);
+      st.panel.addChild(listBox);
+      int kind = clampTalent(st.selTalent);
+      st.detailCard.layout(l -> l.display(TaffyDisplay.FLEX));
+      UIElement card = new UIElement().addClass("ce-detail");
+      card.addChild(line(talentKindKey2(kind), "ce-note"));
+      card.addChild(line(Component.literal(talentName(st.character, kind)), "ce-title-name"));
+      card.addChild(line(talentUnlocked(st, kind)
+              ? "gui.minegenshin.character_equip.unlocked"
+              : "gui.minegenshin.character_equip.locked", "ce-value-dim"));
+      ScrollerView descScroll = newScroller("ce-skill-detail");
+      UIElement desc = new UIElement();
+      desc.addChild(wrapLabel(Component.literal(talentDesc(st.character, kind))));
+      descScroll.addScrollViewChild(desc);
+      card.addChild(descScroll);
+      st.detailCard.addChild(card);
    }
 
    private static UIElement talentRow(CharacterEquipUI.State st, int kind) {
@@ -2497,6 +2526,7 @@ public final class CharacterEquipUI {
       ARTIFACT,
       CONSTELLATION,
       TALENT,
+      SKILL,
       /** 外观：装扮项那一页（内容来自角色自己的配置页，见 buildAppearancePage）。 */
       APPEARANCE,
       PROFILE;
