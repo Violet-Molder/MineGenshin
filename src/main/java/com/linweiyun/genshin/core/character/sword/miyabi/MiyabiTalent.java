@@ -23,6 +23,84 @@ public class MiyabiTalent extends TalentBase {
     /** 上限 +14%。 */
     public static final float BONUS_CAP = 0.14f;
 
+    /** 重击剑气的冰伤倍率（占攻击力），索引 = 技能等级 - 1。 */
+    private static final float[] SWORD_QI = {
+            0.92f, 1.035f, 1.15f, 1.265f, 1.38f, 1.495f, 1.61f, 1.725f, 1.84f,
+            2.10f, 2.36f, 2.62f, 2.88f
+    };
+
+    /** 深雪的冰伤倍率（占攻击力），索引 = 技能等级 - 1。 */
+    private static final float[] DEEP_SNOW = {
+            2.35f, 2.569f, 2.788f, 3.007f, 3.226f, 3.445f, 3.663f, 3.882f, 4.101f, 4.32f
+    };
+
+    /** 深雪在辉映·星超导下的星超导倍率（占攻击力）。 */
+    private static final float[] DEEP_SNOW_CONDUCE = {
+            2.95f, 3.278f, 3.606f, 3.933f, 4.261f, 4.589f, 4.917f, 5.244f, 5.572f, 5.90f
+    };
+
+    /** 飞雪的星超导总倍率（占攻击力）。 */
+    private static final float[] FLYING_SNOW = {
+            4.32f, 4.80f, 5.28f, 5.76f, 6.24f, 6.72f, 7.20f, 7.68f, 8.16f, 8.64f
+    };
+
+    /** 霜月的星超导倍率（占攻击力）。 */
+    private static final float[] FROST_MOON = {
+            1.22f, 1.358f, 1.496f, 1.633f, 1.771f, 1.909f, 2.047f, 2.184f, 2.322f, 2.46f
+    };
+
+    /** 冰伤转星超导时的倍率加成。 */
+    public static final float CONDUCE_MULTIPLIER_BONUS = 0.30f;
+
+    /** 星雪状态下冰伤转星超导的额外倍率加成（基础区）。 */
+    public static final float SNOW_STATE_BASE_BONUS = 0.30f;
+
+    /** 星雪状态下星超导伤害的额外提升（特殊倍率区）。 */
+    public static final float SNOW_STATE_SPECIAL_BONUS = 0.30f;
+
+    /** 覆雪每层的基础加成，每级再 +1%。 */
+    public static final float SNOW_COVER_PER_STACK = 0.08f;
+    public static final float SNOW_COVER_PER_LEVEL = 0.01f;
+
+    /** 飞雪每消耗一层烈霜的加成：基础 10%，每级 +1.5%。 */
+    public static final float RIME_PER_STACK_BASE = 0.10f;
+    public static final float RIME_PER_STACK_PER_LEVEL = 0.015f;
+
+    public static float swordQi(int level) {
+        return at(SWORD_QI, level);
+    }
+
+    public static float deepSnow(int level) {
+        return at(DEEP_SNOW, level);
+    }
+
+    public static float deepSnowConduce(int level) {
+        return at(DEEP_SNOW_CONDUCE, level);
+    }
+
+    public static float flyingSnowTotal(int level) {
+        return at(FLYING_SNOW, level);
+    }
+
+    public static float frostMoon(int level) {
+        return at(FROST_MOON, level);
+    }
+
+    /** 覆雪每层给星超导伤害的加成。 */
+    public static float snowCoverPerStack(int level) {
+        return SNOW_COVER_PER_STACK + SNOW_COVER_PER_LEVEL * Math.max(0, level - 1);
+    }
+
+    /** 飞雪每消耗一层烈霜给本次伤害的加成。 */
+    public static float rimePerStack(int level) {
+        return RIME_PER_STACK_BASE + RIME_PER_STACK_PER_LEVEL * Math.max(0, level - 1);
+    }
+
+    private static float at(float[] table, int level) {
+        int index = Math.max(1, Math.min(table.length, level)) - 1;
+        return table[index];
+    }
+
     /** 按星见雅自己的攻击力算这份户口给全队的星超导基础伤害提升。 */
     public float stellarBaseBonusMult(Miyabi miyabi) {
         double atk = miyabi.getData().getAttributeTotalValue(ModAttributes.ATK.value());
@@ -42,6 +120,7 @@ public class MiyabiTalent extends TalentBase {
                 ModElements.ELECTRO.get(),
                 stellarBaseBonusMult(miyabi));
     }
+
     private static final float[][] NA_TABLE = {
             {0.4042f, 0.4371f, 0.4700f, 0.5170f, 0.5499f, 0.5875f, 0.6392f, 0.6909f, 0.7426f, 0.7990f, 0.8554f, 0.9118f, 0.9682f, 1.0246f, 1.0810f},
             {0.4868f, 0.5264f, 0.5660f, 0.6226f, 0.6622f, 0.7075f, 0.7698f, 0.8320f, 0.8943f, 0.9622f, 1.0301f, 1.0980f, 1.1660f, 1.2339f, 1.3018f},
@@ -59,4 +138,12 @@ public class MiyabiTalent extends TalentBase {
         return row[Math.max(1, Math.min(row.length, level)) - 1];
     }
 
+    private static final float[] CHARGED_TABLE = {
+            1.3304f, 1.4387f, 1.5470f, 1.7017f, 1.8100f, 1.9338f, 2.1039f, 2.2741f, 2.4443f, 2.6299f,
+            2.8155f, 3.0012f, 3.1868f, 3.3725f, 3.5581f
+    };
+
+    public static float chargedAttackMultiplier(int level) {
+        return CHARGED_TABLE[Math.max(1, Math.min(CHARGED_TABLE.length, level)) - 1];
+    }
 }

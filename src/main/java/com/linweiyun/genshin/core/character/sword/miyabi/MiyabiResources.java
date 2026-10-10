@@ -59,6 +59,18 @@ public final class MiyabiResources {
     /** 战技第一段（能量满）。 */
     private static final String SKILL_ANIM = "skill_energy";
 
+    /** 深雪用的普通特殊技动画。 */
+    private static final String DEEP_SNOW_ANIM = "skill_no_energy";
+
+    /** 霜月用的满蓄重击动画。 */
+    private static final String FROST_MOON_ANIM = "heavy_3";
+
+    private static final int DEEP_SNOW_TICKS = 43;
+    private static final int[] DEEP_SNOW_HITS = {12};
+
+    private static final int FROST_MOON_TICKS = 58;
+    private static final int[] FROST_MOON_HITS = {10};
+
     /** 战技收尾段（能量满那一套的第二段）。 */
     public static final String SKILL_FOLLOW_UP = "skill_energy_continue";
 
@@ -154,14 +166,7 @@ public final class MiyabiResources {
             )));
         }
 
-        // 战技：第一段 + 收尾段。收尾段由 ResourceDrivenActionHandler 在读到时挂成后续状态
-        ActionStep skill = melee(new ActionStep(
-                SKILL_ANIM, SKILL_STEP_TICKS, protectFor(SKILL_STEP_TICKS, SKILL_HITS), 3,
-                List.of(),
-                hits(SKILL_HITS),
-                List.of(),
-                0, 0, 0, 0
-        )).withComboEnd(SKILL_FOLLOW_UP, SKILL_FOLLOW_UP_TICKS);
+        ActionStep skill = deepSnowStep();
 
         ActionStep burst = melee(new ActionStep(
                 BURST_ANIM, BURST_TICKS, protectFor(BURST_TICKS, BURST_HITS), 4,
@@ -184,6 +189,39 @@ public final class MiyabiResources {
                 new SkillData(skill, null),
                 new BurstData(burst, BURST_ENERGY),
                 new DodgeData(dodge));
+    }
+
+    /** 深雪：普通特殊技动画，单段斩击。 */
+    public static ActionStep deepSnowStep() {
+        return melee(new ActionStep(
+                DEEP_SNOW_ANIM, DEEP_SNOW_TICKS, protectFor(DEEP_SNOW_TICKS, DEEP_SNOW_HITS), 3,
+                List.of(),
+                hits(DEEP_SNOW_HITS),
+                List.of(),
+                0, 0, 0, 0
+        ));
+    }
+
+    /** 飞雪：强化特殊技两段，多段伤害。 */
+    public static ActionStep flyingSnowStep() {
+        return melee(new ActionStep(
+                SKILL_ANIM, SKILL_STEP_TICKS, protectFor(SKILL_STEP_TICKS, SKILL_HITS), 3,
+                List.of(),
+                hits(SKILL_HITS),
+                List.of(),
+                0, 0, 0, 0
+        )).withComboEnd(SKILL_FOLLOW_UP, SKILL_FOLLOW_UP_TICKS);
+    }
+
+    /** 霜月：满蓄重击动画。 */
+    public static ActionStep frostMoonStep() {
+        return melee(new ActionStep(
+                FROST_MOON_ANIM, FROST_MOON_TICKS, protectFor(FROST_MOON_TICKS, FROST_MOON_HITS), 2,
+                List.of(),
+                hits(FROST_MOON_HITS),
+                List.of(),
+                0, 2, 0, 8
+        ));
     }
 
     private static ActionStep melee(ActionStep step) {

@@ -1,9 +1,10 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
-import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
 import net.minecraft.world.entity.player.Player;
 
@@ -28,9 +29,20 @@ public final class MiyabiElementalSkill {
     }
 
     public static void execute(Player player, PGCharacter character) {
-        int level = Math.max(1, character.getData().getElementalSkillLevel());
+        if (!(character instanceof Miyabi miyabi)) {
+            return;
+        }
+        float multiplier = miyabi.nextSkillHitMultiplier();
+        if (multiplier <= 0f) {
+            return;
+        }
+        if (miyabi.isSkillHitStellar()) {
+            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+                    ModElements.CYRO.get(), DecayGroups.DEFAULT_ELEMENTAL_SKILL,
+                    REACH, WIDTH, HEIGHT, multiplier);
+            return;
+        }
         MiyabiDamage.forward(player, character, AttackType.ELEMENTAL_SKILL, ModElements.CYRO.get(),
-                DecayGroups.DEFAULT_ELEMENTAL_SKILL, REACH, WIDTH, HEIGHT,
-                ShenheTalentConfig.getSkillPressDamage(level));
+                DecayGroups.DEFAULT_ELEMENTAL_SKILL, REACH, WIDTH, HEIGHT, multiplier);
     }
 }

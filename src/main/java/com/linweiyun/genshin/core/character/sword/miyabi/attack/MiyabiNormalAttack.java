@@ -1,13 +1,15 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
-import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiTalent;
-
 import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiResources;
+import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
+import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiTalent;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
+import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 import net.minecraft.world.entity.player.Player;
 
 /**
@@ -35,7 +37,31 @@ public final class MiyabiNormalAttack {
         int level = Math.max(1, character.getData().getNormalAttackLevel());
         float multiplier = MiyabiTalent.normalAttackMultiplier(stage, level);
 
-        MiyabiDamage.forward(player, character, AttackType.NORMAL_ATTACK, ModElements.FYSIKOS.get(),
+        boolean cryo = stage >= 4;
+        Miyabi miyabi = character instanceof Miyabi m ? m : null;
+        boolean snow = miyabi != null && miyabi.isSnowState();
+        boolean stellar = cryo && (snow || StellarGlimmer.hasConduce(character));
+        if (stellar) {
+            float converted = multiplier * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS);
+            miyabi.setConvertedHit(true);
+            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+                    ModElements.CYRO.get(), DecayGroups.DEFAULT_NORMAL_ATTACK,
+                    REACH, WIDTH, HEIGHT, converted);
+            return;
+        }
+
+        if (snow && !cryo) {
+            float converted = multiplier * 1.15f
+                    * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS);
+            miyabi.setConvertedHit(true);
+            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+                    ModElements.CYRO.get(), DecayGroups.DEFAULT_NORMAL_ATTACK,
+                    REACH, WIDTH, HEIGHT, converted);
+            return;
+        }
+
+        MiyabiDamage.forward(player, character, AttackType.NORMAL_ATTACK,
+                cryo ? ModElements.CYRO.get() : ModElements.FYSIKOS.get(),
                 DecayGroups.DEFAULT_NORMAL_ATTACK, REACH, WIDTH, HEIGHT, multiplier);
     }
 }

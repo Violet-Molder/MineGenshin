@@ -1,9 +1,16 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
 import com.linweiyun.genshin.content.entities.teyvat.skill.miyabi.MiyabiSlashEffect;
+import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
+import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
+import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiTalent;
 import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiResources;
+import com.linweiyun.genshin.core.element.ModElements;
+import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.targeting.CombatTargeting;
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -33,6 +40,9 @@ public final class MiyabiChargedAttack {
         if (!(player.level() instanceof ServerLevel level)) {
             return;
         }
+        if (!(character instanceof Miyabi miyabi)) {
+            return;
+        }
 
         LivingEntity target = CombatTargeting.current(player);
         if (target == null) {
@@ -43,8 +53,31 @@ public final class MiyabiChargedAttack {
             faceWithoutMoving(player, target);
         }
 
+        int naLevel = Math.max(1, character.getData().getNormalAttackLevel());
+
+        if (miyabi.isSnowState()) {
+            MiyabiDamage.aroundStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+                    ModElements.CYRO.get(), DecayGroups.DEFAULT_NORMAL_ATTACK,
+                    player.position(), 4.0, MiyabiTalent.frostMoon(naLevel));
+            float qi = MiyabiTalent.swordQi(naLevel) * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS);
+            for (int i = 0; i < 8; i++) {
+                double angle = Math.toRadians(45.0 * i);
+                MiyabiSlashEffect.spawnDirection(level, player, Math.cos(angle), Math.sin(angle), qi, true);
+            }
+            return;
+        }
+
+        MiyabiDamage.forward(player, character, AttackType.CHARGED_ATTACK, ModElements.FYSIKOS.get(),
+                DecayGroups.DEFAULT_NORMAL_ATTACK, MiyabiResources.ATTACK_RANGE, 1.0f, 1.5f,
+                MiyabiTalent.chargedAttackMultiplier(naLevel));
+
+        boolean conduce = miyabi.isConduce();
+        float qi = MiyabiTalent.swordQi(naLevel) * (conduce ? 1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS : 1f);
         for (double spread : SLASH_SPREADS) {
-            MiyabiSlashEffect.spawn(level, player, spread);
+            MiyabiSlashEffect.spawn(level, player, spread, qi, conduce);
+        }
+        if (conduce) {
+            miyabi.addFrostStack();
         }
     }
 

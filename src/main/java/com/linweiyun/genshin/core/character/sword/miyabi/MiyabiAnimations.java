@@ -35,7 +35,7 @@ public final class MiyabiAnimations implements CharacterAnimations {
     public static final Set<String> SPECIAL_ANIMS = Set.of(
             "attack_1", "attack_2", "attack_3", "attack_4", "attack_5",
             "heavy_1", "heavy_2", "heavy_3",
-            "skill_energy", "skill_energy_continue",
+            "skill_no_energy", "skill_energy", "skill_energy_continue",
             "dodge_front", "dodge_back", "dodge_left", "dodge_right",
             // 下落攻击：状态名是我们自己的，实际播普攻第二段（别名见 MiyabiResources#PLUNGE_CLIP）
             MiyabiResources.PLUNGE_STATE,
@@ -49,6 +49,7 @@ public final class MiyabiAnimations implements CharacterAnimations {
             Map.entry("attack_5", SOUND_NS + "attack_5"),
             Map.entry("skill_energy", SOUND_NS + "skill"),
             Map.entry("skill_energy_continue", SOUND_NS + "skill_no_energy"),
+            Map.entry("skill_no_energy", SOUND_NS + "skill_no_energy"),
             Map.entry("heavy_1", SOUND_NS + "atk_h1"),
             Map.entry("heavy_2", SOUND_NS + "atk_h2"),
             Map.entry("heavy_3", SOUND_NS + "atk_h3"),

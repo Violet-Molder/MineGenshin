@@ -1,5 +1,13 @@
 package com.linweiyun.genshin.content.entities.teyvat.skill.miyabi;
 
+import com.linweiyun.genshin.content.entities.area.StellarPrismEntity;
+
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+
+import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
+
+import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
+
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -61,6 +69,10 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
     /** 这一刀的倍率（占攻击力）。 */
     private static final float MULTIPLIER = 1.0f;
 
+    private float multiplier = MULTIPLIER;
+
+    private boolean stellar;
+
     /** 碰撞盒外扩：横向（格）。 */
     private static final double HIT_INFLATE_X = 1.0;
 
@@ -90,6 +102,10 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
      * @param spread 相对视线的水平偏角（写成斜边为 1 的那条直角边，也就是正切值）；0 = 正前方，±0.6 ≈ ±31°
      */
     public static void spawn(ServerLevel level, Player owner, double spread) {
+        spawn(level, owner, spread, MULTIPLIER, false);
+    }
+
+    public static void spawn(ServerLevel level, Player owner, double spread, float multiplier, boolean stellar) {
         MiyabiSlashEffect slash = new MiyabiSlashEffect(ModEntities.MIYABI_SLASH.get(), level);
         // 朝「角色朝向」（身体偏航 yBodyRot，和 moves 位移 / 攻击判定同一套基准）而不是头部视线：
         // 视角是自由的，按视线会让剑气跟着镜头转。
@@ -100,6 +116,19 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
                 owner.getZ() + facing.z * SPAWN_FORWARD);
         slash.launch(facing.x + facing.z * spread, 0.0, facing.z - facing.x * spread);
         slash.ownerUuid = owner.getUUID();
+        slash.multiplier = multiplier;
+        slash.stellar = stellar;
+        level.addFreshEntity(slash);
+    }
+
+    public static void spawnDirection(ServerLevel level, Player owner, double dx, double dz,
+                                      float multiplier, boolean stellar) {
+        MiyabiSlashEffect slash = new MiyabiSlashEffect(ModEntities.MIYABI_SLASH.get(), level);
+        slash.setPos(owner.getX() + dx, owner.getY() + SPAWN_HEIGHT, owner.getZ() + dz);
+        slash.launch(dx, 0.0, dz);
+        slash.ownerUuid = owner.getUUID();
+        slash.multiplier = multiplier;
+        slash.stellar = stellar;
         level.addFreshEntity(slash);
     }
 
@@ -159,12 +188,32 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
                 continue;
             }
 
-            ModDamageSpec spec = ModDamageSpec.builder(AttackType.CHARGED_ATTACK, ModElements.CYRO.get())
-                    .multiplier(MULTIPLIER)
-                    .elementAmount(AttachmentType.WEAK.getInitialAmount())
-                    .attackerCharacter(characterOf(owner))
-                    .build();
+            PGCharacter character = characterOf(owner);
+            ModDamageSpec spec;
+            if (stellar) {
+                if (character instanceof Miyabi miyabi) {
+                    miyabi.setConvertedHit(true);
+                }
+                spec = ModDamageSpec.stellarDirect(ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+                                ModElements.CYRO.get(), AttachmentType.WEAK.getInitialAmount(), multiplier)
+                        .withStellarBaseBonusMult(StellarGlimmer.conduceBaseBonusMult(level()))
+                        .withStellarReactionCoefficient(
+                                StellarPrismEntity.reactionCoefficient(level(), target.position()));
+                spec.setStellarContributors(java.util.List.of(character));
+            } else {
+                spec = ModDamageSpec.builder(AttackType.CHARGED_ATTACK, ModElements.CYRO.get())
+                        .multiplier(multiplier)
+                        .elementAmount(AttachmentType.WEAK.getInitialAmount())
+                        .attackerCharacter(character)
+                        .build();
+            }
             target.hurt(ModDamageSource.from(spec, owner), 0f);
+            if (character instanceof Miyabi miyabi) {
+                miyabi.setConvertedHit(false);
+            }
+            if (stellar && level() instanceof ServerLevel serverLevel) {
+                StellarPrismEntity.recordAttachment(serverLevel, target.position(), ModElements.CYRO.get());
+            }
         }
     }
 

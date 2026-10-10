@@ -1,5 +1,6 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
+import com.linweiyun.genshin.content.entities.area.StellarPrismEntity;
 import com.linweiyun.genshin.content.skill_node.AreaEntityCollector;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.element.ModElements;
@@ -7,9 +8,11 @@ import com.linweiyun.genshin.core.system.combat.CombatAim;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSource;
 import com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec;
+import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.elementlib.core.element.GenshinElement;
 import com.linweiyun.elementlib.core.system.about.AttachmentType;
 import com.linweiyun.elementlib.core.system.combat.decay.DecayGroup;
+import com.linweiyun.elementlib.api.ElementalReactionType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -75,6 +78,41 @@ public final class MiyabiDamage {
         }
     }
 
+    /** 星超导直伤：沿用身前扫描盒，按星超导反应伤害管线结算。 */
+    public static void forwardStellar(Player player, PGCharacter character, ElementalReactionType reactionType,
+                                      GenshinElement element, DecayGroup decayGroup,
+                                      double reach, float width, float height, float coefficient) {
+        Level level = player.level();
+        if (level.isClientSide() || coefficient <= 0f) {
+            return;
+        }
+
+        Vec3 direction = CombatAim.direction(player);
+        AABB box = player.getBoundingBox()
+                .expandTowards(direction.x * reach, direction.y * reach, direction.z * reach)
+                .inflate(width, height, width);
+
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, box,
+                e -> e.isAlive() && !e.isSpectator() && e != player)) {
+            hurtStellar(player, character, target, reactionType, element, decayGroup, coefficient);
+        }
+    }
+
+    /** 以某个点为中心结算一次星超导直伤。 */
+    public static void aroundStellar(Player player, PGCharacter character, ElementalReactionType reactionType,
+                                     GenshinElement element, DecayGroup decayGroup,
+                                     Vec3 center, double radius, float coefficient) {
+        Level level = player.level();
+        if (level.isClientSide() || coefficient <= 0f) {
+            return;
+        }
+        for (LivingEntity target : new AreaEntityCollector(level, center, center, (float) radius).execute()) {
+            if (target != player) {
+                hurtStellar(player, character, target, reactionType, element, decayGroup, coefficient);
+            }
+        }
+    }
+
     private static void hurt(Player player, PGCharacter character, LivingEntity target,
                              AttackType type, GenshinElement element, DecayGroup decayGroup, float multiplier) {
         ModDamageSpec.Builder spec = ModDamageSpec.builder(type, element)
@@ -86,5 +124,20 @@ public final class MiyabiDamage {
         }
 
         target.hurt(ModDamageSource.from(spec.build(), player), 0f);
+    }
+
+    private static void hurtStellar(Player player, PGCharacter character, LivingEntity target,
+                                    ElementalReactionType reactionType, GenshinElement element,
+                                    DecayGroup decayGroup, float coefficient) {
+        ModDamageSpec spec = ModDamageSpec.stellarDirect(reactionType, element,
+                        AttachmentType.WEAK.getInitialAmount(), coefficient)
+                .withStellarBaseBonusMult(StellarGlimmer.conduceBaseBonusMult(player.level()))
+                .withStellarReactionCoefficient(
+                        StellarPrismEntity.reactionCoefficient(player.level(), target.position()));
+        spec.setStellarContributors(java.util.List.of(character));
+        target.hurt(ModDamageSource.from(spec, player), 0f);
+        if (player.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            StellarPrismEntity.recordAttachment(serverLevel, target.position(), ModElements.CYRO.get());
+        }
     }
 }
