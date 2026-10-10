@@ -93,6 +93,32 @@ public class MiyabiSkill extends SkillBase {
     }
 
     @Override
+    public java.util.List<TalentDetail> talentDetails(PGCharacter character, int kind) {
+        java.util.List<TalentDetail> rows = new java.util.ArrayList<>();
+        java.util.function.ObjDoubleConsumer<String> add = (key, value) ->
+                rows.add(new TalentDetail("gui.minegenshin.character_equip.talent.miyabi.detail." + key, value));
+        if (kind == 0) {
+            int na = Math.max(1, character.getData().getNormalAttackLevel());
+            add.accept("na1", MiyabiTalent.normalAttackMultiplier(1, na));
+            add.accept("na2", MiyabiTalent.normalAttackMultiplier(2, na));
+            add.accept("na3", MiyabiTalent.normalAttackMultiplier(3, na));
+            add.accept("na4", MiyabiTalent.normalAttackMultiplier(4, na));
+            add.accept("na5", MiyabiTalent.normalAttackMultiplier(5, na));
+            add.accept("charged", MiyabiTalent.chargedAttackMultiplier(na));
+            add.accept("qi", MiyabiTalent.swordQi(na));
+            add.accept("frost_moon", MiyabiTalent.frostMoon(na));
+        } else if (kind == 1) {
+            int sk = Math.max(1, character.getData().getElementalSkillLevel());
+            add.accept("deep_snow", MiyabiTalent.deepSnow(sk));
+            add.accept("deep_snow_conduce", MiyabiTalent.deepSnowConduce(sk));
+            add.accept("flying_snow", MiyabiTalent.flyingSnowTotal(sk));
+            add.accept("snow_cover", MiyabiTalent.snowCoverPerStack(sk));
+            add.accept("rime_per_stack", MiyabiTalent.rimePerStack(sk));
+        }
+        return rows;
+    }
+
+    @Override
     public double textValue(PGCharacter character, String key) {
         int na = Math.max(1, character.getData().getNormalAttackLevel());
         int sk = Math.max(1, character.getData().getElementalSkillLevel());

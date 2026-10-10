@@ -163,6 +163,15 @@ public class SkillBase {
     *
     * <p>给「下坠时钉在某个姿态」的角色用：落地后从 {@link #plungingAnimationHoldTick()} 那一刻继续把同一条动画播完。
     */
+   /** 详细属性的一行：标签语言键 + 当前等级下的倍率。 */
+   public record TalentDetail(String labelKey, double value) {
+   }
+
+   /** 「详细属性」页的行；返回空列表表示该天赋没有可展示的数值。 */
+   public java.util.List<TalentDetail> talentDetails(PGCharacter character, int kind) {
+      return java.util.List.of();
+   }
+
    /** 描述文本里 {@code {v:键}} 在当前等级下的值（占攻击力的倍率，1.0 = 100%）。 */
    public double textValue(PGCharacter character, String key) {
       return 0.0;

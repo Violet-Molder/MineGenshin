@@ -1208,7 +1208,21 @@ public final class CharacterEquipUI {
          detail.addChild(
             line("gui.minegenshin.character_equip.talent_level", "ce-value-dim", active ? talentLevel(st, kind) : 0, active ? talentLevelCap(st, kind) : 0)
          );
-         detail.addChild(wrapLabel(Component.translatable("gui.minegenshin.character_equip.talent_desc_none")));
+         java.util.List<com.linweiyun.genshin.core.character.talent.SkillBase.TalentDetail> rows =
+                 st.character == null ? java.util.List.of() : st.character.getTalentDetails(kind);
+         if (rows.isEmpty()) {
+            detail.addChild(wrapLabel(Component.translatable("gui.minegenshin.character_equip.talent_desc_none")));
+         } else {
+            for (com.linweiyun.genshin.core.character.talent.SkillBase.TalentDetail row : rows) {
+               detail.addChild(
+                  line(Component.translatable(row.labelKey())
+                          .append(Component.literal("    " + fmtPercent(row.value()))), "ce-value")
+               );
+            }
+            if (hasCheatPermission(st.player)) {
+               detail.addChild(note("gui.minegenshin.character_equip.detail_editable_hint"));
+            }
+         }
       }
 
       detailScroll.addScrollViewChild(detail);

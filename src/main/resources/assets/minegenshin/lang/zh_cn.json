@@ -925,5 +925,19 @@
   "minegenshin.element.resistance": "元素抗性",
   "gui.minegenshin.character_equip.talent.miyabi.normal.name": "风花",
   "gui.minegenshin.character_equip.talent.miyabi.skill.name": "深雪",
-  "gui.minegenshin.character_equip.talent.miyabi.passive1.name": "星辉加护"
+  "gui.minegenshin.character_equip.talent.miyabi.passive1.name": "星辉加护",
+  "gui.minegenshin.character_equip.detail_editable_hint": "作弊模式下可在角色配置页修改上述数值。",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na1": "一段伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na2": "二段伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na3": "三段伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na4": "四段伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na5": "五段伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.charged": "重击伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.qi": "剑气伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.frost_moon": "霜月伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.deep_snow": "深雪伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.deep_snow_conduce": "深雪·星超导伤害",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.flying_snow": "飞雪总倍率",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.snow_cover": "覆雪每层提升",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.rime_per_stack": "烈霜每层提升"
 }

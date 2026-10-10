@@ -957,5 +957,19 @@
   "minegenshin.element.resistance": " RES",
   "gui.minegenshin.character_equip.talent.miyabi.normal.name": "Windflower",
   "gui.minegenshin.character_equip.talent.miyabi.skill.name": "Deep Snow",
-  "gui.minegenshin.character_equip.talent.miyabi.passive1.name": "Stellar Blessing"
+  "gui.minegenshin.character_equip.talent.miyabi.passive1.name": "Stellar Blessing",
+  "gui.minegenshin.character_equip.detail_editable_hint": "Editable on the character config page in cheat mode.",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na1": "1-Hit DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na2": "2-Hit DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na3": "3-Hit DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na4": "4-Hit DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.na5": "5-Hit DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.charged": "Charged Attack DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.qi": "Sword Qi DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.frost_moon": "Frost Moon DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.deep_snow": "Deep Snow DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.deep_snow_conduce": "Deep Snow Stellar Conduce DMG",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.flying_snow": "Flying Snow Total Multiplier",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.snow_cover": "Snow Cover per Stack",
+  "gui.minegenshin.character_equip.talent.miyabi.detail.rime_per_stack": "Rime per Stack"
 }
