@@ -90,9 +90,25 @@ public class DamageTypeDataProviderGIM extends DatapackBuiltinEntriesProvider {
                                             DamageEffects.HURT,
                                             DeathMessageType.DEFAULT));
                             bootstrap.register(
+                                    DamageTypeRegistry.ELECTRO_CHARGED,
+                                    new DamageType(
+                                            "electro_charged",
+                                            DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
+                                            0.1f,
+                                            DamageEffects.HURT,
+                                            DeathMessageType.DEFAULT));
+                            bootstrap.register(
                                     DamageTypeRegistry.SWIRL,
                                     new DamageType(
                                             "swirl",
+                                            DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
+                                            0.1f,
+                                            DamageEffects.HURT,
+                                            DeathMessageType.DEFAULT));
+                            bootstrap.register(
+                                    DamageTypeRegistry.STELLAR_CONDUCE,
+                                    new DamageType(
+                                            "stellar_conduce",
                                             DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
                                             0.1f,
                                             DamageEffects.HURT,

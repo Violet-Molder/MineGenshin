@@ -48,14 +48,10 @@ public final class ModReactionTypes {
     public static final DeferredHolder<ElementalReactionType, ElementalReactionType> SPREAD =
             register("spread", ReactionCategory.TRANSFORMATIVE);
 
-    public static final DeferredHolder<ElementalReactionType, ElementalReactionType> STELLAR_SWIRL_WIND =
-            register("stellar_swirl_wind", ReactionCategory.STELLAR);
-    public static final DeferredHolder<ElementalReactionType, ElementalReactionType> STELLAR_SWIRL_ICE =
-            register("stellar_swirl_ice", ReactionCategory.STELLAR);
-    public static final DeferredHolder<ElementalReactionType, ElementalReactionType> STELLAR_CONDUCE_ELECTRO =
-            register("stellar_conduce_electro", ReactionCategory.STELLAR);
-    public static final DeferredHolder<ElementalReactionType, ElementalReactionType> STELLAR_CONDUCE_ICE =
-            register("stellar_conduce_ice", ReactionCategory.STELLAR);
+    public static final DeferredHolder<ElementalReactionType, ElementalReactionType> STELLAR_SWIRL =
+            register("stellar_swirl", ReactionCategory.STELLAR);
+    public static final DeferredHolder<ElementalReactionType, ElementalReactionType> STELLAR_CONDUCE =
+            register("stellar_conduce", ReactionCategory.STELLAR);
 
     public static final DeferredHolder<ElementalReactionType, ElementalReactionType> LUNAR_CHARGED =
             register("lunar_charged", ReactionCategory.LUNAR);

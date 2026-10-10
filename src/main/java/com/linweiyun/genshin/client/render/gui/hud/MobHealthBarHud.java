@@ -532,7 +532,7 @@ public class MobHealthBarHud {
                 -width / 2.0f,
                 0.0f,
                 Component.literal(text).getVisualOrderText(),
-                true,
+                false,
                 Font.DisplayMode.SEE_THROUGH,
                 0xF000F0,
                 0xFFFFFFFF,

@@ -52,12 +52,20 @@ public final class ElementLibBridge {
         ElementLibApi.setFeedbackHandler(new ReactionFeedbackHandler() {
             @Override
             public void reaction(LivingEntity target, ElementalReactionType type, GenshinElement element) {
-                DamageIndicatorFactory.reaction(target, type);
+                if (com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch.isStellarGlimmer(type)) {
+                    DamageIndicatorFactory.stellarReactionGradient(target, type, element);
+                } else {
+                    DamageIndicatorFactory.reaction(target, type);
+                }
             }
 
             @Override
             public void transformative(LivingEntity target, ElementalReactionType type, GenshinElement element) {
-                DamageIndicatorFactory.reaction(target, type);
+                if (com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch.isStellarGlimmer(type)) {
+                    DamageIndicatorFactory.stellarReactionGradient(target, type, element);
+                } else {
+                    DamageIndicatorFactory.reaction(target, type);
+                }
             }
 
             @Override

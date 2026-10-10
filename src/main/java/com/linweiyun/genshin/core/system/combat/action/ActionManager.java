@@ -106,6 +106,7 @@ public class ActionManager {
       ElementalSkillCastEvent event = new ElementalSkillCastEvent(level, level.getGameTime(), sp,
               character, kind, skillTime >= 1000, skillTime);
       ElibEvents.post(event);
+      com.linweiyun.genshin.core.character.util.handler.PartyHooks.skill(sp, skillTime);
    }
 
    /** 广播元素爆发释放事件（仅服务端）。 */
@@ -116,6 +117,7 @@ public class ActionManager {
       }
       ElementalBurstCastEvent event = new ElementalBurstCastEvent(level, level.getGameTime(), sp, character);
       ElibEvents.post(event);
+      com.linweiyun.genshin.core.character.util.handler.PartyHooks.burst(sp);
    }
 
    public boolean requestElementalBurst(Player player, PGCharacter character) {

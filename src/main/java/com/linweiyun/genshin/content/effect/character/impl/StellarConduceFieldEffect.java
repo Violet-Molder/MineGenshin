@@ -36,7 +36,7 @@ public class StellarConduceFieldEffect implements ICharacterEffect {
                 ModAttributes.CYRO_BONUS.value(), STACK_SOURCE, bonus);
         character.getData().setAttributeTempPercentModifier(
                 ModAttributes.ELECTRO_BONUS.value(), STACK_SOURCE, bonus);
-        return true;
+        return ICharacterEffect.super.onEffectTick(holder, character, instance);
     }
 
     @Override

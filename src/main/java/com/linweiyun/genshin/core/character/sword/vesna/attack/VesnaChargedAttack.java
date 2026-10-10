@@ -50,7 +50,7 @@ public final class VesnaChargedAttack {
             if (target == player) continue;
 
             ModDamageSpec spec = ModDamageSpec.stellarDirect(
-                    ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(), 1.0f, 0.5f);
+                    ModReactionTypes.STELLAR_SWIRL.get(), ModElements.ANEMO.get(), 1.0f, 0.5f);
             spec.setStellarContributors(List.of(character));
             ModDamageSource source = ModDamageSource.from(spec, player);
             if (target.level() instanceof ServerLevel serverLevel) {

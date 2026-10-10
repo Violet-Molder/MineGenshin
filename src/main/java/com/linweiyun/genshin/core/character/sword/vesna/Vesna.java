@@ -372,9 +372,7 @@ public class Vesna extends SwordCharacter implements IStellarHousehold, IStellar
     // ==================== tick（只做调度） ====================
 
     @Override
-    public void tick(Player player) {
-        super.tick(player);
-
+    protected void characterTick(Player player) {
         if (player.level().isClientSide()) return;
 
         if (windriderActive && windriderRemainingTicks > 0) {

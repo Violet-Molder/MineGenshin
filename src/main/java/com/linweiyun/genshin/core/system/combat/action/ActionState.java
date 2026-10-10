@@ -167,7 +167,11 @@ public class ActionState {
             return;
         }
         try {
-            GenshinElement element = context.character == null ? null : context.character.getElemental();
+            if (definition.kind == ActionKind.NORMAL_ATTACK) {
+                com.linweiyun.genshin.core.character.util.handler.PartyHooks.normalAttack(context.player);
+            }
+            GenshinElement element = context.character == null ? null
+                    : context.character.getAttackElement(definition.kind, definition.comboIndex);
             double reach = definition.step != null
                     ? Math.max(2.5, definition.step.effectiveAttackRange())
                     : 2.5;

@@ -178,7 +178,7 @@ public class SwirlReaction extends ElementalReaction {
             spreadToNearby(ctx, spreadElement, spreadQuantity, ctx.targetEntity());
         }
 
-        return ReactionResult.builder(type())
+        return ReactionResult.builder(isStellarSwirl ? ModReactionTypes.STELLAR_SWIRL.get() : type())
                 .reacted()
                 .consumedAttacker(attackerIsAnemo ? consumedAnemoSide : consumedPyroSide)
                 .consumedDefender(attackerIsAnemo ? consumedPyroSide : consumedAnemoSide)
@@ -319,8 +319,8 @@ public class SwirlReaction extends ElementalReaction {
                 ctx.targetEntity().getX(), ctx.targetEntity().getY(), ctx.targetEntity().getZ());
 
         if (ctx.targetEntity() instanceof LivingEntity livingTarget) {
-            DamageIndicatorFactory.stellarIceReactionGradient(livingTarget,
-                    ModReactionTypes.STELLAR_SWIRL_ICE.get());
+            DamageIndicatorFactory.stellarWindReactionGradient(livingTarget,
+                    ModReactionTypes.STELLAR_SWIRL.get());
         }
 
         double x = ctx.targetEntity().getX();

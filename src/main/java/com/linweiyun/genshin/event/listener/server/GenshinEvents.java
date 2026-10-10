@@ -14,19 +14,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 
-/**
- * 本模组注册事件监听者的地方，{@link #init()} 是唯一登记入口。
- *
- * <p>事件本身在 {@code event/game}（以及 elementlib 的 {@code api/event}），订阅在 {@code event/listener}。
- * 当前登记：千岩牢固四件套（伤害结算）、武器被动（技能释放 / 角色退场）。
- */
 public final class GenshinEvents {
 
     private GenshinEvents() {
     }
 
     public static void init() {
-        // 统一的事件日志走本模组的 EVENT 组（按系统），功能域的日志由各触发点自己打
         ElibEvents.setEventLogger(ModLog.getLogger(LogGroup.EVENT));
         ElibEvents.register(TenacityOfTheMillelith4.class);
         ElibEvents.register(GenshinEvents.class);

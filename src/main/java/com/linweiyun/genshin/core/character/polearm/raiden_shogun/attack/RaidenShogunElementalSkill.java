@@ -98,6 +98,9 @@ public final class RaidenShogunElementalSkill {
             passive.grantAscend2DamageBonus(player, character, false);
         }
         new SkillHelper(player, 10).addStun();
+        if (character instanceof com.linweiyun.genshin.core.character.polearm.raiden_shogun.RaidenShogun raiden) {
+            raiden.beginCoordinated();
+        }
     }
 
     private static void executeHold(Player player, PGCharacter character, int skillLevel) {
@@ -129,5 +132,8 @@ public final class RaidenShogunElementalSkill {
             passive.grantAscend2DamageBonus(player, character, true);
         }
         new SkillHelper(player, 10).addStun();
+        if (character instanceof com.linweiyun.genshin.core.character.polearm.raiden_shogun.RaidenShogun raiden) {
+            raiden.beginCoordinated();
+        }
     }
 }

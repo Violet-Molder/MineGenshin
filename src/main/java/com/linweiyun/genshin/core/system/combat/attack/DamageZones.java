@@ -347,10 +347,10 @@ public final class DamageZones {
                 || ModReactionTypes.is(reactionType, ModReactionTypes.BURGEON)) {
             return (float) ((16.0 * em) / (em + 2000.0));
         }
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_ICE)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE)) {
             double a = ReactionConfig.EM_A_STELLAR_SWIRL.get();
             double b = ReactionConfig.EM_B_STELLAR_SWIRL.get();
             return (float) ((a * em) / (em + b));

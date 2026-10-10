@@ -38,15 +38,6 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
 public class Minegenshin {
     public static final String MOD_ID = "minegenshin";
 
-    /**
-     * 本模组所有日志的总开关。
-     *
-     * <p>{@code false} = 从 {@link ModLog} 拿的每一个 LOGGER 全部静默（连 error 也不出声），
-     * 与各分组开关是「与」的关系：总开关关掉时分组开关怎么设都没用。</p>
-     *
-     * <p>运行期可改（{@code volatile}）：{@code Minegenshin.LOG_ENABLED = false;} 立刻生效，
-     * 不需要重启。只静音某一块请用分组开关，见 {@link LogGroup} / {@link ModLog}。</p>
-     */
     public static volatile boolean LOG_ENABLED = true;
 
     public static final Logger LOGGER = ModLog.getLogger(LogGroup.CORE);

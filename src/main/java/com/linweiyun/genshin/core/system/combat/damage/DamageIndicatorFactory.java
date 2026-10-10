@@ -73,16 +73,6 @@ public final class DamageIndicatorFactory {
         if (ModReactionTypes.is(type, ModReactionTypes.FROZEN)) {
             return colorOf(WorldTextColorConfig.FROZEN_COLOR);
         }
-        if (ModReactionTypes.is(type, ModReactionTypes.STELLAR_SWIRL_WIND)
-                || ModReactionTypes.is(type, ModReactionTypes.STELLAR_SWIRL_ICE)) {
-            return colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR);
-        }
-        if (ModReactionTypes.is(type, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
-            return colorOf(WorldTextColorConfig.CYRO_COLOR);
-        }
-        if (ModReactionTypes.is(type, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)) {
-            return colorOf(WorldTextColorConfig.ELECTRO_COLOR);
-        }
         return colorOf(WorldTextColorConfig.VAPORIZE_COLOR);
     }
 
@@ -613,26 +603,6 @@ public final class DamageIndicatorFactory {
                 WHITE, getColorForElement(element), Style.NORMAL, options, true);
     }
 
-    /** 星超导伤害数字：冰段用冰元素色、雷段用雷元素色。 */
-    public static void stellarDamageGradient(LivingEntity target, DamageSource source, float finalDamage,
-                                             GenshinElement element, ElementalReactionType reactionType,
-                                             Options options) {
-        if (source == null) {
-            return;
-        }
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
-            spawnNumber(target, source.getEntity(), finalDamage,
-                    WHITE, colorOf(WorldTextColorConfig.CYRO_COLOR), Style.NORMAL, options, true);
-            return;
-        }
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)) {
-            spawnNumber(target, source.getEntity(), finalDamage,
-                    WHITE, colorOf(WorldTextColorConfig.ELECTRO_COLOR), Style.NORMAL, options, true);
-            return;
-        }
-        stellarDamageGradient(target, source, finalDamage, element, options);
-    }
-
     public static void stellarIceDamageGradient(LivingEntity target, DamageSource source, float finalDamage) {
         stellarIceDamageGradient(target, source, finalDamage, Options.DEFAULT);
     }
@@ -644,6 +614,20 @@ public final class DamageIndicatorFactory {
                 WHITE, bottomColor, Style.NORMAL, options, true);
     }
 
+    /** 星反应（星扩散 / 星超导）文字：白顶 + 底色（风用星风色、冰用星冰色、其余用元素色）的渐变。 */
+    public static void stellarReactionGradient(LivingEntity target, ElementalReactionType type,
+                                              GenshinElement element) {
+        if (type == null) {
+            return;
+        }
+        int bottom = element == ModElements.ANEMO.get()
+                ? colorOf(WorldTextColorConfig.STELLAR_BOTTOM_WIND_COLOR)
+                : element == ModElements.CYRO.get()
+                ? colorOf(WorldTextColorConfig.STELLAR_BOTTOM_ICE_COLOR)
+                : getColorForElement(element);
+        spawnRawInternal(target, null, type.getTranslationKey(),
+                WHITE, bottom, Style.REACTION, Options.DEFAULT, true);
+    }
     public static void stellarWindReactionGradient(LivingEntity target, ElementalReactionType type) {
         stellarWindReactionGradient(target, type, Options.DEFAULT);
     }

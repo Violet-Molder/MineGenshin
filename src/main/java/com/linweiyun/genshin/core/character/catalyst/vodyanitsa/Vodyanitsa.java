@@ -97,8 +97,7 @@ public class Vodyanitsa extends CatalystCharacter {
     // ==================== tick（只做调度） ====================
 
     @Override
-    public void tick(Player player) {
-        super.tick(player);
+    protected void characterTick(Player player) {
         if (player.level().isClientSide()) return;
 
         // 4 命的层数即使在遥久之歌结束后也要继续独立倒计时

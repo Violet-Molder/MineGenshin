@@ -120,29 +120,42 @@ public class StellarPrismEntity extends AreaEntity {
         if (!(this.level() instanceof ServerLevel level)) {
             return;
         }
+        for (Player player : level.getEntitiesOfClass(Player.class, this.fieldBox())) {
+            applyTo(player);
+        }
+    }
+
+    /** 给一个域内玩家上辉映·星超导与领域加伤效果。 */
+    public void applyTo(Player player) {
         ICharacterEffect effect = ModCharacterEffects.RADIANCE_STELLAR_CONDUCE_EFFECT.get();
-        if (effect == null) {
+        PlayerCharactersAttachment attachment = player.getData(
+                AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
+        if (attachment == null) {
             return;
         }
-        for (Player player : level.getEntitiesOfClass(Player.class, this.fieldBox())) {
-            PlayerCharactersAttachment attachment = player.getData(
-                    AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
-            if (attachment == null) {
-                continue;
-            }
-            PGCharacter character = attachment.getCurrentCharacter();
-            if (character instanceof IStellarStateHolder holder && holder.canHoldStellarState()) {
-                int duration = holder.stellarConduceDurationTicks();
-                if (duration > 0) {
-                    CharacterEffectHelper.addEffect(player, character,
-                            new CharacterEffectInstance(effect, duration, 0, false));
-                }
-            }
-            ICharacterEffect fieldEffect = ModCharacterEffects.STELLAR_CONDUCE_FIELD_EFFECT.get();
-            if (fieldEffect != null && character != null) {
+        PGCharacter character = attachment.getCurrentCharacter();
+        if (effect != null && character instanceof IStellarStateHolder holder && holder.canHoldStellarState()) {
+            int duration = holder.stellarConduceDurationTicks();
+            if (duration > 0) {
                 CharacterEffectHelper.addEffect(player, character,
-                        new CharacterEffectInstance(fieldEffect, 20, 0, false));
+                        new CharacterEffectInstance(effect, duration, 0, false));
             }
+        }
+        ICharacterEffect fieldEffect = ModCharacterEffects.STELLAR_CONDUCE_FIELD_EFFECT.get();
+        if (fieldEffect != null && character != null) {
+            CharacterEffectHelper.addEffect(player, character,
+                    new CharacterEffectInstance(fieldEffect, 20, 0, false));
+        }
+    }
+
+    /** 玩家每刻调用：站在某个极星辉域里就补状态（不依赖棱镜自身的 tick）。 */
+    public static void tickPlayerField(Player player) {
+        if (!(player.level() instanceof ServerLevel level) || player.tickCount % 5 != 0) {
+            return;
+        }
+        StellarPrismEntity prism = find(level, player.position());
+        if (prism != null) {
+            prism.applyTo(player);
         }
     }
 
@@ -182,11 +195,23 @@ public class StellarPrismEntity extends AreaEntity {
     @Nullable
     private static StellarPrismEntity find(ServerLevel level, Vec3 at) {
         for (StellarPrismEntity prism : level.getEntitiesOfClass(StellarPrismEntity.class, anchorSearchBox(at))) {
+            if (!prism.isAlive() || prism.isRemoved()) {
+                continue;
+            }
+            if (prism.expired()) {
+                prism.discard();
+                continue;
+            }
             if (prism.containsField(at)) {
                 return prism;
             }
         }
         return null;
+    }
+
+    /** 寿命是否已经走完（即使这一帧还没被 tick 到）。 */
+    public boolean expired() {
+        return expireGameTime >= 0L && this.level().getGameTime() >= expireGameTime;
     }
 
     /** 该点所在领域当前已释放的冻存层数；不在领域内为 0。 */

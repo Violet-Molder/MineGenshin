@@ -13,6 +13,7 @@ import com.linweiyun.genshin.content.effect.character.artifact.TenacityOfTheMill
 import com.linweiyun.genshin.content.effect.character.impl.DamageBonusEffect;
 import com.linweiyun.genshin.content.effect.character.impl.DiebianForsakenWindEffect;
 import com.linweiyun.genshin.content.effect.character.impl.DiebianLoyalWindEffect;
+import com.linweiyun.genshin.content.effect.character.impl.MiyabiSnowStateEffect;
 import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarConduceEffect;
 import com.linweiyun.genshin.content.effect.character.impl.StellarConduceFieldEffect;
 import com.linweiyun.genshin.content.effect.character.impl.RadianceStellarSwirlEffect;
@@ -69,6 +70,13 @@ public class ModCharacterEffects {
             "stellar_conduce_field",
             StellarConduceFieldEffect::new
     );
+
+    /** 星见雅的星雪状态：视为辉映·星超导，冰伤 +15% / 星超导 +25%。 */
+    public static final DeferredHolder<ICharacterEffect, MiyabiSnowStateEffect> MIYABI_SNOW_STATE_EFFECT =
+            CHARACTER_EFFECTS.register(
+                    "miyabi_snow_state",
+                    MiyabiSnowStateEffect::new
+            );
 
     // ======= 圣遗物套装效果 =======
     public static final DeferredHolder<ICharacterEffect, CrimsonWitch2> CRIMSON_WITCH2_EFFECT = CHARACTER_EFFECTS.register(

@@ -65,6 +65,10 @@ public class DamageTypeRegistry {
     public static final ResourceKey<DamageType> LUNAR_CHARGED =
             ResourceKey.create(Registries.DAMAGE_TYPE, Minegenshin.id("lunar_charged"));
 
+    // 感电 —— 对应 AttackType.ELECTRO_CHARGED
+    public static final ResourceKey<DamageType> ELECTRO_CHARGED =
+            ResourceKey.create(Registries.DAMAGE_TYPE, Minegenshin.id("electro_charged"));
+
     // 扩散 —— 对应 AttackType.SWIRL
     public static final ResourceKey<DamageType> SWIRL =
             ResourceKey.create(Registries.DAMAGE_TYPE, Minegenshin.id("swirl"));
@@ -72,6 +76,10 @@ public class DamageTypeRegistry {
     // 星扩散 —— 对应 AttackType.STELLAR_SWIRL
     public static final ResourceKey<DamageType> STELLAR_SWIRL =
             ResourceKey.create(Registries.DAMAGE_TYPE, Minegenshin.id("stellar_swirl"));
+
+    // 星超导 —— 对应 AttackType.STELLAR_CONDUCE
+    public static final ResourceKey<DamageType> STELLAR_CONDUCE =
+            ResourceKey.create(Registries.DAMAGE_TYPE, Minegenshin.id("stellar_conduce"));
 
     // ========== 解析方法 ==========
 
@@ -91,8 +99,10 @@ public class DamageTypeRegistry {
             case SPECIAL -> SPECIAL;                    // 特殊/环境伤害
             case MONSTER -> MONSTER;                    // 怪物伤害
             case LUNAR_CHARGED -> LUNAR_CHARGED;        // 月感电
+            case ELECTRO_CHARGED -> ELECTRO_CHARGED;    // 感电
             case SWIRL -> SWIRL;                        // 扩散
             case STELLAR_SWIRL -> STELLAR_SWIRL;          // 星扩散
+            case STELLAR_CONDUCE -> STELLAR_CONDUCE;    // 星超导
         };
     }
 

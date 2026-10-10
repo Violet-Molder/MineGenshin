@@ -13,13 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * DamageContainer Mixin —— 允许在伤害管线中替换 DamageSource
- *
- * 目标类：NeoForge 的 DamageContainer（原版伤害管线中包裹 DamageSource 的容器）
- *
- * 工作原理：
- * 1. 向 DamageContainer 注入 modifiedSource 字段
- * 2. 拦截 getSource() 方法，如果已设置替换源则返回替换源
- * 3. 通过 IDamageSourceModifier 接口暴露修改方法
  */
 @Mixin(DamageContainer.class)
 public class DamageContainerMixin implements IDamageSourceModifier {

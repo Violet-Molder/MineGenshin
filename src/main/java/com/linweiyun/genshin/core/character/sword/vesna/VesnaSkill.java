@@ -609,7 +609,7 @@ public class VesnaSkill extends SkillBase {
                     if (stellarSwirl) {
                         // 转成星扩散的风段时用<b>同一个倍率</b>（文案里「灵剑伤害」与「灵剑星扩散伤害」同值）
                         spec = ModDamageSpec.stellarDirect(
-                                ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(),
+                                ModReactionTypes.STELLAR_SWIRL.get(), ModElements.ANEMO.get(),
                                 elementAmount, multiplier)
                                 .withStellarBaseBonusMult(
                                         StellarGlimmer.swirlBaseBonusMult(level))

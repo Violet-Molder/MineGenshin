@@ -1,9 +1,14 @@
 package com.linweiyun.genshin.content.entities.teyvat.skill.miyabi;
 
+import com.linweiyun.genshin.content.entities.area.StellarPrismEntity;
+
+import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
+
+import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
+
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
-import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.genshin.core.system.combat.CombatAim;
@@ -190,12 +195,7 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
             PGCharacter character = characterOf(owner);
             ModDamageSpec spec;
             if (stellar) {
-                if (character instanceof Miyabi miyabi) {
-                    miyabi.setConvertedHit(true);
-                }
-                spec = ModDamageSpec.stellarDirect(
-                                com.linweiyun.genshin.core.system.registry.register.ModReactionTypes
-                                        .STELLAR_CONDUCE_ICE.get(),
+                spec = ModDamageSpec.stellarDirect(ModReactionTypes.STELLAR_CONDUCE.get(),
                                 ModElements.CYRO.get(), AttachmentType.WEAK.getInitialAmount(), multiplier)
                         .withStellarBaseBonusMult(
                                 com.linweiyun.genshin.core.system.reaction.StellarGlimmer
@@ -209,12 +209,8 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
                         .build();
             }
             target.hurtServer(serverLevel, ModDamageSource.from(spec, owner), 0f);
-            if (character instanceof Miyabi miyabi) {
-                miyabi.setConvertedHit(false);
-            }
             if (stellar) {
-                com.linweiyun.genshin.content.entities.area.StellarPrismEntity.recordAttachment(
-                        serverLevel, target.position(), ModElements.CYRO.get());
+                StellarPrismEntity.recordAttachment(serverLevel, target.position(), ModElements.CYRO.get());
             }
         }
     }

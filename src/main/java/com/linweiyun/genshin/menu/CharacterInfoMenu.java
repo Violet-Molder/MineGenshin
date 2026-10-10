@@ -19,6 +19,7 @@ import com.lowdragmc.lowdraglib2.gui.ui.elements.inventory.InventorySlots;
 import com.lowdragmc.lowdraglib2.gui.ui.style.Stylesheet;
 import com.lowdragmc.lowdraglib2.gui.ui.style.StylesheetManager;
 import dev.vfyjxf.taffy.style.FlexDirection;
+import lombok.Getter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -28,10 +29,12 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 
 public class CharacterInfoMenu extends AbstractContainerMenu {
    private static final Logger LOGGER = ModLog.getLogger(LogGroup.RENDER);
+   @Getter
    private final ArtifactInventory artifactInventory;
    private final int weaponSlotIndex;
 
@@ -94,11 +97,7 @@ public class CharacterInfoMenu extends AbstractContainerMenu {
       return slot;
    }
 
-   public ArtifactInventory getArtifactInventory() {
-      return this.artifactInventory;
-   }
-
-   public ItemStack quickMoveStack(Player player, int index) {
+    public @NonNull ItemStack quickMoveStack(@NonNull Player player, int index) {
       Slot slot = (Slot)this.slots.get(index);
       if (!slot.hasItem()) {
          return ItemStack.EMPTY;
@@ -125,7 +124,7 @@ public class CharacterInfoMenu extends AbstractContainerMenu {
       return result;
    }
 
-   public void clicked(int slotIndex, int buttonNum, ContainerInput containerInput, Player player) {
+   public void clicked(int slotIndex, int buttonNum, @NonNull ContainerInput containerInput, @NonNull Player player) {
       if (slotIndex >= 0 && slotIndex < this.artifactInventory.slotCount()) {
          if (slotIndex < this.slots.size()) {
             this.getSlot(slotIndex);

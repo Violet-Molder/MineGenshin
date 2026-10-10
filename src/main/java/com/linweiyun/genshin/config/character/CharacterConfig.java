@@ -9,8 +9,16 @@ public class CharacterConfig {
       CharacterXpConfig.register(builder);
       CharacterSystemConfig.register(builder);
       ShenheConfig.register(builder);
+      miyabiRegister(builder);
       ColumbinaConfig.register(builder);
       ArlecchinoConfig.register(builder);
       LinweiyunConfig.register(builder);
+   }
+
+   private static void miyabiRegister(Builder builder) {
+      builder.push("miyabi");
+      MiyabiTalentConfig.register(builder);
+      TalentConfigs.register(MiyabiTalentConfig.SOURCE);
+      builder.pop();
    }
 }

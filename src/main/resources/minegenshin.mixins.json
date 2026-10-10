@@ -27,6 +27,7 @@
   "client": [
     "AvatarRendererMixin",
     "CameraTypeMixin",
+    "CameraZoomMixin",
     "EntityTurnMixin",
     "GeoRendererSubmitTasksMixin",
     "LivingEntityTickHeadTurnMixin",

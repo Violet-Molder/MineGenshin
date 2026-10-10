@@ -37,7 +37,7 @@ public final class MiyabiElementalSkill {
             return;
         }
         if (miyabi.isSkillHitStellar()) {
-            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE.get(),
                     ModElements.CYRO.get(), DecayGroups.DEFAULT_ELEMENTAL_SKILL,
                     REACH, WIDTH, HEIGHT, multiplier);
             return;

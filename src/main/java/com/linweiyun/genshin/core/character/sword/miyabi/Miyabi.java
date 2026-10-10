@@ -6,9 +6,13 @@ import com.linweiyun.genshin.core.character.talent.ConstellationBase;
 import com.linweiyun.genshin.core.character.util.capability.IStellarHousehold;
 import com.linweiyun.genshin.core.character.util.capability.IStellarStateHolder;
 import com.linweiyun.genshin.core.character.util.type.CharacterAscendAttribute;
+import com.linweiyun.genshin.content.effect.character.CharacterEffectHelper;
+import com.linweiyun.genshin.content.effect.character.CharacterEffectInstance;
+import com.linweiyun.genshin.content.effect.character.ICharacterEffect;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterActionData;
 import com.linweiyun.genshin.core.system.combat.action.data.CharacterRenderRepository;
+import com.linweiyun.genshin.core.system.registry.register.ModCharacterEffects;
 import com.linweiyun.genshin.core.system.registry.register.ModAttributes;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmerBranch;
@@ -54,14 +58,25 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
     public static final int SNOW_STATE_TICKS = 160;
     public static final int SNOW_COVER_TICKS = 160;
 
-    /** 深雪冷却（刻）。 */
+    /** 深雪冷却（刻）：平时 8 秒，这一下开出星雪才是 15 秒。 */
+    public static final int SHORT_DEEP_SNOW_COOLDOWN_TICKS = 8 * 20;
     public static final int DEEP_SNOW_COOLDOWN_TICKS = 15 * 20;
 
     /** 飞雪自己的冷却（刻），与深雪独立。 */
     public static final int FLYING_SNOW_COOLDOWN_TICKS = 80;
 
+    /** 深雪自己的剩余冷却（刻）；星雪期间 E 显示飞雪的冷却，两者各算各的。 */
+    @Persisted(key = "miyabiDeepSnowCd")
+    protected int deepSnowCooldownTicks;
+
     /** 辉映·星超导下深雪消耗几层落霜以上进入星雪。 */
     public static final int SNOW_STATE_FROST_THRESHOLD = 4;
+
+    /** 星雪的动作状态键：飞雪可用，元素战技与重击都换掉。 */
+    public static final String SNOW_ACTION_STATE = "snow";
+
+    /** 星雪的动作状态键（飞雪冷却中 / 本轮已放过）：只有重击换成霜月。 */
+    public static final String SNOW_CHARGE_ACTION_STATE = "snow_charge";
 
     /** 落霜每层的剩余时间；0 = 该层不存在。 */
     @DescSynced
@@ -94,7 +109,6 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
     private transient float[] skillHitPlan = new float[0];
     private transient int skillHitIndex;
     private transient boolean skillHitStellar;
-    private transient boolean convertedHit;
 
     /** 资源目录名 / 渲染登记表的键 / 动画登记表的键。 */
     public static final String ID = "miyabi";
@@ -112,8 +126,8 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
                 Component.translatable("character.name.miyabi"),
                 ModElements.CYRO.getId().toString(),
                 CharacterAscendAttribute.CDG,
-                15 * 20,
-                15 * 20,
+                SHORT_DEEP_SNOW_COOLDOWN_TICKS,
+                DEEP_SNOW_COOLDOWN_TICKS,
                 60.0F,
                 ID,
                 statGrowthMap()
@@ -149,8 +163,7 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
     }
 
     @Override
-    public void tick(Player player) {
-        super.tick(player);
+    protected void characterTick(Player player) {
         if (player.level().isClientSide()) {
             return;
         }
@@ -169,14 +182,38 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
             flyingSnowCooldownTicks--;
         }
 
-        if (isSnowState() && !snowEUsed) {
-            getData().setElementalSkillCooldownTick(flyingSnowCooldownTicks);
+        if (deepSnowCooldownTicks > 0) {
+            deepSnowCooldownTicks--;
         }
+
+        // E 的冷却按当前是哪一个战技来显示：星雪里还没放飞雪就是飞雪的 4 秒，其余时候是深雪的
+        int wantedCooldown = isSnowState() && !snowEUsed ? flyingSnowCooldownTicks : deepSnowCooldownTicks;
+        if ((int) getData().getElementalSkillCooldownTick() != wantedCooldown) {
+            getData().setElementalSkillCooldownTick(wantedCooldown);
+        }
+    }
+
+    /**
+     * 深雪 / 飞雪的冷却分开记：开出星雪的那一下是 {@link #DEEP_SNOW_COOLDOWN_TICKS}，
+     * 其余深雪是 {@link #SHORT_DEEP_SNOW_COOLDOWN_TICKS}；飞雪自己不影响深雪的冷却。
+     */
+    @Override
+    public void applyElementalSkillCooldown(Player player, int skillTime) {
+        getData().setElementalSkillStacks(getData().getElementalSkillStacks() - 1);
+        if (!(isSnowState() && snowEUsed)) {
+            deepSnowCooldownTicks = isSnowState() ? DEEP_SNOW_COOLDOWN_TICKS : SHORT_DEEP_SNOW_COOLDOWN_TICKS;
+        }
+        getData().setElementalSkillCooldownTick(
+                isSnowState() && !snowEUsed ? flyingSnowCooldownTicks : deepSnowCooldownTicks);
+        syncRealtimeState();
     }
 
     @Override
     public String getActionStateKey(Player player) {
-        return isFlyingSnowMode() ? "snow" : "default";
+        if (!isSnowState()) {
+            return "default";
+        }
+        return isFlyingSnowMode() ? SNOW_ACTION_STATE : SNOW_CHARGE_ACTION_STATE;
     }
 
     public boolean isFlyingSnowMode() {
@@ -196,23 +233,13 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
         return snowCoverStacks * MiyabiTalent.snowCoverPerStack(getData().getElementalSkillLevel());
     }
 
-    @Override
-    public float getOwnElevationBonus(StellarGlimmerBranch branch) {
-        return branch == StellarGlimmerBranch.CONDUCE && snowStateTicks > 0 && !convertedHit
-                ? MiyabiTalent.SNOW_STATE_SPECIAL_BONUS
-                : 0f;
-    }
-
-    public void setConvertedHit(boolean converted) {
-        this.convertedHit = converted;
-    }
-
     public boolean isSnowState() {
         return snowStateTicks > 0;
     }
 
+    /** 星雪视为处于辉映·星超导状态，所以两种来源都算。 */
     public boolean isConduce() {
-        return StellarGlimmer.hasConduce(this);
+        return snowStateTicks > 0 || StellarGlimmer.hasConduce(this);
     }
 
     public int frostStacks() {
@@ -262,10 +289,15 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
         return count;
     }
 
-    public void enterSnowState() {
+    public void enterSnowState(Player player) {
         snowStateTicks = SNOW_STATE_TICKS;
         flyingSnowCooldownTicks = FLYING_SNOW_COOLDOWN_TICKS;
         snowEUsed = false;
+        ICharacterEffect snowEffect = ModCharacterEffects.MIYABI_SNOW_STATE_EFFECT.get();
+        if (snowEffect != null) {
+            CharacterEffectHelper.addEffect(player, this,
+                    new CharacterEffectInstance(snowEffect, SNOW_STATE_TICKS, 0, false));
+        }
     }
 
     public boolean isFlyingSnowReady() {
@@ -278,31 +310,26 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
     }
 
     /** 深雪起手：消耗落霜、结算覆雪与星雪、排好这一招的逐段倍率。 */
-    public void planDeepSnow(int level) {
+    public void planDeepSnow(Player player, int level) {
         boolean conduce = isConduce();
         if (!conduce) {
             addFrostStack();
             skillHitPlan = new float[]{MiyabiTalent.deepSnow(level)};
             skillHitIndex = 0;
             skillHitStellar = false;
-            convertedHit = false;
             return;
         }
 
         int consumed = consumeFrostStacks();
         float multiplier = MiyabiTalent.deepSnowConduce(level) * (1f + 0.10f * consumed);
-        if (isSnowState()) {
-            multiplier *= 1f + MiyabiTalent.SNOW_STATE_BASE_BONUS;
-        }
         grantSnowCover(consumed);
         if (consumed > SNOW_STATE_FROST_THRESHOLD) {
             addRimeStacks(consumed);
-            enterSnowState();
+            enterSnowState(player);
         }
         skillHitPlan = new float[]{multiplier * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS)};
         skillHitIndex = 0;
         skillHitStellar = true;
-        convertedHit = true;
     }
 
     /** 飞雪起手：消耗烈霜，按第一段 + 后续等分的多段倍率排好。 */
@@ -321,7 +348,6 @@ public class Miyabi extends SwordCharacter implements IBCharacter, IStellarHouse
         skillHitPlan = plan;
         skillHitIndex = 0;
         skillHitStellar = true;
-        convertedHit = false;
         snowEUsed = true;
     }
 

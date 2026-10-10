@@ -73,13 +73,10 @@ public class PGCharacterData implements IPersistedSerializable, IManaged {
    @Persisted(key = "current_obtaining_energy")
    @DescSynced
    private float currentObtainingEnergy;
-   @Persisted(key = "skill_short_max_cooldown")
    @DescSynced
    private int skillShortMaxCooldownTick;
-   @Persisted(key = "skill_long_max_cooldown")
    @DescSynced
    private int skillLongMaxCooldownTick;
-   @Persisted(key = "burst_max_cooldown")
    @DescSynced
    private int burstMaxCooldownTick;
    @Persisted(key = "max_obtaining_energy")

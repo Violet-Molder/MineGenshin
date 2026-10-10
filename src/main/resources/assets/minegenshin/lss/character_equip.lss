@@ -235,10 +235,9 @@
   text-color: #86B6D4;
 }
 
-/* 右侧详情栏：宽度固定 196。窗口 88% 时内容层约 777 单位，三栏是
-   62 + 8 + (剩) + 8 + 196，中间预览还有 ~490 —— 模型有足够的地方站。 */
+/* 右侧详情栏：占主体宽度的一半，与中间预览约 1:1（左侧页签另占固定 62）。 */
 #ce-panel {
-  width: 196;
+  width: 50%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -1091,4 +1090,41 @@ scroller-horizontal .__scroller_scroll_container__ {
   gap-all: 4;
   width: 100%;
   flex-shrink: 0;
+}
+
+/* ---------------- 详细属性行（与 K 页 cc-talent-* 同一套外观） ---------------- */
+
+.ce-talent-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap-all: 4;
+  width: 100%;
+}
+
+.ce-talent-name {
+  width: 24%;
+  font-size: 9;
+  text-color: #C9DCE8;
+}
+
+.ce-talent-spacer {
+  width: 42%;
+}
+
+.ce-talent-value {
+  width: 22%;
+  margin-right: 8;
+  font-size: 9;
+  text-color: #DCEBF5;
+  text-align: right;
+}
+
+.ce-talent-field {
+  width: 22%;
+  margin-right: 8;
+  background: group(#C0091421, border(1, #7A6FD8F5));
+  focus-overlay: border(1, #CC9BE8FF);
+  text-color: #DCEBF5;
+  font-size: 9;
 }
