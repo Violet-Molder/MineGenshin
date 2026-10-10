@@ -1,66 +1,60 @@
 # 7. 实战：把渲染接到 Photon
 
+## 7.1 四种时机（本项目 `client/fx` 就是范例）
 
-## 7.1 「什么时候召唤粒子」只有四种时机
-
-本项目的 `client/fx` 就是这四种时机的范例（见 `TestCharacterFx` 的类注释）：
-
-| 时机 | 锚点 | 用的 API |
+| 时机 | 锚点 | 用什么 |
 | --- | --- | --- |
-| 常驻，跟随角色 | 角色本身 | 内置 `EntityEffectExecutor` |
-| 常驻，跟随手中武器 | 武器骨骼 | 自定义锚点 + `FxAnchor` |
-| 只在攻击动画期间 | 武器尖 / 指定骨骼 | 自定义锚点 + `ActionStateMachine` |
-| 技能释放后定点飞出 | 世界坐标 | `FixedPointExecutor`（实现 `IEffectExecutor`） |
+| 常驻跟随角色 | 角色 | `EntityEffectExecutor` |
+| 常驻跟随武器 | 武器骨骼 | `FxAnchor` + 武器挂点层 |
+| 只在攻击期间 | 武器尖 | `FxAnchor` + `ActionStateMachine` |
+| 技能后定点飞出 | 世界坐标 | `FixedPointExecutor` |
 
-来自服务端的触发一律走网络包 + 客户端判断，不在服务端构造 `FX`。
+## 7.2 两条回调的界律
 
-## 7.2 常驻跟随：`EntityEffectExecutor`
+| 回调 | 频率 | 写什么 |
+| --- | --- | --- |
+| `updateFXObjectTick` | 20/s | 推进状态、判断生死 |
+| `updateFXObjectFrame` | 每帧 | 按 `partialTick` 插值算位置/朝向 |
 
-```java
-FX fx = FXHelper.getFX(ResourceLocation.fromNamespaceAndPath("minegenshin", "sword_aura"));
-var executor = new EntityEffectExecutor(fx, level, player, EntityEffectExecutor.AutoRotate.LOOK);
-executor.setOffset(0, 1.0, 0);
-executor.start();
-```
+**两边都写位置 = 抖动**。
 
-它会每帧把 FX 根挪到实体眼睛位置（再加 offset），实体死亡时自动销毁
-（`EntityEffectExecutor.java:41` 起）。`AutoRotate` 有 `NONE / FORWARD / LOOK / XROT` 四档。
-
-## 7.3 跟随武器：骨骼 → 世界坐标
-
-1. 在渲染层里读武器骨骼（§4.5 的 `renderForBone`）；
-2. 把 `PoseStack` 里那根骨骼的矩阵取出来，变换到世界坐标；
-3. 把结果存进 `WeaponAnchorCache` 一类的缓存；
-4. 下一帧用 `FxAnchor` / `updatePos` / `updateRotation` 把 FX 根挪过去。
-
-关键约束：**第 1 步必须发生在渲染线程**，第 4 步必须在 frame 回调里，中间的数据用缓存过桥。
-
-## 7.4 只在攻击时生效
+## 7.3 最小启动代码
 
 ```java
-if (!ActionStateMachine.isAttacking(player)) { anchor.stop(); return; }
+FX fx = FXHelper.getFX(ResourceLocation.fromNamespaceAndPath("minegenshin", "skill_burst"));
+EntityEffectExecutor exec = new EntityEffectExecutor(fx, level, player,
+        EntityEffectExecutor.AutoRotate.LOOK);
+exec.setOffset(0, 1.0, 0);
+exec.start();
 ```
 
-动画期间开关特效是状态问题，不是渲染问题：状态变化在 tick 里判断，渲染只负责跟随。
-
-## 7.5 定点生成 + 朝前飞
-
-`FixedPointExecutor`（`client/fx/FixedPointExecutor.java`）的做法值得照抄：
+## 7.4 骨骼挂点怎么接
 
 ```text
-tick  ：origin += forward × speed                       （推进一个整刻）
-frame ：pos = origin + forward × speed × partialTicks   （刻内插值，不抖）
+渲染期：renderForBone / preRender 里读骨骼矩阵 → 变换到世界坐标 → 存缓存
+每帧：从缓存取锚点 → runtime.root.updatePos / updateRotation
 ```
 
-速度在客户端算、位置由执行器给，特效本身（`.fx`）里把模拟空间设成 `WORLD` 就行；
-反过来把位移全写在特效里、`forwardSpeed` 传 0 也成立，两种都由特效作者决定。
+约束：读骨骼只在渲染线程、只在渲染那一刻有效；缓存按实体 + 骨骼名分键并在实体卸载时清。
 
-## 7.6 把游戏状态喂给着色器
+## 7.5 定点飞出
 
-1.21.1 上的通道比 26.2 少（没有 RenderState 票据），实际能用的三条：
+```text
+tick  ：origin += forward × speed
+frame ：pos = origin + forward × speed × partialTicks
+```
 
-1. **uniform**：`shader.safeGetUniform("X").set(v)`，每帧在渲染回调里写；
-2. **自定义材质**：在 `IMaterial` 里读写 `MaterialContext`，供着色器图使用；
-3. **顶点数据**：把数值塞进 UV2 / 颜色通道，着色器里再还原（省 uniform 但要小心精度）。
+## 7.6 服务端触发
 
----
+服务端只发包，客户端构造 `FX` 与执行器；服务端不要 import `com.lowdragmc.photon.client.*`。
+
+## 7.7 新加特效的清单
+
+1. `.fx` 放 `assets/<ns>/fx/`；
+2. 选时机、写执行器；
+3. 需要骨骼挂点就先在渲染层读出来；
+4. 触发逻辑进状态机或技能代码，服务端只发包；
+5. 覆盖「实体死亡 / 退世界 / 资源重载」三种结束路径；
+6. 用编辑器先量开销。
+
+深入：[完全参考 10. 项目实战](/doc/rendering-1.21.1-reference-practice)。

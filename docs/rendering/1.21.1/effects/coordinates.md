@@ -1,44 +1,60 @@
 # 3. 坐标空间完全指南
 
-
-这一节两条线几乎一样，差别只有类名（1.21.1 用 `ResourceLocation`，26.2 用 `Identifier`）。
+位置不对时，先回答三个问题：**在哪个空间？单位是什么？角度还是弧度？**
 
 ## 3.1 五个空间
 
-| 空间 | 原点 | 单位 | 谁在用 |
-| --- | --- | --- | --- |
-| 世界空间 | 世界原点 | 方块 | 实体坐标、粒子位置、Photon FX 根 |
-| 相机空间 | 相机 | 方块 | `RenderLevelStageEvent` 给的 `PoseStack` 起点 |
-| 实体空间 | 实体脚底 | 方块 | `EntityRenderer#render` 的入参 |
-| 模型空间 | 模型根 | 1/16 方块 | Blockbench / `.geo.json` / GeckoLib 骨骼 |
-| 屏幕空间 | 窗口左上 | 像素 | GUI、`GuiGraphics` |
+| 空间 | 原点 | 单位 |
+| --- | --- | --- |
+| 世界 | 世界原点 | 方块 |
+| 相机 | 相机 | 方块 |
+| 实体 | 实体脚底 | 方块 |
+| 模型 | 模型根 | **1/16 方块** |
+| 屏幕 | 窗口左上 | 像素 |
 
-## 3.2 三条换算公式
+`RenderLevelStageEvent` 给的 `PoseStack` 是**相机相对**的：世界坐标要先减相机坐标。
+
+## 3.2 三条常用换算
 
 ```text
-模型空间 → 世界空间： 世界坐标 = 实体坐标 + 模型坐标 / 16 （再叠加骨骼的旋转与缩放）
-世界空间 → 相机空间： 相机空间 = 世界坐标 - 相机坐标
-世界空间 → 屏幕空间： 屏幕坐标 = 投影 × 模型视图 × 世界坐标
+世界 → 相机： pos - camera.getPosition()
+模型 → 实体： 模型坐标 / 16，沿骨骼链变换
+相机 → 屏幕： ProjMat × ModelViewMat × pos
 ```
 
-## 3.3 角度还是弧度
+## 3.3 度与弧度
 
 | 位置 | 单位 |
 | --- | --- |
-| 实体 / 相机朝向（`yRot`、`xRot`） | 度 |
-| `Mth.sin/cos/rotLerp` 的入参 | 度 |
-| `Quaternionf.rotationXYZ(...)` | 弧度 |
-| `PoseStack.mulPose(...)` 的参数 | 四元数（弧度来源） |
-| GeckoLib 的 `.geo.json` / `.animation.json` | 度（加载期转弧度） |
-| GeckoLib 运行时（`GeoBone#getRotX`） | 弧度 |
+| 实体 `yRot` / `xRot`、`Mth.rotLerp` | 度 |
+| `Quaternionf.rotationXYZ` / `mulPose` | 弧度 |
+| GeckoLib `.geo.json` / `.animation.json` | 度（加载期换算） |
+| GeckoLib `GeoBone#getRotX` | 弧度 |
+| Photon `setRotation` / 时间轴旋转 | 度 |
 
-## 3.4 常见症状对照表
+换算：`rad = deg * Mth.DEG_TO_RAD`，`deg = rad * Mth.RAD_TO_DEG`。
 
-| 症状 | 通常原因 |
+## 3.4 变形的书写顺序
+
+```java
+poseStack.pushPose();
+poseStack.translate(x, y, z);      // 1 平移
+poseStack.mulPose(quaternion);     // 2 旋转
+poseStack.scale(sx, sy, sz);       // 3 缩放
+// …… 写顶点
+poseStack.popPose();
+```
+
+`PoseStack` 是**右乘**：后写的变换发生在先写变换之后的局部坐标系里；`push` / `pop` 必须成对。
+
+## 3.5 症状对照
+
+| 症状 | 原因 |
 | --- | --- |
-| 特效整体偏了半格 | 用了摆件（`GeoObjectRenderer`）的 +0.5 平移补偿 |
-| 模型上下颠倒 | 模型空间与世界空间的 X 轴反向 |
-| 特效跟手但方向反 | 用了 `yRot` 直接当弧度，或四元数欧拉序不对 |
-| 位置一格一格跳 | 在 tick 里写了位置，又在 frame 里写了一遍 |
+| 偏半格 | 摆件原点补偿（`GeoObjectRenderer` 的 +0.5） |
+| 上下颠倒 / 反向 | 模型 X 轴反向；度当弧度 |
+| 远处抖动 | 先转 `float` 再减相机坐标 |
+| 缩放不对 | 忘了模型单位是 1/16 方块 |
+| 旋转跟着父级跑偏 | `popPose` 漏了 / 变换顺序反了 |
 
----
+深入：[完全参考 6. 坐标空间、矩阵与四元数](/doc/rendering-1.21.1-reference-transform)。

@@ -1,40 +1,51 @@
 # 10. 附录
 
-
-## 10.1 类名速查（1.21.1 / 2.2.8）
+## 10.1 类名速查
 
 | 用途 | 类 |
 | --- | --- |
-| 顶点消费者 | `com.mojang.blaze3d.vertex.VertexConsumer` |
-| 顶点构建 | `com.mojang.blaze3d.vertex.BufferBuilder` / `MeshData` / `BufferUploader` |
-| 变换栈 | `com.mojang.blaze3d.vertex.PoseStack` |
+| 顶点 | `com.mojang.blaze3d.vertex.VertexConsumer` / `BufferBuilder` / `MeshData` / `BufferUploader` |
+| 变换 | `com.mojang.blaze3d.vertex.PoseStack` |
+| 状态 | `com.mojang.blaze3d.systems.RenderSystem` / `platform.GlStateManager` |
 | 渲染类型 | `net.minecraft.client.renderer.RenderType` / `RenderStateShard` |
 | 着色器 | `net.minecraft.client.renderer.ShaderInstance` |
 | 多缓冲 | `net.minecraft.client.renderer.MultiBufferSource.BufferSource` |
-| 实体渲染器 | `net.minecraft.client.renderer.entity.EntityRenderer` |
 | 后处理 | `net.minecraft.client.renderer.PostChain` / `PostPass` |
-| GeckoLib 4 渲染器 | `software.bernie.geckolib.renderer.GeoRenderer` / `GeoEntityRenderer` / `GeoObjectRenderer` |
-| GeckoLib 4 动画 | `software.bernie.geckolib.animation.AnimationController` / `AnimatableManager` / `PlayState` |
-| GeckoLib 4 骨骼 | `software.bernie.geckolib.cache.object.GeoBone` / `animation.state.BoneSnapshot` |
-| Photon 运行时 | `com.lowdragmc.photon.client.fx.FX` / `FXRuntime` / `FXHelper` / `IEffectExecutor` |
-| Photon 对象 | `com.lowdragmc.photon.client.gameobject.IFXObject` / `FXObject` |
-| Photon 光 | `com.lowdragmc.photon.client.light.PhotonLights` / `DynamicLight` / `FogVolume` |
+| GeckoLib 渲染 | `software.bernie.geckolib.renderer.GeoRenderer` / `GeoEntityRenderer` / `GeoObjectRenderer` |
+| GeckoLib 层 | `software.bernie.geckolib.renderer.layer.GeoRenderLayer` |
+| GeckoLib 动画 | `animation.AnimationController` / `AnimatableManager` / `PlayState` |
+| GeckoLib 骨骼 | `cache.object.GeoBone` / `animation.state.BoneSnapshot` |
+| Photon 运行时 | `com.lowdragmc.photon.client.fx.FX` / `FXRuntime` / `FXHelper` |
+| Photon 执行器 | `IEffectExecutor` / `IFXEffectExecutor` / `EntityEffectExecutor` |
+| Photon 光 | `client.light.PhotonLights` / `DynamicLight` / `FogVolume` |
 
-## 10.2 参考
+## 10.2 事件速查
 
-| 事实 | 来源 |
+`RenderLevelStageEvent`（阶段：`AFTER_SKY`、`AFTER_SOLID_BLOCKS`、`AFTER_CUTOUT_MIPPED_BLOCKS_BLOCKS`、
+`AFTER_CUTOUT_BLOCKS`、`AFTER_ENTITIES`、`AFTER_BLOCK_ENTITIES`、`AFTER_TRANSLUCENT_BLOCKS`、
+`AFTER_TRIPWIRE_BLOCKS`、`AFTER_PARTICLES`、`AFTER_WEATHER`、`AFTER_LEVEL`）、
+`RenderFrameEvent`、`EntityRenderersEvent.RegisterRenderers`、`RegisterShadersEvent`、
+`RegisterClientReloadListenersEvent`、`RegisterGuiLayersEvent`、`RenderHandEvent`。
+
+## 10.3 事实来源
+
+`neoforge-21.1.250-sources.jar`、`photon-neoforge-1.21.1-2.2.8-sources.jar`、
+`ldlib2-neoforge-1.21.1-2.2.42-sources.jar`、`geckolib-neoforge-1.21.1-4.9.3-sources.jar`
+（都在本机 Gradle 缓存里）；**与官方文档站冲突时以 jar 为准**。
+
+## 10.4 这一册与完全参考的关系
+
+这一册讲「怎么做」，[完全参考](/doc/rendering-1.21.1-reference-intro)讲「为什么」与「源码在哪一行」。
+遇到本册没讲透的细节，按下面对应章去查：
+
+| 本册 | 参考 |
 | --- | --- |
-| MC / NeoForge | `neoforge-21.1.250-sources.jar`（`build/moddev/artifacts/`） |
-| Photon | `photon-neoforge-1.21.1-2.2.8-sources.jar` |
-| LDLib2 | `ldlib2-neoforge-1.21.1-2.2.42-sources.jar` |
-| GeckoLib | `geckolib-neoforge-1.21.1-4.9.3-sources.jar` |
-| Photon 2.2.8 变更 | Modrinth `photon-editor` 版本 `mc1.21.1-2.2.8-neoforge` 的 changelog |
-
-## 10.3 本文未覆盖 / 未确认的部分
-
-- 1.21.1 上的 GPU 蒙皮 / 几何接管未接入（`GeoRenderIntercept` 仍是空实现），
-  所以 26.2 文档第 7 章的性能结论不能照搬到这里；
-- Photon 编辑器内部实现（时间轴、资源面板）只在必要处点到，未逐类展开；
-- Iris 兼容层的细节（`IrisCompositeMode` 各档行为）未逐条核对；
-- 官方文档站对 1.21.1 / Photon 2.2.x 的描述与 jar 有出入时，本文以 jar 为准，
-  出入点没有逐条列出。
+| 1 心智模型 | 参考 1 |
+| 2 Blaze3D | 参考 2 |
+| 3 坐标 | 参考 6 |
+| 4 GeckoLib | 参考 5 |
+| 5 着色器 | 参考 3 |
+| 6 Photon 架构 | 参考 8 |
+| 7 实战 | 参考 10 |
+| 8 性能 | 参考 7 |
+| 9 排错 | 参考 11 |
