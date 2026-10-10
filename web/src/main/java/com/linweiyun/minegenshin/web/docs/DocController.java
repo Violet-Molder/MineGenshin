@@ -17,6 +17,11 @@ import java.nio.file.Path;
 @RestController
 public class DocController {
 
+    /** 当前页属于哪条线；不带版本的文档用站点默认版本。 */
+    private static String activeVersion(DocCatalog.Doc doc) {
+        return doc != null && doc.versioned() ? doc.version() : DocCatalog.DEFAULT_VERSION;
+    }
+
     private final MarkdownRenderer renderer;
     private final Path docsRoot;
 
@@ -34,7 +39,7 @@ public class DocController {
     @GetMapping("/api/docs")
     public java.util.List<java.util.Map<String, String>> menu() {
         return DocCatalog.DOCS.stream()
-                .map(d -> java.util.Map.of("slug", d.slug(), "title", d.title(), "group", d.group(), "version", d.version()))
+                .map(d -> java.util.Map.of("slug", d.slug(), "title", d.title(), "group", d.group(), "version", d.version(), "counterpart", d.counterpart() == null ? "" : d.counterpart()))
                 .toList();
     }
 
@@ -44,7 +49,7 @@ public class DocController {
         if (doc.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .contentType(MediaType.TEXT_HTML)
-                    .body(SiteTemplate.page("404", "找不到页面",
+                    .body(SiteTemplate.page("404", "找不到页面", "",
                             "<h1>找不到页面</h1><p class=\"lede\">没有这个文档：<code>" + slug + "</code>。回 <a href=\"/\">首页</a> 看看。</p>"));
         }
         Path file = docsRoot.resolve(doc.get().source()).normalize();
@@ -56,7 +61,7 @@ public class DocController {
         if (!file.startsWith(docsRoot) || !Files.isReadable(file)) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.TEXT_HTML)
-                    .body(SiteTemplate.page("error", "文档源缺失",
+                    .body(SiteTemplate.page("error", "文档源缺失", "",
                             "<h1>文档源缺失</h1><p class=\"lede\">读不到 <code>" + file
                                     + "</code>。请确认启动目录，或用 <code>-Dsite.docs-root=仓库根目录</code> 指定。</p>"));
         }
@@ -64,12 +69,12 @@ public class DocController {
             String markdown = Files.readString(file, StandardCharsets.UTF_8);
             return ResponseEntity.ok()
                     .contentType(MediaType.TEXT_HTML)
-                    .body(SiteTemplate.docPage(doc.get().slug(), doc.get().title(), doc.get().source(), DocCatalog.versionOptions(doc.get()),
+                    .body(SiteTemplate.docPage(doc.get().slug(), doc.get().title(), doc.get().source(), activeVersion(doc.get()), DocCatalog.versionOptions(doc.get(), activeVersion(doc.get())),
                             renderer.render(markdown)));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.TEXT_HTML)
-                    .body(SiteTemplate.page("error", "读取失败",
+                    .body(SiteTemplate.page("error", "读取失败", "",
                             "<h1>读取失败</h1><pre>" + e.getMessage() + "</pre>"));
         }
     }

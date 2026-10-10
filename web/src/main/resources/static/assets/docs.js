@@ -26,11 +26,11 @@ const FALLBACK_MENU = [
   { slug: "character-implementations", title: "角色实现清单", group: "深入文档", href: "/doc/character-implementations" },
   { slug: "port-targeting", title: "索敌系统移植参考", group: "深入文档", href: "/doc/port-targeting" },
   { slug: "port-targeting-patch", title: "索敌移植补丁记录", group: "深入文档", href: "/doc/port-targeting-patch" },
-  { slug: "rendering-photon2-reference", title: "Minecraft 26.2 渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference", version: "26.2" },
-  { slug: "rendering-photon2-reference-1.21.1", title: "Minecraft 1.21.1 渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference-1.21.1", version: "1.21.1" },
+  { slug: "rendering-photon2-reference", title: "渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference", version: "26.2" },
+  { slug: "rendering-photon2-reference-1.21.1", title: "渲染与 Photon2 完全参考", group: "渲染与特效", href: "/doc/rendering-photon2-reference-1.21.1", version: "1.21.1" },
   { slug: "rendering-photon2", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2", version: "26.2" },
-  { slug: "rendering-photon2-1.21.1", title: "渲染与 Photon2 特效（1.21.1）", group: "渲染与特效", href: "/doc/rendering-photon2-1.21.1", version: "1.21.1" },
-  { slug: "ldlib2-node-graph", title: "LDLib2 节点图工具包", group: "扩展框架", href: "/doc/ldlib2-node-graph", version: "26.2" },
+  { slug: "rendering-photon2-1.21.1", title: "渲染与 Photon2 特效", group: "渲染与特效", href: "/doc/rendering-photon2-1.21.1", version: "1.21.1" },
+  { slug: "ldlib2-node-graph", title: "LDLib2 节点图工具包", group: "扩展框架", href: "/doc/ldlib2-node-graph" },
   { slug: "readme", title: "项目介绍", group: "项目", href: "/doc/readme" },
   { slug: "changelog", title: "更新日志", group: "项目", href: "/doc/changelog" },
 ];
@@ -42,7 +42,7 @@ async function loadMenu() {
       const docs = await res.json();
       const items = [{ slug: "index", title: "文档首页", group: "导览", href: "/" }];
       for (const d of docs) {
-        items.push({ slug: d.slug, title: d.title, group: d.group, href: "/doc/" + d.slug, version: d.version });
+        items.push({ slug: d.slug, title: d.title, group: d.group, href: "/doc/" + d.slug, version: d.version || "" });
       }
       return items;
     }
@@ -50,6 +50,72 @@ async function loadMenu() {
     /* 直接用 file:// 打开时没有后端，走兜底 */
   }
   return FALLBACK_MENU;
+}
+
+/* ---------- 版本状态 ----------
+   站点一次只显示一套目录：带版本的文档按当前版本出一篇，其余文档两条线共用。
+   当前版本 = 页面自带的版本 → 上次选择 → 站点默认。 */
+
+const VERSION_KEY = "minegenshin.docs.version";
+const DEFAULT_VERSION = "1.21.1";
+
+function storedVersion() {
+  try {
+    return localStorage.getItem(VERSION_KEY) || "";
+  } catch (e) {
+    /* 隐私模式 / file:// 下取不到，按没有算 */
+    return "";
+  }
+}
+
+function setStoredVersion(version) {
+  try {
+    if (version) localStorage.setItem(VERSION_KEY, version);
+  } catch (e) {
+    /* 同上 */
+  }
+}
+
+function activeVersion() {
+  return document.body.dataset.version || storedVersion() || DEFAULT_VERSION;
+}
+
+/** 切换版本：只换版本相关的显示（目录里配对的那几篇、首页卡片、按钮状态）。 */
+function applyVersion(version) {
+  document.body.dataset.version = version;
+  document.querySelectorAll("#versionbar .vchip").forEach((chip) => {
+    const own = chip.dataset.version === version;
+    chip.classList.toggle("active", own);
+    if (own) chip.setAttribute("aria-current", "true");
+    else chip.removeAttribute("aria-current");
+  });
+  document.querySelectorAll("#sidebar li.nav-item[data-version]").forEach((li) => {
+    li.hidden = li.dataset.version !== version;
+  });
+  document.querySelectorAll("#sidebar details.nav-group").forEach((group) => {
+    const visible = [...group.querySelectorAll("li.nav-item")].some((li) => !li.hidden);
+    group.hidden = !visible;
+  });
+  document.querySelectorAll(".card[data-version]").forEach((card) => {
+    card.hidden = card.dataset.version !== version;
+  });
+}
+
+/** 右上角版本按钮：带配对的文档跳对应篇，其余就地切换。 */
+function wireVersionSwitch() {
+  const bar = document.getElementById("versionbar");
+  if (!bar) return;
+  bar.querySelectorAll(".vchip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const version = chip.dataset.version;
+      setStoredVersion(version);
+      if (chip.dataset.href) {
+        location.href = chip.dataset.href;
+        return;
+      }
+      applyVersion(version);
+    });
+  });
 }
 
 /* 与 GitHub 一致的锚点算法：小写 → 去掉非「字母/数字/空白/连字符/下划线」→ 空白转连字符。
@@ -309,7 +375,61 @@ function wireBackToTop() {
   onScroll();
 }
 
-/* ---------- 侧边栏 ---------- */
+/* ---------- 侧边栏：分组 → 页面 → 页内章节 的树 ---------- */
+
+/** 把正文的 h2/h3 收成一棵树（h3 挂在它前面的 h2 下），顺便给标题补锚点。 */
+function collectSections(content) {
+  const pageTitle = content.querySelector("h1");
+  const tree = [];
+  let currentH2 = null;
+  [...content.querySelectorAll("h1, h2, h3")]
+    .filter((h) => h !== pageTitle)
+    .forEach((h) => {
+      if (!h.id) h.id = slug(h.textContent);
+      // 取标题文字时先摘掉自己加的 # 锚点，重复构建也不会把 # 算进文字
+      const clean = h.cloneNode(true);
+      clean.querySelectorAll("a.anchor").forEach((a) => a.remove());
+      const node = { id: h.id, text: clean.textContent.trim(), level: h.tagName === "H3" ? 3 : 2, children: [] };
+      if (node.level === 3 && currentH2) {
+        currentH2.children.push(node);
+      } else {
+        tree.push(node);
+        currentH2 = node.level === 2 ? node : null;
+      }
+      if (!h.querySelector("a.anchor")) {
+        const anchor = document.createElement("a");
+        anchor.className = "anchor";
+        anchor.href = `#${h.id}`;
+        anchor.textContent = "#";
+        h.appendChild(anchor);
+      }
+    });
+  return tree;
+}
+
+function sectionTree(items) {
+  return items.map((item) => {
+    if (item.children.length) {
+      return `<li class="nav-sub-item"><details class="nav-sub">` +
+        `<summary><span class="nav-caret" aria-hidden="true"></span>` +
+        `<a href="#${item.id}" class="toc-link">${item.text}</a></summary>` +
+        `<ul class="nav-sub-list">${sectionTree(item.children)}</ul></details></li>`;
+    }
+    const lv = item.level === 3 ? " lv3" : "";
+    return `<li class="nav-sub-item"><a href="#${item.id}" class="toc-link${lv}">${item.text}</a></li>`;
+  }).join("");
+}
+
+function navPage(page, isCurrent, sections) {
+  const versionAttr = page.version ? ` data-version="${page.version}"` : "";
+  const label = `<a href="${page.href}"${isCurrent ? ' class="active"' : ""}>${page.title}</a>`;
+  const body = isCurrent && sections && sections.length
+    ? `<details class="nav-page" open><summary><span class="nav-caret" aria-hidden="true"></span>` +
+      `${label}</summary>` +
+      `<ul class="nav-sub-list">${sectionTree(sections)}</ul></details>`
+    : label;
+  return `<li class="nav-item"${versionAttr} data-title="${page.title}">${body}</li>`;
+}
 
 async function buildSidebar() {
   const sidebar = document.getElementById("sidebar");
@@ -318,39 +438,22 @@ async function buildSidebar() {
 
   const current = document.body.dataset.page || "";
   const menu = await loadMenu();
-  const parts = [];
+  const sections = collectSections(content);
 
-  parts.push('<a class="brand" href="/">MineGenshin 文档<small>Minecraft 26.2 · 1.21.1 双线文档</small></a>');
+  const parts = [];
+  parts.push('<a class="brand" href="/">MineGenshin 文档<small>NeoForge Mod 开发文档</small></a>');
   parts.push('<input id="filter" class="search" type="search" placeholder="过滤目录…" autocomplete="off">');
 
-  const groups = [...new Set(menu.map((m) => m.group))];
-  for (const group of groups) {
-    parts.push(`<div class="side-group">${group}</div><ul class="side-list">`);
-    for (const page of menu.filter((m) => m.group === group)) {
-      const id = page.slug === "index" ? "index" : page.slug;
-      const active = id === current ? ' class="active"' : "";
-      const badge = page.version ? `<span class="ver-badge">${page.version}</span>` : "";
-      parts.push(`<li><a href="${page.href}"${active}>${page.title}${badge}</a></li>`);
+  for (const group of [...new Set(menu.map((m) => m.group))]) {
+    // 两个版本的配对条目都渲染出来，由 applyVersion 决定哪一篇可见（切换版本时不用重建）
+    const pages = menu.filter((m) => m.group === group);
+    if (!pages.length) continue;
+    parts.push('<details class="nav-group" open><summary><span class="nav-caret" aria-hidden="true"></span>' +
+      `<span class="nav-group-title">${group}</span></summary><ul class="nav-list">`);
+    for (const page of pages) {
+      parts.push(navPage(page, page.slug === current, sections));
     }
-    parts.push("</ul>");
-  }
-
-  // 源文档用 h1 作大节标题，因此目录覆盖 h1/h2/h3；页面自身的标题（第一个 h1）排除在外
-  const pageTitle = content.querySelector("h1");
-  const headings = [...content.querySelectorAll("h1, h2, h3")].filter((h) => h !== pageTitle);
-  if (headings.length) {
-    parts.push('<div class="side-group">本页目录</div><ul class="side-list" id="toc">');
-    headings.forEach((h) => {
-      if (!h.id) h.id = slug(h.textContent);
-      const level = h.tagName === "H3" ? " lv3" : "";
-      parts.push(`<li><a href="#${h.id}" class="toc-link${level}" data-text="${h.textContent}">${h.textContent}</a></li>`);
-      const anchor = document.createElement("a");
-      anchor.className = "anchor";
-      anchor.href = `#${h.id}`;
-      anchor.textContent = "#";
-      h.appendChild(anchor);
-    });
-    parts.push("</ul>");
+    parts.push("</ul></details>");
   }
 
   sidebar.innerHTML = parts.join("");
@@ -358,14 +461,21 @@ async function buildSidebar() {
   wireScrollSpy();
 }
 
+/** 过滤只看页面级条目：命中的组自动展开，没有命中的组收起。 */
 function wireFilter() {
   const input = document.getElementById("filter");
   if (!input) return;
   input.addEventListener("input", () => {
     const q = input.value.trim().toLowerCase();
-    document.querySelectorAll(".side-list li").forEach((li) => {
-      const text = li.textContent.toLowerCase();
-      li.hidden = q.length > 0 && !text.includes(q);
+    document.querySelectorAll("#sidebar details.nav-group").forEach((group) => {
+      let shown = 0;
+      group.querySelectorAll("li.nav-item").forEach((li) => {
+        const hit = q.length === 0 || (li.dataset.title || "").toLowerCase().includes(q);
+        li.hidden = !hit;
+        if (hit) shown++;
+      });
+      group.hidden = shown === 0;
+      if (q.length > 0 && shown > 0) group.open = true;
     });
   });
 }
@@ -374,6 +484,13 @@ function wireScrollSpy() {
   const links = [...document.querySelectorAll(".toc-link")];
   if (!links.length) return;
   const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+  const openParents = (el) => {
+    let details = el.closest("details");
+    while (details) {
+      details.open = true;
+      details = details.parentElement ? details.parentElement.closest("details") : null;
+    }
+  };
   const observer = new IntersectionObserver(
     (entries) => {
       const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
@@ -382,6 +499,7 @@ function wireScrollSpy() {
       const link = byId.get(visible[0].target.id);
       if (link) {
         link.classList.add("active");
+        openParents(link);
         // 手机上侧边栏是抽屉：自动滚动高亮会让抽屉自己乱跳，所以只在桌面端跟随
         if (!isMobile()) link.scrollIntoView({ block: "nearest" });
       }
@@ -392,10 +510,12 @@ function wireScrollSpy() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  if (document.body.dataset.version) setStoredVersion(document.body.dataset.version);
   wireMobileNav();
   wrapTables();
   wireSyntaxHighlight();
   wireCopyButtons();
   wireBackToTop();
-  buildSidebar();
+  wireVersionSwitch();
+  buildSidebar().then(() => applyVersion(activeVersion()));
 });

@@ -1,29 +1,41 @@
 package com.linweiyun.minegenshin.web.docs;
 
+import java.util.ArrayList;
 import java.util.List;
 
-/** 站点收录的文档：slug → 标题 → 仓库里的 Markdown 源文件（相对 docs-root）。 */
+/**
+ * 站点收录的文档：slug → 标题 → 仓库里的 Markdown 源文件（相对 docs-root）。
+ *
+ * <p>只有「同一个主题在两条技术线上各一篇」的文档才带 {@code version} 与 {@code counterpart}，
+ * 侧边栏按当前版本只显示其中一篇；其它文档不参与版本切换。
+ */
 public final class DocCatalog {
 
-    /** 版本标签：两条技术线各一份；两边都成立的不打标签。 */
     public static final String V26_2 = "26.2";
     public static final String V1_21_1 = "1.21.1";
-    public static final String V_BOTH = "通用";
+    /** 不参与版本切换的文档：没有版本，也没有对应篇。 */
+    private static final String V_NONE = "";
+    /** 站点默认版本：没记住过选择、当前页也不带版本时用这个。 */
+    public static final String DEFAULT_VERSION = V1_21_1;
+    /** 版本切换的显示顺序（与切换按钮一致）。 */
+    public static final List<String> VERSIONS = List.of(V26_2, V1_21_1);
 
     /** 每个版本各自的入口篇：切到「本篇暂无该版本」时落到这里。 */
     private static final String HUB_26_2 = "rendering-photon2-reference";
     private static final String HUB_1_21_1 = "rendering-photon2-reference-1.21.1";
 
     public record Doc(String slug, String title, String source, String group, String version, String counterpart) {
-        /** 不分版本的文档：没有版本标签，也没有对应篇。 */
         public Doc(String slug, String title, String source, String group) {
-            this(slug, title, source, group, V_BOTH, null);
+            this(slug, title, source, group, V_NONE, null);
+        }
+
+        public boolean versioned() {
+            return !V_NONE.equals(version);
         }
     }
 
-    /** 版本切换器的一个选项：当前篇的版本高亮，另一版本指向对应篇或该版本的入口篇。 */
-    public record VersionOption(String label, String href, boolean active, String hint) {}
-
+    /** 版本切换按钮的一项：{@code href} 为空表示就地切换（两个版本是同一页）。 */
+    public record VersionOption(String version, String href, boolean active) {}
     public static final List<Doc> DOCS = List.of(
             // 系统详解：每个模块一份，含关键类、数据流、扩展步骤与坑
             new Doc("sys-registry", "注册中心与内容注册", "docs/systems/registry.md", "系统详解"),
@@ -42,19 +54,19 @@ public final class DocCatalog {
             new Doc("sys-network-event", "网络、事件与数据生成", "docs/systems/network-event-datagen.md", "系统详解"),
             new Doc("sys-performance", "性能优化系统", "docs/systems/performance.md", "系统详解"),
             // 渲染与特效：Blaze3D / GeckoLib / Photon2 的完整链路
-            new Doc("rendering-photon2-reference", "Minecraft 26.2 渲染与 Photon2 完全参考",
+            new Doc("rendering-photon2-reference", "渲染与 Photon2 完全参考",
                     "docs/rendering-photon2-reference.md", "渲染与特效", V26_2, "rendering-photon2-reference-1.21.1"),
-            new Doc("rendering-photon2-reference-1.21.1", "Minecraft 1.21.1 渲染与 Photon2 完全参考",
+            new Doc("rendering-photon2-reference-1.21.1", "渲染与 Photon2 完全参考",
                     "docs/rendering-photon2-reference-1.21.1.md", "渲染与特效", V1_21_1, "rendering-photon2-reference"),
             new Doc("rendering-photon2", "渲染与 Photon2 特效", "docs/rendering-and-photon2.md", "渲染与特效", V26_2, "rendering-photon2-1.21.1"),
-            new Doc("rendering-photon2-1.21.1", "渲染与 Photon2 特效（1.21.1）",
+            new Doc("rendering-photon2-1.21.1", "渲染与 Photon2 特效",
                     "docs/rendering-and-photon2-1.21.1.md", "渲染与特效", V1_21_1, "rendering-photon2"),
             // 扩展框架：项目依赖的第三方框架怎么用
-            new Doc("ldlib2-node-graph", "LDLib2 节点图工具包", "docs/ldlib2-node-graph.md", "扩展框架", V26_2, null),
+            new Doc("ldlib2-node-graph", "LDLib2 节点图工具包", "docs/ldlib2-node-graph.md", "扩展框架"),
             // 现有深入文档
             new Doc("graphics-matrix-notes", "图形学学习笔记：4×4 变换矩阵", "web/src/main/resources/static/graphics-matrix-notes.html", "图形学学习笔记"),
             new Doc("entity-development", "实体开发文档", "web/src/main/resources/static/entity-development.html", "深入文档"),
-            new Doc("entity-ai", "实体 AI 指南", "docs/entity-ai-goal-guide.md", "深入文档", V26_2, null),
+            new Doc("entity-ai", "实体 AI 指南", "docs/entity-ai-goal-guide.md", "深入文档"),
             new Doc("character-system", "角色系统详解（薇斯娜）", "CHARACTER_SYSTEM.md", "深入文档"),
             new Doc("character-implementations", "角色实现清单", "CHARACTER_IMPLEMENTATIONS.md", "深入文档"),
             new Doc("port-targeting", "索敌系统移植参考", "docs/port-targeting-changelog.md", "深入文档"),
@@ -67,23 +79,28 @@ public final class DocCatalog {
         return DOCS.stream().filter(d -> d.slug().equals(slug)).findFirst().orElse(null);
     }
 
-    /**
-     * 版本切换器的选项：当前篇高亮，另一版本优先指向声明了对应关系的篇目，
-     * 找不到就退到那个版本的入口篇（渲染参考）。
-     */
-    public static List<VersionOption> versionOptions(Doc doc) {
-        if (doc == null || V_BOTH.equals(doc.version())) {
-            return List.of();
+    /** 版本切换按钮的选项：带配对的文档跳到对应篇，其余就地切换。 */
+    public static List<VersionOption> versionOptions(Doc doc, String activeVersion) {
+        List<VersionOption> options = new ArrayList<>();
+        for (String version : VERSIONS) {
+            options.add(new VersionOption(version, hrefFor(doc, version), version.equals(activeVersion)));
         }
-        String other = V1_21_1.equals(doc.version()) ? V26_2 : V1_21_1;
+        return options;
+    }
+
+    /** 切到目标版本时该去哪一页；{@code null} = 留在本页就地切换。 */
+    private static String hrefFor(Doc doc, String target) {
+        if (doc == null || !doc.versioned()) {
+            return null;
+        }
+        if (doc.version().equals(target)) {
+            return "/doc/" + doc.slug();
+        }
         Doc counterpart = counterpartOf(doc);
-        String href = counterpart != null ? "/doc/" + counterpart.slug() : "/doc/" + hubOf(other);
-        String hint = counterpart != null
-                ? "切到 " + counterpart.title()
-                : other + " 线的渲染参考（本篇暂无 " + other + " 版本）";
-        return List.of(
-                new VersionOption(doc.version(), "/doc/" + doc.slug(), true, "当前页"),
-                new VersionOption(other, href, false, hint));
+        if (counterpart != null) {
+            return "/doc/" + counterpart.slug();
+        }
+        return "/doc/" + hubOf(target);
     }
 
     private static Doc counterpartOf(Doc doc) {

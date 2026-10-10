@@ -35,34 +35,45 @@ SITE_DOCS_ROOT=/path/to/repo java -jar minegenshin-web.jar
 | `/entity-development.html` | 手写的实体开发文档（`src/main/resources/static/`） |
 | `/assets/docs.css`、`/assets/docs.js` | 站点样式与导航脚本 |
 
-侧边栏、页内目录、过滤框与滚动高亮由 `docs.js` 提供：跨页菜单写在 `DOCS_PAGES`，页内目录直接读页面的 `h1`/`h2`/`h3`（新增章节不用改导航）。标题锚点 id 由 `MarkdownRenderer` 按 GitHub 规则注入，保证文档内部的 `#锚点` 链接可用。
+侧边栏、页内目录、过滤框与滚动高亮由 `docs.js` 提供：跨页菜单来自 `/api/docs`（后端 `DocCatalog` 是唯一来源），页内章节直接读当前页的 `h2`/`h3` 并挂到该页节点下（新增章节不用改导航）。标题锚点 id 由 `MarkdownRenderer` 按 GitHub 规则注入，保证文档内部的 `#锚点` 链接可用。
 
 ## 加一篇文档
 
 1. 把 Markdown 放进仓库（推荐 `docs/`）。
 2. 在 `DocCatalog.DOCS` 里加一行：`new Doc("slug", "标题", "相对仓库根的路径.md")`。
 
-菜单会自动出现（`docs.js` 的 `DOCS_PAGES` 里补一个同名条目即可）。
+菜单会自动出现；顺带在 `docs.js` 的 `FALLBACK_MENU` 里补一个同名条目（那是直接用 `file://` 打开时的兜底）。
 
-## 版本切换（26.2 / 1.21.1）
+## 版本切换与左侧目录
 
-站点现在是**双线文档**：同一个主题在两条技术线上各一篇，`DocCatalog.Doc` 多带两个字段：
+站点是**双线文档**：同一个主题在 26.2 与 1.21.1 上各一篇，但一次只显示一套目录 ——
+配对的两篇（渲染参考、渲染特效）按当前版本只出一篇，其它文档两条线共用，条目上一律不挂版本字样。
+
+`DocCatalog.Doc` 因此多两个字段，只有真正分版本的文档才填：
 
 ```java
-new Doc("rendering-photon2-reference", "Minecraft 26.2 渲染与 Photon2 完全参考",
+new Doc("rendering-photon2-reference", "渲染与 Photon2 完全参考",
         "docs/rendering-photon2-reference.md", "渲染与特效", V26_2, "rendering-photon2-reference-1.21.1"),
-new Doc("rendering-photon2-reference-1.21.1", "Minecraft 1.21.1 渲染与 Photon2 完全参考",
+new Doc("rendering-photon2-reference-1.21.1", "渲染与 Photon2 完全参考",
         "docs/rendering-photon2-reference-1.21.1.md", "渲染与特效", V1_21_1, "rendering-photon2-reference"),
 ```
 
-- `version`：`V26_2` / `V1_21_1` / `V_BOTH`（通用）。通用文档没有切换器。
-- `counterpart`：对面版本的 slug。两边互相声明，缺一个也能反向找到。
-- 页面右上角的 `#versionbar` 由 `SiteTemplate.versionBar(...)` 渲染：当前版本高亮，
-  另一版本指向对应篇；对面没有对应篇时退到那个版本的入口篇（`HUB_26_2` / `HUB_1_21_1`）。
-- 侧边栏的版本徽章来自 `/api/docs` 返回的 `version` 字段（`docs.js` 渲染成 `.ver-badge`）。
+- `version`：`V26_2` / `V1_21_1`；留空表示两条线共用。
+- `counterpart`：对面版本的 slug，两边互相声明，只写一边也能反向找到。
+- **标题两条线写成一样的**：版本由切换按钮表达，不写进标题（页面正文第一段本来就会写适用版本）。
 
-加一篇分版本文档的步骤：Markdown 放进 `docs/` → `DocCatalog.DOCS` 加两行（版本 + 对应篇）→
-`docs.js` 的 `FALLBACK_MENU` 补两条（`file://` 兜底用）。
+页面右上角的 `#versionbar` 由 `SiteTemplate.versionBar(...)` 渲染，是两个按钮：
+
+- 当前页带配对（`Doc.versioned()`）→ 另一个版本按钮带 `data-href`，点它跳到对应篇；
+- 其余页面 → 没有 `data-href`，点它**就地切换**：左栏里配对的那两篇换一条线、首页卡片跟着换，正文不动。
+- 选过的版本记在 `localStorage["minegenshin.docs.version"]`；没记过时用 `DocCatalog.DEFAULT_VERSION`。
+
+左侧目录是一条可展开收缩的树（`docs.js`）：分组（`details.nav-group`）→ 页面 → 当前页的
+页内章节（`details.nav-page` 里的 h2/h3，h3 挂在各自 h2 下）。页内章节挂在当前页节点下面，
+**不再有独立的「本页目录」块**；滚动高亮会自动展开对应的章节节点。
+
+加一篇分版本文档的步骤：Markdown 放进 `docs/` → `DocCatalog.DOCS` 加两行（同标题，各自的版本 + 对应篇）→
+`docs.js` 的 `FALLBACK_MENU` 补两条（`file://` 兜底用），标题保持与 catalog 一致。
 ## 依赖隔离说明
 
 | 关注点 | 结论 |

@@ -7,7 +7,7 @@ public final class SiteTemplate {
 
     private SiteTemplate() {}
 
-    public static String page(String pageId, String title, String body) {
+    public static String page(String pageId, String title, String version, String body) {
         return """
                 <!DOCTYPE html>
                 <html lang="zh-CN">
@@ -21,7 +21,7 @@ public final class SiteTemplate {
                 <title>%s · MineGenshin</title>
                 <link rel="stylesheet" href="/assets/docs.css">
                 </head>
-                <body data-page="%s">
+                <body data-page="%s" data-version="%s">
                 <header id="mobilebar">
                   <button id="menu-toggle" type="button" aria-label="打开目录" aria-controls="sidebar" aria-expanded="false">☰ 目录</button>
                   <span class="bartitle">%s</span>
@@ -36,29 +36,25 @@ public final class SiteTemplate {
                 <script src="/assets/docs.js"></script>
                 </body>
                 </html>
-                """.formatted(title, title, pageId, title, body);
+                """.formatted(title, title, pageId, version, title, body);
     }
 
     public static String index(List<DocCatalog.Doc> docs) {
         StringBuilder cards = new StringBuilder("<div class=\"cards\">");
-        cards.append(card("/entity-development.html", "实体开发文档",
+        cards.append(card("/entity-development.html", "", "实体开发文档",
                 "从注册实体到渲染：实体类骨架、属性、AI、同步、投射物范例与检查清单"));
         for (DocCatalog.Doc doc : docs) {
-            cards.append(card("/doc/" + doc.slug(), versioned(doc), "由 " + doc.source() + " 实时渲染"));
+            cards.append(card("/doc/" + doc.slug(), doc.version(), doc.title(),
+                    "由 " + doc.source() + " 实时渲染"));
         }
         cards.append("</div>");
 
         String body = """
                 <h1>MineGenshin 文档</h1>
                 <p class="lede">把《原神》的核心玩法机制移植到 Minecraft 的 NeoForge Mod —— 角色、元素附着与反应、圣遗物与武器、祈愿、怪物等级、战斗与动作系统。</p>
-                <p><span class="tag">1.21.1 · NeoForge 21.1.250 · Java 21</span><span class="tag">26.2 · NeoForge 26.2.0.88 · Java 25</span></p>
-                <p class="lede">两条技术线的写法差别很大（立即模式 vs 三段式、GeckoLib 4 vs 5、Photon 2.2.x vs 26.2.x）：
-                   渲染相关的文档各写一份，右上角的版本切换在两条线之间跳。</p>
-                <nav id="versionbar" aria-label="版本入口">
-                  <span class="vlabel">版本</span>
-                  <a class="vchip" href="/doc/rendering-photon2-reference">26.2</a>
-                  <a class="vchip" href="/doc/rendering-photon2-reference-1.21.1">1.21.1</a>
-                </nav>
+                <p class="lede">项目同时在 <b>26.2</b> 与 <b>1.21.1</b> 两条线上开发，同一主题在两边的写法差别很大；
+                   渲染教程两条线各一份，用右上角的版本切换切换，切换后左侧目录与页面内容会一起换。</p>
+                %s
                 <h2>从这里开始</h2>
                 %s
                 <div class="note">
@@ -68,11 +64,12 @@ public final class SiteTemplate {
                 <h2>开源协议</h2>
                 <p>本项目采用 <b>CC BY-NC-SA 4.0</b>：允许非商业使用、修改与分发，必须署名并以相同协议发布，禁止任何商业用途。完整条款见仓库根目录的 <code>LICENSE.txt</code>。</p>
                 <p>MineGenshin 的原创美术、音频与文本资源保留所有权利，未经书面许可不得提取或用于其他项目。</p>
-                """.formatted(cards);
-        return page("index", "MineGenshin 文档", body);
+                """.formatted(versionBar(DocCatalog.versionOptions(null, DocCatalog.DEFAULT_VERSION)), cards);
+        return page("index", "MineGenshin 文档", DocCatalog.DEFAULT_VERSION, body);
     }
 
-    public static String docPage(String slug, String title, String source,
+    /** 文档页：右上角版本切换 + 正文。 */
+    public static String docPage(String slug, String title, String source, String activeVersion,
                                  List<DocCatalog.VersionOption> versions, String renderedHtml) {
         String body = """
                 %s
@@ -80,39 +77,32 @@ public final class SiteTemplate {
                 <p class="srcbar">本页由 <code>%s</code> 实时渲染。</p>
                 %s
                 """.formatted(versionBar(versions), title, source, renderedHtml);
-        return page(slug, title, body);
+        return page(slug, title, activeVersion, body);
     }
 
-    /** 页面右上角的版本切换：当前篇高亮，另一版本指向对应篇或该版本的入口篇。 */
+    /**
+     * 右上角的版本切换：只显示版本号，当前版本高亮；带配对的文档点另一个版本会跳到对应篇，
+     * 其余文档就地切换（左栏与首页卡片跟着换，正文不动）。
+     */
     private static String versionBar(List<DocCatalog.VersionOption> versions) {
-        if (versions.isEmpty()) {
-            return "";
-        }
         StringBuilder bar = new StringBuilder("<nav id=\"versionbar\" aria-label=\"版本切换\">");
-        bar.append("<span class=\"vlabel\">版本</span>");
         for (DocCatalog.VersionOption option : versions) {
-            if (option.active()) {
-                bar.append("<span class=\"vchip active\" aria-current=\"true\">")
-                        .append(option.label())
-                        .append("</span>");
-            } else {
-                bar.append("<a class=\"vchip\" href=\"").append(option.href())
-                        .append("\" title=\"").append(option.hint())
-                        .append("\">").append(option.label()).append("</a>");
+            bar.append("<button type=\"button\" class=\"vchip")
+                    .append(option.active() ? " active" : "")
+                    .append("\" data-version=\"").append(option.version()).append("\"");
+            if (option.href() != null) {
+                bar.append(" data-href=\"").append(option.href()).append("\"");
             }
+            if (option.active()) {
+                bar.append(" aria-current=\"true\"");
+            }
+            bar.append(">").append(option.version()).append("</button>");
         }
         return bar.append("</nav>").toString();
     }
 
-    /** 卡片标题：有版本标签的挂一个小徽章。 */
-    private static String versioned(DocCatalog.Doc doc) {
-        if (DocCatalog.V_BOTH.equals(doc.version())) {
-            return doc.title();
-        }
-        return doc.title() + " · " + doc.version();
-    }
-
-    private static String card(String href, String title, String desc) {
-        return "<a class=\"card\" href=\"%s\"><b>%s</b><span>%s</span></a>".formatted(href, title, desc);
+    private static String card(String href, String version, String title, String desc) {
+        String attr = version == null || version.isEmpty() ? "" : " data-version=\"" + version + "\"";
+        return "<a class=\"card\" href=\"%s\"%s><b>%s</b><span>%s</span></a>".formatted(href, attr, title, desc);
     }
 }
