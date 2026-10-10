@@ -111,6 +111,26 @@ function activeVersion() {
   return document.body.dataset.version || storedVersion() || DEFAULT_VERSION;
 }
 
+/* 左栏的展开状态与滚动位置也记在 localStorage —— 换页时保持原样，不重置。
+   这是「记住用户点过什么」，不是自动展开：默认仍然全部收起。 */
+
+const NAV_STATE_KEY = "minegenshin.docs.nav";
+
+function readNavState() {
+  try {
+    return JSON.parse(localStorage.getItem(NAV_STATE_KEY) || "{}");
+  } catch (e) {
+    return {};
+  }
+}
+
+function writeNavState(state) {
+  try {
+    localStorage.setItem(NAV_STATE_KEY, JSON.stringify(state));
+  } catch (e) {
+    /* 隐私模式 / 配额满：忽略 */
+  }
+}
 /** 切换版本：只换版本相关的显示（目录里配对的那几篇、首页卡片、按钮状态）。 */
 function applyVersion(version) {
   document.body.dataset.version = version;
@@ -426,13 +446,13 @@ async function buildSidebar() {
 
   for (const group of [...new Set(menu.map((m) => m.group))]) {
     const inGroup = menu.filter((m) => m.group === group);
-    parts.push('<details class="nav-group"><summary><span class="nav-caret" aria-hidden="true"></span>' +
+    parts.push('<details class="nav-group" data-nav-key="g:' + group + '"><summary><span class="nav-caret" aria-hidden="true"></span>' +
       `<span class="nav-group-title">${group}</span></summary><ul class="nav-list">`);
     for (const page of inGroup.filter((m) => !m.section)) {
       parts.push(navPageItem(page));
     }
     for (const book of [...new Set(inGroup.filter((m) => m.section).map((m) => m.section))]) {
-      parts.push('<li class="nav-book"><details class="nav-book-details">' +
+      parts.push('<li class="nav-book"><details class="nav-book-details" data-nav-key="b:' + book + '">' +
         '<summary><span class="nav-caret" aria-hidden="true"></span>' +
         `<span class="nav-book-title">${book}</span></summary><ul class="nav-list">`);
       for (const page of inGroup.filter((m) => m.section === book)) {
@@ -448,7 +468,32 @@ async function buildSidebar() {
   const link = sidebar.querySelector(`li.nav-item a[href="/doc/${current}"]`);
   if (link) link.classList.add("active");
 
+  wireNavState(sidebar);
   wireFilter();
+}
+
+/* 恢复上次的展开状态与滚动位置，并把之后的变化记下来 */
+function wireNavState(sidebar) {
+  const state = readNavState();
+  sidebar.querySelectorAll("details[data-nav-key]").forEach((details) => {
+    if (state[details.dataset.navKey] === true) details.open = true;
+    details.addEventListener("toggle", () => {
+      const now = readNavState();
+      now[details.dataset.navKey] = details.open;
+      writeNavState(now);
+    });
+  });
+  if (typeof state.__scroll === "number") sidebar.scrollTop = state.__scroll;
+  let timer = 0;
+  sidebar.addEventListener("scroll", () => {
+    if (timer) return;
+    timer = window.setTimeout(() => {
+      timer = 0;
+      const now = readNavState();
+      now.__scroll = sidebar.scrollTop;
+      writeNavState(now);
+    }, 200);
+  });
 }
 
 /* ---------- 右侧「本页」：只列当前页的 h2/h3，纯链接，不动左栏 ---------- */
