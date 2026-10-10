@@ -147,8 +147,11 @@ function applyVersion(version) {
     const visible = [...group.querySelectorAll("li.nav-item")].some((li) => !li.hidden);
     group.hidden = !visible;
   });
-  document.querySelectorAll(".card[data-version]").forEach((card) => {
-    card.hidden = card.dataset.version !== version;
+  // 首页的「一本书」卡片：切版本只换 href，不出两张卡片
+  const hrefKey = "data-href-" + version.replace(".", "-");
+  document.querySelectorAll(".card[data-href-26-2]").forEach((card) => {
+    const href = card.getAttribute(hrefKey);
+    if (href) card.setAttribute("href", href);
   });
 }
 

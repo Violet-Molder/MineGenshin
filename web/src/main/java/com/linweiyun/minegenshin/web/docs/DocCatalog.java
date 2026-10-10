@@ -125,6 +125,14 @@ public final class DocCatalog {
         return docs;
     }
 
+    /** 首页卡片用的「一本书」：两条线各一个入口章，切版本时只换链接，不再出两张卡片。 */
+    public record BookCard(String title, String group, String slug26, String slug121) {}
+
+    public static final List<BookCard> BOOKS = List.of(
+            new BookCard("渲染与 Photon2 完全参考", "渲染与特效",
+                    "rendering-26.2-reference-intro", "rendering-1.21.1-reference-intro"),
+            new BookCard("渲染与 Photon2 特效", "渲染与特效",
+                    "rendering-26.2-effects-mental-model", "rendering-1.21.1-effects-mental-model"));
     public static Doc bySlug(String slug) {
         return DOCS.stream().filter(d -> d.slug().equals(slug)).findFirst().orElse(null);
     }

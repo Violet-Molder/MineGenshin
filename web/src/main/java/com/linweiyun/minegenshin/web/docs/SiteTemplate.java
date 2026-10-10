@@ -44,9 +44,14 @@ public final class SiteTemplate {
         StringBuilder cards = new StringBuilder("<div class=\"cards\">");
         cards.append(card("/entity-development.html", "", "实体开发文档",
                 "从注册实体到渲染：实体类骨架、属性、AI、同步、投射物范例与检查清单"));
+        for (DocCatalog.BookCard book : DocCatalog.BOOKS) {
+            cards.append(bookCard(book));
+        }
         for (DocCatalog.Doc doc : docs) {
-            cards.append(card("/doc/" + doc.slug(), doc.version(), doc.title(),
-                    "由 " + doc.source() + " 实时渲染"));
+            if (doc.versioned() || !doc.section().isEmpty()) {
+                continue;   // 分版本的按「书」出卡片（一章一张太碎），章节页不上首页
+            }
+            cards.append(card("/doc/" + doc.slug(), "", doc.title(), "由 " + doc.source() + " 实时渲染"));
         }
         cards.append("</div>");
 
@@ -102,6 +107,12 @@ public final class SiteTemplate {
         return bar.append("</nav>").toString();
     }
 
+    /** 一本书一张卡片：两条线的入口都写进 data 属性，切版本时由 docs.js 换 href。 */
+    private static String bookCard(DocCatalog.BookCard book) {
+        return ("<a class=\"card\" href=\"/doc/%s\" data-href-26-2=\"/doc/%s\" data-href-1-21-1=\"/doc/%s\">"
+                + "<b>%s</b><span>%s · 一页一章，右上角可切版本</span></a>")
+                .formatted(book.slug121(), book.slug26(), book.slug121(), book.title(), book.group());
+    }
     private static String card(String href, String version, String title, String desc) {
         String attr = version == null || version.isEmpty() ? "" : " data-version=\"" + version + "\"";
         return "<a class=\"card\" href=\"%s\"%s><b>%s</b><span>%s</span></a>".formatted(href, attr, title, desc);
