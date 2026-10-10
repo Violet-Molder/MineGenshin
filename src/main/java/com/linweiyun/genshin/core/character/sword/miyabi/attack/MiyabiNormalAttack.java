@@ -35,7 +35,7 @@ public final class MiyabiNormalAttack {
     public static void execute(Player player, PGCharacter character, int comboStage) {
         int stage = Math.max(1, Math.min(MiyabiResources.MAX_COMBO, comboStage));
         int level = Math.max(1, character.getData().getNormalAttackLevel());
-        float multiplier = (float) ShenheTalentConfig.getNormalAttack(stage, level);
+        float multiplier = MiyabiTalent.normalAttackMultiplier(stage, level);
 
         boolean cryo = stage >= 4;
         Miyabi miyabi = character instanceof Miyabi m ? m : null;

@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.character.sword.vesna.attack;
 
+import com.linweiyun.genshin.core.character.sword.vesna.VesnaTalent;
+
 import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.content.entities.teyvat.skill.vesna.VesnaAttackProjectile;
 import com.linweiyun.genshin.content.skill_node.AreaEntityCollector;
@@ -45,7 +47,7 @@ public final class VesnaNormalAttack {
 
         int stage = Math.max(1, comboStage);
         int naLevel = Math.max(1, character.getData().getNormalAttackLevel());
-        float multiplier = (float) ShenheTalentConfig.getNormalAttack(stage, naLevel);
+        float multiplier = VesnaTalent.normalAttackMultiplier(stage, naLevel);
 
         Vec3 startPos = player.position();
         Vec3 lookDir = CombatAim.direction(player);
