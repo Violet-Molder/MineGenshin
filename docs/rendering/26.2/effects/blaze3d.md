@@ -83,3 +83,39 @@ Photon 的骨骼矩阵缓冲就踩过这个坑，源码里专门留了注释说�
 最终都会落到一条 `RenderPipeline` 上。**同一个 pipeline + 同一套纹理与顶点布局，才能合批** —— 这是性能章节的根。
 
 ---
+
+## 2.6 深入：提交层能提交什么
+
+26.2 把「画什么」的入口收在一个收集器上，常见的提交方法（都在参考 2.3 里有逐个说明）：
+
+| 方法 | 什么时候用 |
+| --- | --- |
+| `order(int)` | 需要控制同阶段内的绘制顺序时 |
+| `submitCustomGeometry(pose, renderType, callback)` | 自己写顶点的自定义几何（最常用） |
+| `submitModel(pose, renderType, …)` | 提交一个烘焙模型（GeckoLib 也走这条） |
+| `submitText` / `submitNameTag` | 世界内文字、名牌 |
+| `submitItem` / `submitBlockModel` | 物品、方块模型 |
+| `submitShadow` / `submitFlame` / `submitLeash` | 影子、火焰、拴绳 |
+| `submitShapeOutline` | 形状轮廓（`afterTerrain` 控制是否在地形之后） |
+| `submitQuadParticleGroup` | 粒子批 |
+
+要点：
+
+- `submitCustomGeometry` 的回调是**稍后执行**的，闭包里捕获的必须是已经算好的数据，
+  不要在回调里再去读实体；
+- `order` 决定同阶段内的先后，不是跨阶段；
+- 提交的文字/模型/轮廓各有自己的 `RenderType` 要求，选错表现为「看不见」而不是报错。
+
+## 2.7 26.2 的「怎么画」：`RenderPipeline`
+
+1.21.1 用 `assets/<ns>/shaders/core/*.json + .vsh + .fsh`；26.2 **删掉了 core shader JSON**，
+改成在 Java 里用 `RenderPipeline` 描述：状态（混合/深度/剔除）、顶点格式、着色器、常量缓冲都在代码里声明。
+
+| 关注点 | 1.21.1 | 26.2 |
+| --- | --- | --- |
+| 声明位置 | 资源 JSON | Java `RenderPipeline` |
+| 参数传递 | 逐个 `uniform` set | std140 常量缓冲（UBO） |
+| 与渲染类型的关系 | `RenderType` 内联全部状态 | 命名渲染类型 + 管线对象分开 |
+
+**实践影响**：同一个着色器在 1.21.1 上改 JSON 就能生效，在 26.2 上要改代码并重新注册；
+所以 26.2 侧不要把管线写成「一次性的」，尽量按用途复用。

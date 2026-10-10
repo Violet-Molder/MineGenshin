@@ -72,3 +72,42 @@
 - 资源加载/重载有自己的线程，**不要在重载回调里碰 `RenderSystem`/GL 状态**。
 
 ---
+
+## 1.4 深入：三段式到底改变了什么
+
+**`RenderState` 是有寿命的。** 提取阶段（extract）把「这一帧要画什么」从实体/方块上抓成纯数据；
+这一步之后渲染线程就不再保证实体对象还在、数值还没变。所以：
+
+- 渲染需要的一切（动画进度、颜色、朝向、骨骼挂点）都必须在 extract 里写进 `RenderState`；
+- 想在别处复用「渲染那一刻」的值（比如骨骼世界坐标），要往 `RenderState` 里放票据；
+- 票据用 `DataTicket.create(id, Class)` 自己建 —— 去重键是 `(类型, id)`，复用别人的 id 会相互覆盖。
+
+**提交阶段（submit）是「描述」，不是「执行」。** 你把几何交给 `SubmitNodeCollector`
+（`submitCustomGeometry` / `submitModel` / `submitText` 等，完整家族见
+[2. Blaze3D 在 26.2 里长什么样](/doc/rendering-26.2-effects-blaze3d)），
+绘制顺序用 `order(int)` 控制。**提交阶段不会立刻画**，这正是三相分离的意义：
+同一帧里可以先把所有东西描述完，再统一按顺序绘制。
+
+**相机空间。** 提交几何时 `PoseStack` 的原点是**相机**，不是世界原点。
+这条结论是 26.2 上位置类 bug 的头号来源，展开见
+[3. 坐标空间完全指南](/doc/rendering-26.2-effects-coordinates)。
+
+## 1.5 三阶段各自能做什么
+
+| 阶段 | 能做 | 不能做 |
+| --- | --- | --- |
+| 提取 | 读实体/方块、算数据、写 `RenderState`、建票 | 写顶点、换 `RenderPipeline` |
+| 提交 | 交几何、排队、控制 `order` | 从实体上读数据（实体可能已失效） |
+| 绘制 | 执行任务、绑定管线与状态 | 改 `RenderState` 的内容再期待生效 |
+
+## 1.6 NeoForge 挂载点
+
+| 事件 | 用途 |
+| --- | --- |
+| `RenderLevelStageEvent` | 按阶段插自己的提交（`AFTER_ENTITIES` / `AFTER_PARTICLES` 等） |
+| `EntityRenderersEvent.RegisterRenderers` | 注册渲染器 |
+| `RegisterShadersEvent` / 命名渲染类型 | 注册「怎么画」 |
+| `RegisterClientReloadListenersEvent` | 资源重载（模型/几何缓存） |
+
+与 1.21.1 的差别一句话：**26.2 是「先描述再执行」，1.21.1 是「边描述边执行」**；
+1.21.1 那册里的 `endBatch` 那套写法在 26.2 上不存在。
