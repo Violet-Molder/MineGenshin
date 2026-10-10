@@ -206,6 +206,10 @@ public class LivingEntityHurtMixin {
                     spec, source.getEntity(), attackerCharacter, target, targetCharacter);
             ElibEvents.post(event);
 
+            if (source.getEntity() instanceof net.minecraft.world.entity.player.Player hookPlayer) {
+                com.linweiyun.genshin.core.character.util.handler.PartyHooks.damage(hookPlayer, target, spec);
+            }
+
             // 普通攻击产球由伤害管线直接驱动
             com.linweiyun.genshin.core.system.combat.damage.NormalAttackOrbProducer.tryProduce(
                     level, spec, source.getEntity(), attackerCharacter);

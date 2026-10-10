@@ -71,12 +71,12 @@ public enum StellarGlimmerBranch {
         if (reactionType == null) {
             return null;
         }
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_ICE)) {
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL)) {
             return SWIRL;
         }
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)
-                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ICE)) {
+        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE)
+                || ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE)) {
             return CONDUCE;
         }
         return null;
@@ -87,19 +87,4 @@ public enum StellarGlimmerBranch {
         return of(reactionType) != null;
     }
 
-    /**
-     * 这条反应结算时用哪个元素吃抗性区。
-     *
-     * <p>和「哪个元素触发」无关 —— 星扩散的风段按风抗算、星扩散的冰段按冰抗算，
-     * 超导同理（雷 / 冰）。
-     */
-    public static GenshinElement damageElementOf(@Nullable ElementalReactionType reactionType) {
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_SWIRL_WIND)) {
-            return ModElements.ANEMO.get();
-        }
-        if (ModReactionTypes.is(reactionType, ModReactionTypes.STELLAR_CONDUCE_ELECTRO)) {
-            return ModElements.ELECTRO.get();
-        }
-        return ModElements.CYRO.get();
-    }
 }

@@ -241,7 +241,7 @@ public final class PlungeAttack {
         int hold = (int) Math.floor(Math.max(0.0, character.getPlungingAnimationHoldTick()));
         ActionStateMachine.changeState(recovery, ActionStateMachine.PRIO_ATTACK,
                 ticks, 0, -1, 0, false);
-        ActionStateMachine.animationTick = Math.max(1, ticks - hold);
+        ActionStateMachine.setPendingAnimationStartSeconds(hold / 20.0);
         String sound = character.getPlungingLandingSound();
         if (sound != null && !sound.isEmpty()) {
             ActionStateMachine.playLocalSound(player, sound,

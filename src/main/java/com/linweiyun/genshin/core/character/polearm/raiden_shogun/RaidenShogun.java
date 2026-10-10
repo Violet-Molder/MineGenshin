@@ -14,6 +14,78 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class RaidenShogun extends PolearmCharacter {
+
+   /** 元素战技的协同攻击持续时间（刻），后台也生效。 */
+   public static final int COORDINATED_DURATION_TICKS = 30 * 20;
+
+   /** 协同攻击冷却（刻），0.8 秒。 */
+   public static final int COORDINATED_COOLDOWN_TICKS = 16;
+
+   /** 协同攻击的伤害倍率（占攻击力）。 */
+   public static final float COORDINATED_DAMAGE = 1.0f;
+
+   @com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted(key = "raidenCoordinated")
+   protected int coordinatedTicks;
+
+   @com.lowdragmc.lowdraglib2.syncdata.annotation.Persisted(key = "raidenCoordinatedGate")
+   protected long coordinatedGateTick;
+
+   public void beginCoordinated() {
+      coordinatedTicks = COORDINATED_DURATION_TICKS;
+   }
+
+   public boolean coordinatedActive() {
+      return coordinatedTicks > 0;
+   }
+
+   public boolean coordinatedReady(long gameTime) {
+      return coordinatedTicks > 0 && gameTime >= coordinatedGateTick;
+   }
+
+   public void markCoordinated(long gameTime) {
+      coordinatedGateTick = gameTime + COORDINATED_COOLDOWN_TICKS;
+   }
+
+   @Override
+   public void backTick(net.minecraft.world.entity.player.Player player) {
+      if (!player.level().isClientSide() && coordinatedTicks > 0) {
+         coordinatedTicks--;
+      }
+   }
+
+   /** 后台钩子：队伍造成伤害时，若协同攻击就绪就打一次雷元素协同攻击。 */
+   @Override
+   public void backDamage(net.minecraft.world.entity.player.Player player,
+                            net.minecraft.world.entity.LivingEntity target,
+                            com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec spec) {
+      if (coordinatedAttackInProgress || target == null || !target.isAlive()) {
+         return;
+      }
+      long now = player.level().getGameTime();
+      if (!coordinatedReady(now)) {
+         return;
+      }
+      markCoordinated(now);
+      coordinatedAttackInProgress = true;
+      try {
+         com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec strike =
+                 com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec
+                         .builder(com.linweiyun.genshin.core.system.combat.attack.AttackType.ELEMENTAL_SKILL,
+                                 com.linweiyun.genshin.core.element.ModElements.ELECTRO.get())
+                         .multiplier(COORDINATED_DAMAGE)
+                         .elementAmount(com.linweiyun.elementlib.core.system.about.AttachmentType.WEAK.getInitialAmount())
+                         .decayGroup(com.linweiyun.genshin.core.system.combat.decay.ModDecayGroups.RAIDEN_COORDINATED)
+                         .attackerCharacter(this)
+                         .build();
+         target.hurt(com.linweiyun.genshin.core.system.combat.damage.ModDamageSource.from(strike, player), 0f);
+      } finally {
+         coordinatedAttackInProgress = false;
+      }
+   }
+
+   /** 协同攻击自身造成的伤害不再触发协同攻击。 */
+   private static boolean coordinatedAttackInProgress;
+
     public RaidenShogun() {
         super(135003, 5, Component.translatable("character.name.raiden_shogun"),
             ModElements.ELECTRO.getId().toString(), CharacterAscendAttribute.ATK,

@@ -1,6 +1,5 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
-import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiResources;
 import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
@@ -8,14 +7,17 @@ import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiTalent;
 import com.linweiyun.genshin.core.element.ModElements;
 import com.linweiyun.genshin.core.system.combat.attack.AttackType;
 import com.linweiyun.elementlib.core.system.combat.decay.DecayGroups;
-import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 import net.minecraft.world.entity.player.Player;
 
 /**
- * 星见雅的普通攻击：五段近战斩击，每段一下<b>物理</b>伤害。
+ * 星见雅的普通攻击：五段近战斩击，一至三段<b>物理</b>、四至五段<b>冰</b>。
  *
- * <p>倍率读申鹤 / 薇斯娜那张表（同为五星单手剑）；伤害点、时长、削韧都写在动作表里
+ * <p>处于辉映·星超导状态下时，四、五段转为<b>星超导</b>伤害（倍率上浮
+ * {@link MiyabiTalent#CONDUCE_MULTIPLIER_BONUS}），其余各段改为<b>冰</b>伤害
+ * —— 这一层冰附魔不可被其他转化覆盖。
+ *
+ * <p>倍率读她自己的表；伤害点、时长、削韧都写在动作表里
  * （见 {@link MiyabiResources}），这里只负责「打到谁、打多少」。
  */
 public final class MiyabiNormalAttack {
@@ -37,31 +39,17 @@ public final class MiyabiNormalAttack {
         int level = Math.max(1, character.getData().getNormalAttackLevel());
         float multiplier = MiyabiTalent.normalAttackMultiplier(stage, level);
 
-        boolean cryo = stage >= 4;
-        Miyabi miyabi = character instanceof Miyabi m ? m : null;
-        boolean snow = miyabi != null && miyabi.isSnowState();
-        boolean stellar = cryo && (snow || StellarGlimmer.hasConduce(character));
-        if (stellar) {
+        boolean conduce = character instanceof Miyabi miyabi && miyabi.isConduce();
+        if (stage >= 4 && conduce) {
             float converted = multiplier * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS);
-            miyabi.setConvertedHit(true);
-            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
-                    ModElements.CYRO.get(), DecayGroups.DEFAULT_NORMAL_ATTACK,
-                    REACH, WIDTH, HEIGHT, converted);
-            return;
-        }
-
-        if (snow && !cryo) {
-            float converted = multiplier * 1.15f
-                    * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS);
-            miyabi.setConvertedHit(true);
-            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+            MiyabiDamage.forwardStellar(player, character, ModReactionTypes.STELLAR_CONDUCE.get(),
                     ModElements.CYRO.get(), DecayGroups.DEFAULT_NORMAL_ATTACK,
                     REACH, WIDTH, HEIGHT, converted);
             return;
         }
 
         MiyabiDamage.forward(player, character, AttackType.NORMAL_ATTACK,
-                cryo ? ModElements.CYRO.get() : ModElements.FYSIKOS.get(),
+                stage >= 4 || conduce ? ModElements.CYRO.get() : ModElements.FYSIKOS.get(),
                 DecayGroups.DEFAULT_NORMAL_ATTACK, REACH, WIDTH, HEIGHT, multiplier);
     }
 }

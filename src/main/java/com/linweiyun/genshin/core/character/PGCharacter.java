@@ -426,6 +426,18 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       return current != null ? current.plungingAnimationHoldTick() : -1.0;
    }
 
+   public com.linweiyun.elementlib.core.element.GenshinElement getAttackElement(
+         com.linweiyun.genshin.core.system.combat.action.ActionKind kind, int comboIndex) {
+      SkillBase current = this.getSkill();
+      return current != null ? current.attackElement(this, kind, comboIndex) : null;
+   }
+
+   /** 该角色可编辑的倍率表；没有就返回 null。 */
+   public com.linweiyun.genshin.config.character.TalentConfigSource getTalentConfigSource() {
+      SkillBase current = this.getSkill();
+      return current != null ? current.talentConfigSource() : null;
+   }
+
    /** 「详细属性」页的行（当前等级）。 */
    public java.util.List<SkillBase.TalentDetail> getTalentDetails(int kind) {
       SkillBase current = this.getSkill();
@@ -493,21 +505,71 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       return current != null ? current.getChargedAttackMaxTicks() : 0;
    }
 
+   /** 前台角色每刻（当前出战）。 */
    public void frontTick(Player player) {
    }
 
+   /** 后台角色每刻。 */
    public void backTick(Player player) {
    }
 
+   /** 队伍造成伤害时（含领域 / 脱手伤害）：前台角色。 */
+   public void frontDamage(Player player, net.minecraft.world.entity.LivingEntity target,
+                           com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec spec) {
+   }
+
+   /** 队伍造成伤害时：后台角色。 */
+   public void backDamage(Player player, net.minecraft.world.entity.LivingEntity target,
+                          com.linweiyun.genshin.core.system.combat.damage.ModDamageSpec spec) {
+   }
+
+   /** 队伍打出普通攻击时。 */
+   public void frontNormalAttack(Player player) {
+   }
+
+   public void backNormalAttack(Player player) {
+   }
+
+   /** 队伍释放元素战技时；{@code skillTime < 1000} = 点按。 */
+   public void frontSkill(Player player, int skillTime) {
+   }
+
+   public void backSkill(Player player, int skillTime) {
+   }
+
+   /** 队伍释放元素爆发时。 */
+   public void frontBurst(Player player) {
+   }
+
+   public void backBurst(Player player) {
+   }
+
    public void tick(Player player) {
+      tick(player, true);
+   }
+
+   public void tick(Player player, boolean front) {
       this.data.tick();
       this.recalculateDirtyArtifactSlots();
-      this.frontTick(player);
-      this.backTick(player);
+      this.characterTick(player);
+      if (front) {
+         this.frontTick(player);
+      } else {
+         this.backTick(player);
+      }
       ActionManager.get(player).tick(player, this);
       if (!player.level().isClientSide()) {
          this.syncRealtimeState();
       }
+   }
+
+   /**
+    * 角色自己的每刻推进（前后台都会跑）。
+    *
+    * <p>纯状态倒计时写这里；「只有前台 / 只有后台才做的事」分别写
+    * {@link #frontTick(Player)} / {@link #backTick(Player)}。
+    */
+   protected void characterTick(Player player) {
    }
 
    public void equipArtifact(ArtifactType type, ItemStack artifactStack) {
@@ -765,34 +827,28 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
    }
 
    public void addExp(int amount) {
-      if (this.data.getLevel() < 90) {
-         List<Integer> expList = CharacterXpConfig.getAllXp();
-         long totalMaxExp = 0L;
-
-         for (int i = 0; i < 89; i++) {
-            totalMaxExp += expList.get(i).intValue();
-         }
-
-         long currentSpent = 0L;
-
-         for (int i = 0; i < this.data.getLevel() - 1; i++) {
-            currentSpent += expList.get(i).intValue();
-         }
-
-         long remaining = totalMaxExp - currentSpent - this.data.getCurrentExp();
-         if (amount > remaining) {
-            this.data.setCurrentExp(this.data.getCurrentExp() + (int)remaining);
-         } else {
-            this.data.setCurrentExp(this.data.getCurrentExp() + amount);
-         }
-
-         this.tryLevelUp();
+      if (amount <= 0) {
+         return;
       }
+
+      // 只吃到当前突破阶段的上限：到顶之后多出来的经验直接丢掉，不留在 currentExp 里
+      long room = this.characterExpRoom();
+      if (room <= 0L) {
+         return;
+      }
+
+      this.data.setCurrentExp(this.data.getCurrentExp() + (int)Math.min(amount, room));
+      this.tryLevelUp();
+   }
+
+   /** 当前突破阶段能到的等级上限。 */
+   public int maxLevelForPhase() {
+      return this.data.getAscensionPhase() == 0 ? 20 : Math.min((this.data.getAscensionPhase() + 3) * 10, 90);
    }
 
    public long characterExpRoom() {
       List<Integer> expList = CharacterXpConfig.getAllXp();
-      int cap = this.data.getAscensionPhase() == 0 ? 20 : Math.min((this.data.getAscensionPhase() + 3) * 10, 90);
+      int cap = this.maxLevelForPhase();
       long room = 0L;
       int level = this.data.getLevel();
       int current = Math.max(0, this.data.getCurrentExp());
@@ -863,7 +919,6 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
       int totalExpConsumed = 0;
       int levelsToGain = 0;
       int oldLevel = this.data.getLevel();
-      int currentAscensionPhase = this.data.getAscensionPhase();
 
       while (oldLevel < 90) {
          int expNeeded = expList.get(oldLevel - 1);
@@ -871,8 +926,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
             break;
          }
 
-         int maxLevelForPhase = currentAscensionPhase == 0 ? 20 : Math.min((currentAscensionPhase + 3) * 10, 90);
-         if (oldLevel >= maxLevelForPhase) {
+         if (oldLevel >= this.maxLevelForPhase()) {
             break;
          }
 
@@ -894,7 +948,7 @@ public class PGCharacter implements IPersistedSerializable, ISyncCharacter {
    }
 
    public void ascend() {
-      int maxLevelForPhase = this.data.getAscensionPhase() == 0 ? 20 : Math.min((this.data.getAscensionPhase() + 3) * 10, 90);
+      int maxLevelForPhase = this.maxLevelForPhase();
       if (this.data.getLevel() == maxLevelForPhase) {
          int newPhase = this.data.getAscensionPhase() + 1;
          this.data.setAscensionPhase(newPhase);

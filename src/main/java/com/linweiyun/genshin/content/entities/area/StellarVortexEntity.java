@@ -359,12 +359,12 @@ public class StellarVortexEntity extends AreaEntity {
     }
 
     private static ModDamageSpec buildWindSpec(double coefficient, List<PGCharacter> contributors) {
-        return ModDamageSpec.stellarReaction(ModReactionTypes.STELLAR_SWIRL_WIND.get(),
+        return ModDamageSpec.stellarReaction(ModReactionTypes.STELLAR_SWIRL.get(),
                 ModElements.ANEMO.get(), (float) coefficient, 0f, 0f, contributors);
     }
 
     private static ModDamageSpec buildIceSpec(double coefficient, List<PGCharacter> contributors) {
-        return ModDamageSpec.stellarReaction(ModReactionTypes.STELLAR_SWIRL_ICE.get(),
+        return ModDamageSpec.stellarReaction(ModReactionTypes.STELLAR_SWIRL.get(),
                 ModElements.CYRO.get(), (float) coefficient, 0f, 0f, contributors);
     }
 

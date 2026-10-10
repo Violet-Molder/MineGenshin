@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.system.combat.attack;
 
+import com.linweiyun.elementlib.core.element.GenshinElement;
+
 import com.linweiyun.genshin.config.reaction.ReactionConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.system.combat.damage.CombatMath;
@@ -76,7 +78,7 @@ final class StellarDamage {
         boolean tracing = DamageTrace.active();
         DamageTrace trace = tracing ? DamageTrace.start(pipelineName(spec, branch)) : DamageTrace.none();
         if (tracing) {
-            trace.headAttack(spec.getAttackType(), StellarGlimmerBranch.damageElementOf(reactionType));
+            trace.headAttack(spec.getAttackType(), spec.getElement());
             trace.head("反应", reactionType);
             trace.head("反应", branch == null ? "非星烁" : branch.reactionName());
             trace.headEntities(null, target, logAttacker == null ? null : logAttacker.getName());
@@ -100,8 +102,8 @@ final class StellarDamage {
         // 数值行只给日志用：不输出时连这个列表都不建（每条理论伤害的数值串是这次伤害里最贵的一段）
         List<String> valueTexts = tracing ? new ArrayList<>(contributors.size()) : null;
         for (PGCharacter contributor : contributors) {
-            Result result = calculatePerCharacter(contributor, target, reactionType, coefficient,
-                    baseBonusMult, baseBonusFlat, byReaction, spec.getSovereigntyBonus(),
+            Result result = calculatePerCharacter(contributor, target, reactionType, spec.getElement(),
+                    coefficient, baseBonusMult, baseBonusFlat, byReaction, spec.getSovereigntyBonus(),
                     spec.getStellarReactionCoefficient());
             results.add(result);
             if (valueTexts != null) {
@@ -152,12 +154,13 @@ final class StellarDamage {
     static Result calculatePerCharacter(PGCharacter character, LivingEntity target,
                                         ElementalReactionType reactionType, double coefficient,
                                         float baseBonusMult, float baseBonusFlat, boolean byReaction) {
-        return calculatePerCharacter(character, target, reactionType, coefficient,
+        return calculatePerCharacter(character, target, reactionType, null, coefficient,
                 baseBonusMult, baseBonusFlat, byReaction, 0f, 1f);
     }
 
     private static Result calculatePerCharacter(PGCharacter character, LivingEntity target,
-                                                ElementalReactionType reactionType, double coefficient,
+                                                ElementalReactionType reactionType, GenshinElement specElement,
+                                                double coefficient,
                                                 float baseBonusMult, float baseBonusFlat,
                                                 boolean byReaction, float sovereigntyBonus,
                                                 float reactionCoefficient) {
@@ -176,12 +179,11 @@ final class StellarDamage {
         float glimmerBonus = DamageZones.stellarGlimmerBonus(character, reactionType);
         // 擢升区按「角色 + 分支」给（例：薇斯娜满命的星扩散擢升 20%）
         StellarGlimmerBranch branch = StellarGlimmerBranch.of(reactionType);
+        GenshinElement damageElement = specElement;
         float rawResistance = DamageZones.rawResistance(
-                StellarGlimmerBranch.damageElementOf(reactionType), target,
-                AttackerResolver.resolveCharacter(target));
+                damageElement, target, AttackerResolver.resolveCharacter(target));
         float resistanceZone = CombatMath.resistanceZone(rawResistance);
-        DamageZones.CritRoll critRoll = DamageZones.rollCrit(character,
-                StellarGlimmerBranch.damageElementOf(reactionType), true);
+        DamageZones.CritRoll critRoll = DamageZones.rollCrit(character, damageElement, true);
         float sovereignty = 1.0f + sovereigntyBonus;
 
         float damage = (float) (baseBoost * reactionCoefficient * (1f + emBonus + glimmerBonus)

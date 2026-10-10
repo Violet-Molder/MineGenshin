@@ -1,7 +1,6 @@
 package com.linweiyun.genshin.core.character.sword.miyabi.attack;
 
 import com.linweiyun.genshin.content.entities.teyvat.skill.miyabi.MiyabiSlashEffect;
-import com.linweiyun.genshin.config.character.ShenheTalentConfig;
 import com.linweiyun.genshin.core.character.PGCharacter;
 import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
 import com.linweiyun.genshin.core.character.sword.miyabi.MiyabiTalent;
@@ -56,8 +55,8 @@ public final class MiyabiChargedAttack {
         int naLevel = Math.max(1, character.getData().getNormalAttackLevel());
 
         if (miyabi.isSnowState()) {
-            MiyabiDamage.aroundStellar(player, character, ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
-                    ModElements.CYRO.get(), DecayGroups.DEFAULT_NORMAL_ATTACK,
+            MiyabiDamage.aroundStellar(player, character, ModReactionTypes.STELLAR_CONDUCE.get(),
+                    ModElements.CYRO.get(), com.linweiyun.genshin.core.system.combat.decay.ModDecayGroups.CHARGED_ATTACK,
                     player.position(), 4.0, MiyabiTalent.frostMoon(naLevel));
             float qi = MiyabiTalent.swordQi(naLevel) * (1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS);
             for (int i = 0; i < 8; i++) {
@@ -67,11 +66,12 @@ public final class MiyabiChargedAttack {
             return;
         }
 
-        MiyabiDamage.forward(player, character, AttackType.CHARGED_ATTACK, ModElements.FYSIKOS.get(),
-                DecayGroups.DEFAULT_NORMAL_ATTACK, MiyabiResources.ATTACK_RANGE, 1.0f, 1.5f,
+        boolean conduce = miyabi.isConduce();
+        MiyabiDamage.forward(player, character, AttackType.CHARGED_ATTACK,
+                conduce ? ModElements.CYRO.get() : ModElements.FYSIKOS.get(),
+                com.linweiyun.genshin.core.system.combat.decay.ModDecayGroups.CHARGED_ATTACK, MiyabiResources.ATTACK_RANGE, 1.0f, 1.5f,
                 MiyabiTalent.chargedAttackMultiplier(naLevel));
 
-        boolean conduce = miyabi.isConduce();
         float qi = MiyabiTalent.swordQi(naLevel) * (conduce ? 1f + MiyabiTalent.CONDUCE_MULTIPLIER_BONUS : 1f);
         for (double spread : SLASH_SPREADS) {
             MiyabiSlashEffect.spawn(level, player, spread, qi, conduce);

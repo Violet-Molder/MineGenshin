@@ -51,8 +51,10 @@ public final class DamageLabels {
             case ELEMENTAL_SKILL -> "元素战技";
             case ELEMENTAL_BURST -> "元素爆发";
             case LUNAR_CHARGED -> "月曜反应";
+            case ELECTRO_CHARGED -> "感电反应";
             case SWIRL -> "扩散反应";
             case STELLAR_SWIRL -> "星烁反应";
+            case STELLAR_CONDUCE -> "星超导反应";
             case SPECIAL -> "特殊";
             case MONSTER -> "怪物";
         };

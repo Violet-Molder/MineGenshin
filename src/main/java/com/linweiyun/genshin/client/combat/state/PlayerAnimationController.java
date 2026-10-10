@@ -58,7 +58,7 @@ public final class PlayerAnimationController {
    }
 
    public static <T extends GeoAnimatable & IPlayerAnimatableProxy> AnimationController<T> create(T animatable) {
-      return new AnimationController<>(animatable, "movement_controller", 5, state -> {
+      return new GenshinAnimationController<>(animatable, "movement_controller", 5, state -> {
          Player player = animatable.getPlayerEntity();
          return handle(state, player);
       });
@@ -149,7 +149,12 @@ public final class PlayerAnimationController {
          controller.transitionLength(0);
       }
 
-      return state.setAndContinue(target);
+      PlayState started = state.setAndContinue(target);
+      double pendingSeconds = ActionStateMachine.consumePendingAnimationStartSeconds();
+      if (pendingSeconds >= 0.0 && controller instanceof GenshinAnimationController<?> custom) {
+         custom.playFromTick(pendingSeconds * 20.0);
+      }
+      return started;
    }
 
    private static boolean previousWasOneShot(CharacterAnimations animations, Player player, @Nullable String previousName) {

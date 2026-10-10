@@ -217,7 +217,7 @@ public class VesnaSpiritSwordEntity extends Entity implements ISyncManagedEntity
                 // 两个参数不能写反：写成 {@code (multiplier, 0.5f)} 会让「星扩散状态下的灵剑」
                 // 伤害恒为 ATK×0.5，与技能等级、阶级无关。
                 spec = ModDamageSpec.stellarDirect(
-                        ModReactionTypes.STELLAR_SWIRL_WIND.get(), ModElements.ANEMO.get(),
+                        ModReactionTypes.STELLAR_SWIRL.get(), ModElements.ANEMO.get(),
                         elementAmount, multiplier)
                         .withStellarBaseBonusMult(
                                 com.linweiyun.genshin.core.system.reaction.StellarGlimmer

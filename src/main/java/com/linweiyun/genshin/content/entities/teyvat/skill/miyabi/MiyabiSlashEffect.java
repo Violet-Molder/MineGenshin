@@ -6,8 +6,6 @@ import com.linweiyun.genshin.core.system.registry.register.ModReactionTypes;
 
 import com.linweiyun.genshin.core.system.reaction.StellarGlimmer;
 
-import com.linweiyun.genshin.core.character.sword.miyabi.Miyabi;
-
 import com.linweiyun.genshin.core.attachment.AttachmentRegistration;
 import com.linweiyun.genshin.core.attachment.PlayerCharactersAttachment;
 import com.linweiyun.genshin.core.character.PGCharacter;
@@ -191,10 +189,7 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
             PGCharacter character = characterOf(owner);
             ModDamageSpec spec;
             if (stellar) {
-                if (character instanceof Miyabi miyabi) {
-                    miyabi.setConvertedHit(true);
-                }
-                spec = ModDamageSpec.stellarDirect(ModReactionTypes.STELLAR_CONDUCE_ICE.get(),
+                spec = ModDamageSpec.stellarDirect(ModReactionTypes.STELLAR_CONDUCE.get(),
                                 ModElements.CYRO.get(), AttachmentType.WEAK.getInitialAmount(), multiplier)
                         .withStellarBaseBonusMult(StellarGlimmer.conduceBaseBonusMult(level()))
                         .withStellarReactionCoefficient(
@@ -208,9 +203,6 @@ public class MiyabiSlashEffect extends Entity implements GeoEntity {
                         .build();
             }
             target.hurt(ModDamageSource.from(spec, owner), 0f);
-            if (character instanceof Miyabi miyabi) {
-                miyabi.setConvertedHit(false);
-            }
             if (stellar && level() instanceof ServerLevel serverLevel) {
                 StellarPrismEntity.recordAttachment(serverLevel, target.position(), ModElements.CYRO.get());
             }

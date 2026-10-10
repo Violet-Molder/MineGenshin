@@ -1213,14 +1213,24 @@ public final class CharacterEquipUI {
          if (rows.isEmpty()) {
             detail.addChild(wrapLabel(Component.translatable("gui.minegenshin.character_equip.talent_desc_none")));
          } else {
+            boolean editable = hasCheatPermission(st.player) && st.character.getTalentConfigSource() != null;
             for (com.linweiyun.genshin.core.character.talent.SkillBase.TalentDetail row : rows) {
-               detail.addChild(
-                  line(Component.translatable(row.labelKey())
-                          .append(Component.literal("    " + fmtPercent(row.value()))), "ce-value")
-               );
-            }
-            if (hasCheatPermission(st.player)) {
-               detail.addChild(note("gui.minegenshin.character_equip.detail_editable_hint"));
+               if (editable && row.configKey() != null) {
+                  detail.addChild(talentValueEditor(st, row));
+               } else {
+                  UIElement rowBox = new UIElement().addClass("ce-talent-row");
+                  Label rowName = new Label();
+                  rowName.addClass("ce-talent-name");
+                  rowName.setText(Component.translatable(row.labelKey()));
+                  rowName.layout(l -> l.height(12.0F));
+                  UIElement rowSpacer = new UIElement().addClass("ce-talent-spacer");
+                  Label rowValue = new Label();
+                  rowValue.addClass("ce-talent-value");
+                  rowValue.setText(Component.literal(fmtPercent(row.value())));
+                  rowValue.layout(l -> l.height(12.0F));
+                  rowBox.addChildren(new UIElement[]{rowName, rowSpacer, rowValue});
+                  detail.addChild(rowBox);
+               }
             }
          }
       }
@@ -2395,6 +2405,43 @@ public final class CharacterEquipUI {
 
    private static String fmtNumber(double value) {
       return String.format(Locale.ROOT, "%,d", Math.round(value));
+   }
+
+   /** 详细属性的一行（作弊模式）：数值可直接改，写回倍率表并同步服务端。 */
+   private static UIElement talentValueEditor(CharacterEquipUI.State st,
+                                              com.linweiyun.genshin.core.character.talent.SkillBase.TalentDetail row) {
+      UIElement lineRow = new UIElement().addClass("ce-talent-row");
+      Label name = new Label();
+      name.addClass("ce-talent-name");
+      name.setText(Component.translatable(row.labelKey()));
+      name.layout(l -> l.height(12.0F));
+      UIElement spacer = new UIElement().addClass("ce-talent-spacer");
+      com.lowdragmc.lowdraglib2.gui.ui.elements.TextField field =
+              new com.lowdragmc.lowdraglib2.gui.ui.elements.TextField();
+      field.addClass("ce-talent-field");
+      field.layout(l -> l.height(12.0F));
+      field.setOverflowVisible(true);
+      field.setNumbersOnlyDouble(0.0, 100.0);
+      field.setText(trimTalentValue(row.value()), false);
+      field.setTextResponder(text -> {
+         try {
+            double parsed = Double.parseDouble(text.trim());
+            com.linweiyun.genshin.config.character.TalentConfigSource source = st.character.getTalentConfigSource();
+            if (source != null) {
+               source.setByKey(row.configKey(), parsed);
+            }
+            NetworkManager.setTalentMultiplierToServer(row.configKey(), parsed);
+         } catch (NumberFormatException ignored) {
+         }
+      });
+      lineRow.addChildren(new UIElement[]{name, spacer, field});
+      return lineRow;
+   }
+
+   private static String trimTalentValue(double value) {
+      String text = String.format(Locale.ROOT, "%.4f", value);
+      text = text.replaceAll("0+$", "").replaceAll("\\.$", "");
+      return text;
    }
 
    private static String fmtPercent(double ratio) {

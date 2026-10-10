@@ -105,7 +105,7 @@ public final class ReactionPoiseTable {
             Map.entry(ModReactionTypes.LUNAR_CRYSTALLIZE.get(), both(30f, ImpactLevel.ofLevel(2))),
             // 星扩散（风伤）：20 / 2；「星辉风旋小 60 / 击飞 100,600」「大 80 / 击飞 100,600」
             // 是风旋那两个实体各自结算的，不走反应伤害这条线（见 StellarVortexEntity）
-            Map.entry(ModReactionTypes.STELLAR_SWIRL_WIND.get(), both(20f, ImpactLevel.ofLevel(2))),
+            Map.entry(ModReactionTypes.STELLAR_SWIRL.get(), both(20f, ImpactLevel.ofLevel(2))),
             // 冻结消失：30 / 2。本项目冻结的直接破韧走 PoiseService.forceBreak（见 PoiseFreezeBreak），
             // 这一行留给以后真的做「解冻伤害」时用
             Map.entry(ModReactionTypes.FROZEN.get(), both(30f, ImpactLevel.ofLevel(2)))
@@ -117,7 +117,7 @@ public final class ReactionPoiseTable {
      *   「丰穰之核绽放 50 / 3（角色 5 / 0）」 —— 丰穰之核还没有实现，
      *     以后做的时候加一个枚举值再补一行即可。
      *
-     * 另一处「故意不填」：星扩散的**冰**分支（STELLAR_SWIRL_ICE）。
+     * 另一处「故意不填」：星扩散的冰段（同一反应，元素由伤害本身区分）。
      * 文献那张反应表只给了星扩散的「风伤 20 / 2」与两个风旋，没有冰分支那一行，
      * 所以宁可留着不猜 —— 要加就先补文献。
      */

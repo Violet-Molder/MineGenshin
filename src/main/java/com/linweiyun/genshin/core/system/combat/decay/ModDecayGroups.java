@@ -16,6 +16,22 @@ public final class ModDecayGroups {
             DecaySequence.DEFAULT_POISE
     );
 
+    /** 重击：与普攻同一套规则，但元素序列是独立实例（独立附着计数）。 */
+    public static final DecayGroup CHARGED_ATTACK = new DecayGroup(
+            50,
+            DecaySequence.createRepeating(new float[]{1.0f, 0.0f, 0.0f}, 8),
+            DecaySequence.DEFAULT_DAMAGE,
+            DecaySequence.DEFAULT_POISE
+    );
+
+    /** 雷神协同攻击：0.1 秒清除，每次命中都能重新附着弱雷。 */
+    public static final DecayGroup RAIDEN_COORDINATED = new DecayGroup(
+            2,
+            DecaySequence.createFilled(1.0f, 1),
+            DecaySequence.DEFAULT_DAMAGE,
+            DecaySequence.DEFAULT_POISE
+    );
+
     private ModDecayGroups() {
     }
 }

@@ -45,8 +45,17 @@ public class AttributeCapHandler {
                 scanned, changed);
     }
 
+    /**
+     * 按属性的<b>短名</b>取配置里的上限。
+     *
+     * <p>同一个属性在不同版本里的登记名不一样：有的带分类前缀（{@code generic.max_health}），
+     * 有的就是光名字（{@code max_health}）。按全名匹配的话，带前缀的那种一条都对不上，
+     * 于是整个解除会在「扫描 N 条、放宽 0 条」里静默失效，所以这里先砍掉前缀再比。
+     */
     private static double resolveCap(String attributePath, double fallback) {
-        return switch (attributePath) {
+        int dot = attributePath.lastIndexOf('.');
+        String key = dot >= 0 ? attributePath.substring(dot + 1) : attributePath;
+        return switch (key) {
             case "max_health" -> EntityAttributeCapConfig.getMaxHealthCap();
             case "attack_damage" -> EntityAttributeCapConfig.getAttackDamageCap();
             case "armor" -> EntityAttributeCapConfig.getArmorCap();

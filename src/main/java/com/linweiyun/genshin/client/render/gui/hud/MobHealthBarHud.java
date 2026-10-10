@@ -521,7 +521,7 @@ public class MobHealthBarHud {
                 -width / 2.0f,
                 0.0f,
                 0xFFFFFFFF,
-                true,
+                false,
                 poseStack.last().pose(),
                 collector,
                 Font.DisplayMode.SEE_THROUGH,

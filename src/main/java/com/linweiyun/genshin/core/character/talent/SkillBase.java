@@ -164,7 +164,21 @@ public class SkillBase {
     * <p>给「下坠时钉在某个姿态」的角色用：落地后从 {@link #plungingAnimationHoldTick()} 那一刻继续把同一条动画播完。
     */
    /** 详细属性的一行：标签语言键 + 当前等级下的倍率。 */
-   public record TalentDetail(String labelKey, double value) {
+   public record TalentDetail(String labelKey, double value, String configKey) {
+      public TalentDetail(String labelKey, double value) {
+         this(labelKey, value, null);
+      }
+   }
+
+   /** 这一段动作给环境（方块）留什么元素；默认用角色元素，物理段可覆盖成 FYSIKOS。 */
+   public com.linweiyun.elementlib.core.element.GenshinElement attackElement(
+         PGCharacter character, ActionKind kind, int comboIndex) {
+      return character == null ? null : character.getElemental();
+   }
+
+   /** 该角色的倍率表（可编辑用）；没有就返回 null。 */
+   public com.linweiyun.genshin.config.character.TalentConfigSource talentConfigSource() {
+      return null;
    }
 
    /** 「详细属性」页的行；返回空列表表示该天赋没有可展示的数值。 */

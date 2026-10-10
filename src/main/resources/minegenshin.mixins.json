@@ -26,6 +26,7 @@
   ],
   "client": [
     "CameraTypeMixin",
+    "CameraZoomMixin",
     "EntityTurnMixin",
     "LivingEntityTickHeadTurnMixin",
     "LocalPlayerSprintMixin",

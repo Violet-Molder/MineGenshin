@@ -35,6 +35,7 @@ public class CharacterTickHandler {
         }
         PlayerCharactersAttachment attachment = player.getData(AttachmentRegistration.PLAYER_CHARACTERS_ATTACHMENT);
         tickPlungeAttack(player, attachment);
+        com.linweiyun.genshin.content.entities.area.StellarPrismEntity.tickPlayerField(player);
         tickPartyCharacters(player, attachment);
         checkAllCharactersDown(player, attachment);
         syncDirtyCharacters(player, attachment);
@@ -121,7 +122,7 @@ public class CharacterTickHandler {
             for (int uuid : attachment.getPartyCharacterUUIDs()) {
                 PGCharacter character = CharacterHelper.getCharacterByUUID(player, uuid);
                 if (character != null) {
-                    character.tick(player);
+                    character.tick(player, character == attachment.getCurrentCharacter());
                 }
             }
         }

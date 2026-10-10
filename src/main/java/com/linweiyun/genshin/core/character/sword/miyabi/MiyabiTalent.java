@@ -1,5 +1,7 @@
 package com.linweiyun.genshin.core.character.sword.miyabi;
 
+import com.linweiyun.genshin.config.character.MiyabiTalentConfig;
+
 import com.linweiyun.genshin.core.character.talent.TalentBase;
 import com.linweiyun.genshin.core.character.util.capability.IStellarHousehold;
 import com.linweiyun.genshin.core.element.ModElements;
@@ -52,12 +54,6 @@ public class MiyabiTalent extends TalentBase {
     /** 冰伤转星超导时的倍率加成。 */
     public static final float CONDUCE_MULTIPLIER_BONUS = 0.30f;
 
-    /** 星雪状态下冰伤转星超导的额外倍率加成（基础区）。 */
-    public static final float SNOW_STATE_BASE_BONUS = 0.30f;
-
-    /** 星雪状态下星超导伤害的额外提升（特殊倍率区）。 */
-    public static final float SNOW_STATE_SPECIAL_BONUS = 0.30f;
-
     /** 覆雪每层的基础加成，每级再 +1%。 */
     public static final float SNOW_COVER_PER_STACK = 0.08f;
     public static final float SNOW_COVER_PER_LEVEL = 0.01f;
@@ -67,33 +63,42 @@ public class MiyabiTalent extends TalentBase {
     public static final float RIME_PER_STACK_PER_LEVEL = 0.015f;
 
     public static float swordQi(int level) {
-        return at(SWORD_QI, level);
+        int lv = Math.max(1, Math.min(SWORD_QI.length, level));
+        return (float) MiyabiTalentConfig.value("myb-qi-" + lv, SWORD_QI[lv - 1]);
     }
 
     public static float deepSnow(int level) {
-        return at(DEEP_SNOW, level);
+        int lv = Math.max(1, Math.min(DEEP_SNOW.length, level));
+        return (float) MiyabiTalentConfig.value("myb-deep_snow-" + lv, DEEP_SNOW[lv - 1]);
     }
 
     public static float deepSnowConduce(int level) {
-        return at(DEEP_SNOW_CONDUCE, level);
+        int lv = Math.max(1, Math.min(DEEP_SNOW_CONDUCE.length, level));
+        return (float) MiyabiTalentConfig.value("myb-deep_snow_conduce-" + lv, DEEP_SNOW_CONDUCE[lv - 1]);
     }
 
     public static float flyingSnowTotal(int level) {
-        return at(FLYING_SNOW, level);
+        int lv = Math.max(1, Math.min(FLYING_SNOW.length, level));
+        return (float) MiyabiTalentConfig.value("myb-flying_snow-" + lv, FLYING_SNOW[lv - 1]);
     }
 
     public static float frostMoon(int level) {
-        return at(FROST_MOON, level);
+        int lv = Math.max(1, Math.min(FROST_MOON.length, level));
+        return (float) MiyabiTalentConfig.value("myb-frost_moon-" + lv, FROST_MOON[lv - 1]);
     }
 
     /** 覆雪每层给星超导伤害的加成。 */
     public static float snowCoverPerStack(int level) {
-        return SNOW_COVER_PER_STACK + SNOW_COVER_PER_LEVEL * Math.max(0, level - 1);
+        int lv = Math.max(1, Math.min(10, level));
+        return (float) MiyabiTalentConfig.value("myb-snow_cover-" + lv,
+                SNOW_COVER_PER_STACK + SNOW_COVER_PER_LEVEL * (lv - 1));
     }
 
     /** 飞雪每消耗一层烈霜给本次伤害的加成。 */
     public static float rimePerStack(int level) {
-        return RIME_PER_STACK_BASE + RIME_PER_STACK_PER_LEVEL * Math.max(0, level - 1);
+        int lv = Math.max(1, Math.min(10, level));
+        return (float) MiyabiTalentConfig.value("myb-rime-" + lv,
+                RIME_PER_STACK_BASE + RIME_PER_STACK_PER_LEVEL * lv);
     }
 
     private static float at(float[] table, int level) {
@@ -134,8 +139,9 @@ public class MiyabiTalent extends TalentBase {
         if (stage < 1 || stage > NA_TABLE.length) {
             return 0f;
         }
-        float[] row = NA_TABLE[stage - 1];
-        return row[Math.max(1, Math.min(row.length, level)) - 1];
+        int lv = Math.max(1, Math.min(NA_TABLE[stage - 1].length, level));
+        return (float) MiyabiTalentConfig.value("myb-na" + stage + "-" + lv,
+                NA_TABLE[stage - 1][lv - 1]);
     }
 
     private static final float[] CHARGED_TABLE = {
@@ -144,6 +150,39 @@ public class MiyabiTalent extends TalentBase {
     };
 
     public static float chargedAttackMultiplier(int level) {
-        return CHARGED_TABLE[Math.max(1, Math.min(CHARGED_TABLE.length, level)) - 1];
+        int lv = Math.max(1, Math.min(CHARGED_TABLE.length, level));
+        return (float) MiyabiTalentConfig.value("myb-charged-" + lv, CHARGED_TABLE[lv - 1]);
+    }
+
+    public static float defaultNormalAttack(int stage, int level) {
+        return at(row(NA_TABLE, stage), level);
+    }
+
+    public static float defaultCharged(int level) {
+        return at(CHARGED_TABLE, level);
+    }
+
+    public static float defaultSwordQi(int level) {
+        return at(SWORD_QI, level);
+    }
+
+    public static float defaultFrostMoon(int level) {
+        return at(FROST_MOON, level);
+    }
+
+    public static float defaultDeepSnow(int level) {
+        return at(DEEP_SNOW, level);
+    }
+
+    public static float defaultDeepSnowConduce(int level) {
+        return at(DEEP_SNOW_CONDUCE, level);
+    }
+
+    public static float defaultFlyingSnow(int level) {
+        return at(FLYING_SNOW, level);
+    }
+
+    private static float[] row(float[][] table, int stage) {
+        return table[Math.max(1, Math.min(table.length, stage)) - 1];
     }
 }

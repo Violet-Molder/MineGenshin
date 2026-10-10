@@ -49,10 +49,12 @@ public enum AttackType {
     LUNAR_CHARGED(null, "attack_type.lunar_charged"),
 
     // 扩散 —— 风元素造成的剧变反应范围伤害
+    ELECTRO_CHARGED(null, "attack_type.electro_charged"),
     SWIRL(null, "attack_type.swirl"),
 
     // 星扩散 —— 冰扩散的星烁反应变体
-    STELLAR_SWIRL(null, "attack_type.stellar_swirl");
+    STELLAR_SWIRL(null, "attack_type.stellar_swirl"),
+    STELLAR_CONDUCE(null, "attack_type.stellar_conduce");
 
     // 衰减标签 —— 决定该攻击类型的附着冷却共用关系
     // null表示不使用附着冷却系统（如特殊/环境伤害）

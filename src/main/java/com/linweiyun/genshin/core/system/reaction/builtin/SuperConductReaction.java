@@ -83,9 +83,15 @@ public class SuperConductReaction extends ElementalReaction {
         consumeElementUnit(context.targetContainer(), elB, consumedB);
         consumeElementUnit(context.targetContainer(), elA, consumedA);
 
-        applyDamageOffCooldown(context);
+        boolean converted = StellarConduceReaction.convert(context);
+        if (!converted) {
+            applyDamageOffCooldown(context);
+        }
+        ElementalReactionType convertedType = attackerMain == ModElements.ELECTRO.get()
+                ? ModReactionTypes.STELLAR_CONDUCE.get()
+                : ModReactionTypes.STELLAR_CONDUCE.get();
 
-        return ReactionResult.builder(type())
+        return ReactionResult.builder(converted ? convertedType : type())
                 .reacted()
                 .consumedAttacker(attackerIsA ? consumedA : consumedB)
                 .consumedDefender(attackerIsA ? consumedB : consumedA)

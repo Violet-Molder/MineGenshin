@@ -1,10 +1,14 @@
 package com.linweiyun.genshin.client.performance;
 
 import com.linweiyun.genshin.config.PerformanceConfig;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
+import org.joml.Matrix4f;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -33,9 +37,17 @@ public final class IndicatorGlyphCache {
     /** 全亮光照坐标：世界空间飘字不受方块光照影响 */
     public static final int FULL_BRIGHT = 0xF000F0;
 
-    /** 行上下沿的取值（字体像素，y 向下；相对基线，向上为负） */
-    private static final float FALLBACK_LINE_TOP = -7.0f;
-    private static final float FALLBACK_LINE_BOTTOM = 1.0f;
+    /**
+     * 量不出字形上下沿时的兜底区间（字体像素，y 向下；相对绘制原点）。
+     *
+     * <p>内置字体的字形盒从绘制原点往下铺满一个行高：英文位图 8px、统一码 16px 字形
+     * （过采样 2）算下来都是 {@code y ∈ [0, 8]}，所以兜底取这个区间而不是「基线上方」。</p>
+     */
+    private static final float FALLBACK_LINE_TOP = 0.0f;
+    private static final float FALLBACK_LINE_BOTTOM = 8.0f;
+
+    private static final Matrix4f IDENTITY = new Matrix4f();
+    private static final BoundsProbe PROBE = new BoundsProbe();
 
     /**
      * 一条排好版的文字。字段全部是只读的，可跨帧复用。
@@ -45,7 +57,7 @@ public final class IndicatorGlyphCache {
         public final FormattedCharSequence sequence;
         /** 居中绘制时的左端点（字体像素，相对基线中点） */
         public final float left;
-        /** 渐变取端点用的行上下沿（字体像素，y 向下；向上为负） */
+        /** 渐变取端点用的字形盒上下沿（字体像素，相对绘制原点，y 向下） */
         public final float top;
         public final float bottom;
         /** 建立这条结果时用的字体实例 */
@@ -147,6 +159,98 @@ public final class IndicatorGlyphCache {
         Style style = Style.EMPTY.withItalic(italic);
         FormattedCharSequence sequence = Component.literal(text).withStyle(style).getVisualOrderText();
         float left = -font.width(sequence) / 2.0f;
-        return new Label(sequence, left, FALLBACK_LINE_TOP, FALLBACK_LINE_BOTTOM, font);
+        float[] line = measureLine(font, sequence, left);
+        return new Label(sequence, left, line[0], line[1], font);
+    }
+
+    /**
+     * 量出这段文字绘制时真正占用的本地 y 区间（字体像素，相对绘制原点，y 向下）。
+     *
+     * <p>渐变按顶点 y 落在区间里的比例插值，区间一旦和字形实际落点对不上，整行就会挤在
+     * 同一个颜色上、看不出渐变。字形盒的上下沿由字体提供（位图取 ascent、统一码按过采样折算），
+     * 没有现成接口可查，所以这里空跑一次绘制、把顶点过一遍只记 y 的极值；结果随排版一起缓存，
+     * 每条文字只付这一次开销。</p>
+     *
+     * @return {@code {top, bottom}}；字形量不出来时退回当前字体的行高
+     */
+    private static float[] measureLine(Font font, FormattedCharSequence sequence, float left) {
+        PROBE.reset();
+        font.drawInBatch(sequence, left, 0.0f, 0xFFFFFFFF, false,
+                IDENTITY, PROBE, Font.DisplayMode.SEE_THROUGH, 0, FULL_BRIGHT);
+        if (PROBE.vertexCount == 0 || PROBE.maxY - PROBE.minY < 1.0f) {
+            return new float[]{FALLBACK_LINE_TOP, Math.max(FALLBACK_LINE_BOTTOM, font.lineHeight - 1.0f)};
+        }
+        return new float[]{PROBE.minY, PROBE.maxY};
+    }
+
+    /**
+     * 只记录顶点 y 极值的空绘制目标。
+     *
+     * <p>字形写顶点的顺序是「先 {@code addVertex} 再 {@code setColor}」，所以量上下沿只需要
+     * 顶点位置，颜色、UV、光照一律丢掉。</p>
+     */
+    private static final class BoundsProbe implements MultiBufferSource, VertexConsumer {
+
+        private float minY = Float.MAX_VALUE;
+        private float maxY = -Float.MAX_VALUE;
+        private int vertexCount;
+
+        void reset() {
+            this.minY = Float.MAX_VALUE;
+            this.maxY = -Float.MAX_VALUE;
+            this.vertexCount = 0;
+        }
+
+        private void record(float y) {
+            this.vertexCount++;
+            if (y < this.minY) {
+                this.minY = y;
+            }
+            if (y > this.maxY) {
+                this.maxY = y;
+            }
+        }
+
+        @Override
+        public VertexConsumer getBuffer(RenderType type) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer addVertex(float x, float y, float z) {
+            record(y);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer addVertex(Matrix4f pose, float x, float y, float z) {
+            record(y);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv(float u, float v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv1(int u, int v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv2(int u, int v) {
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
+            return this;
+        }
     }
 }

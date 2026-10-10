@@ -45,6 +45,9 @@ public final class ActionStateMachine {
    public static String currentState = "default";
    public static int currentPriority = 1;
    private static boolean currentStateLoops = false;
+
+   /** 下一次起播动画时要跳到的秒数；< 0 = 不跳。 */
+   private static double pendingAnimationStartSeconds = -1.0;
    public static int animationTick = 0;
    public static int actionLockFrames = 0;
    public static int lockDelayFrames = 0;
@@ -69,6 +72,17 @@ public final class ActionStateMachine {
 
    public static int actionSequence() {
       return actionSequence;
+   }
+
+   public static void setPendingAnimationStartSeconds(double seconds) {
+      pendingAnimationStartSeconds = seconds;
+   }
+
+   /** 取出并清空待跳秒数；没有就返回 -1。 */
+   public static double consumePendingAnimationStartSeconds() {
+      double value = pendingAnimationStartSeconds;
+      pendingAnimationStartSeconds = -1.0;
+      return value;
    }
 
    public static boolean currentStateLoops() {
