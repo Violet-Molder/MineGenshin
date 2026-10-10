@@ -67,6 +67,7 @@ base {
 // Mojang ships Java 25 to end users in 26.2, so mods should target Java 25.
 java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
+
 neoForge {
     // Specify the version of NeoForge to use.
     version = project.neo_version
@@ -281,4 +282,13 @@ idea {
 def privateBuildScript = file('src/private/gradle/private-build.gradle')
 if (privateBuildScript.isFile()) {
     apply from: privateBuildScript
+}
+
+// 每个 java 进程都走本分支的 JBR：Gradle daemon 用哪个 JVM 无所谓（IDE 会把它设成 project-jdk），
+// 这里按 toolchain 挑 JetBrains 的那份，26.2 → JBR 25、1.21.1 → JBR 21，版本跟着分支走。
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = java.toolchain.languageVersion.get()
+        vendor = JvmVendorSpec.JETBRAINS
+    }
 }
